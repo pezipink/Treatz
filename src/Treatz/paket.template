@@ -1,0 +1,23 @@
+type project
+owners
+    President, Dragon Treats Ltd
+authors 
+    President, Dragon Treats Ltd
+projectUrl
+    http://github.com/pezipink/Treatz
+iconUrl
+    https://raw.githubusercontent.com/pezipink/Treatz/master/docs/files/img/logo.png
+licenseUrl
+    http://github.com/pezipink/Treatz/blob/master/LICENSE.txt
+requireLicenseAcceptance
+    false
+copyright
+    Copyright 2015
+tags
+    F# game sdl
+summary
+    A ridiculous game brought to you by Dragon Treats Ltd
+description
+    A ridiculous game brought to you by Dragon Treats Ltd
+
+
