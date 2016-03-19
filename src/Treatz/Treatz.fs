@@ -93,17 +93,17 @@ let update (state:TreatzState) : TreatzState =
         ]
     (state,movement) ||> List.fold (fun acc f -> update f acc)
 
-let rec eventPump (renderHandler:'TState->unit) (eventHandler:SDLEvent.Event->'TState->'TState option) (state:'TState) : unit =
+let rec eventPump (renderHandler:'TState->unit) (eventHandler:SDLEvent.Event->'TState->'TState option) (update:'TState->'TState) (state:'TState) : unit =
     match SDLEvent.pollEvent() with
     | Some event ->
         match state |> eventHandler event with
-        | Some newState -> eventPump renderHandler eventHandler newState
+        | Some newState -> eventPump renderHandler eventHandler update newState
         | None -> ()
     | None -> 
         let state = update state
         state
         |> renderHandler
-        eventPump renderHandler eventHandler state
+        eventPump renderHandler eventHandler update state
 
 
 let handleEvent (event:SDLEvent.Event) (state:TreatzState) : TreatzState option =
@@ -172,6 +172,6 @@ let main() =
          Juans = []
          PressedKeys = Set.empty}
 
-    eventPump (render context) (handleEvent) state
+    eventPump (render context) handleEvent update state
         
 main()
