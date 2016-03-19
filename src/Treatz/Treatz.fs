@@ -66,13 +66,14 @@ type TreatzState =
     { Player1 : Juan
       Player2 : Juan
       Juans : Juan list
-      PressedKeys : Set<ScanCode> }
+      PressedKeys : Set<ScanCode> 
+      Sprites : Map<string, SDLTexture.Texture>
+      mutable TurkeyAngle : float}
 
 type RenderingContext =
     {Renderer:SDLRender.Renderer;
      Texture:SDLTexture.Texture;
      Surface:SDLSurface.Surface;
-     WorkSurface:SDLSurface.Surface
      mutable lastFrameTick : uint32 }
 
 let update (state:TreatzState) : TreatzState =
@@ -130,20 +131,26 @@ let render(context:RenderingContext) (state:TreatzState) =
     |> ignore
     
     context.Surface
-    |> SDLSurface.fillRect (Some {X=(state.Player1.location.X)*1<px>;Y=(state.Player1.location.Y)*1<px>;Width=5<px>;Height=5<px>}) {Red=255uy;Green=0uy;Blue=255uy;Alpha=255uy}
+    |> SDLSurface.fillRect (Some {X=(state.Player1.location.X)*1<px>;Y=(state.Player1.location.Y)*1<px>;Width=25<px>;Height=25<px>}) {Red=255uy;Green=0uy;Blue=255uy;Alpha=255uy}
     |> ignore
 
     context.Surface
-    |> SDLSurface.fillRect (Some {X=(state.Player2.location.X)*1<px>;Y=(state.Player2.location.Y)*1<px>;Width=5<px>;Height=5<px>}) {Red=0uy;Green=0uy;Blue=255uy;Alpha=255uy}
+    |> SDLSurface.fillRect (Some {X=(state.Player2.location.X)*1<px>;Y=(state.Player2.location.Y)*1<px>;Width=25<px>;Height=25<px>}) {Red=0uy;Green=0uy;Blue=255uy;Alpha=255uy}
     |> ignore
-
 
     context.Texture
     |> SDLTexture.update None context.Surface
     |> ignore
 
-
     context.Renderer |> SDLRender.copy context.Texture None None |> ignore
+    
+    let t = state.Sprites.["turkey"]  
+    let dst = { X = 350<px>; Y = 250<px>; Width=50<px>; Height=50<px> }
+    // 60 fps, rotate once every 2 seconds - 120 steps =
+    let angle = state.TurkeyAngle + (360.0 / 120.0)
+    if angle > 360.0 then state.TurkeyAngle <- 0. else state.TurkeyAngle <- angle
+    context.Renderer  |> copyEx t None (Some dst) state.TurkeyAngle 0 |> ignore
+    
     context.Renderer |> SDLRender.present 
 
     // delay to lock at 60fps (we could do extra work here)
@@ -155,22 +162,31 @@ let main() =
     use system = new SDL.System(SDL.Init.Video ||| SDL.Init.Events)
     use mainWindow = SDLWindow.create "test" 100<px> 100<px> screenWidth screenHeight 0u
     use mainRenderer = SDLRender.create mainWindow -1 SDLRender.Flags.Accelerated
-    use surface = SDLSurface.createRGB (320<px>,240<px>,32<bit/px>) (0x00FF0000u,0x0000FF00u,0x000000FFu,0x00000000u)
-    use workSurface = SDLSurface.createRGB (8<px>,8<px>,32<bit/px>) (0x00FF0000u,0x0000FF00u,0x000000FFu,0x00000000u)
+    use surface = SDLSurface.createRGB (screenWidth,screenHeight,32<bit/px>) (0x00FF0000u,0x0000FF00u,0x000000FFu,0x00000000u)
+    
+    use bitmap = SDLSurface.loadBmp SDLPixel.RGB888Format @"..\..\..\..\images\turkey.bmp"
 
-    workSurface
-    |> SDLSurface.setColorKey (Some {Red=0uy;Green=0uy;Blue=0uy;Alpha=0uy})
+    bitmap
+    |> SDLSurface.setColorKey (Some {Red=255uy;Green=0uy;Blue=255uy;Alpha=0uy})
     |> ignore
 
-    use mainTexture = mainRenderer |> SDLTexture.create SDLPixel.RGB888Format SDLTexture.Access.Streaming (320<px>,240<px>)
-    mainRenderer |> SDLRender.setLogicalSize (320<px>,240<px>) |> ignore
+    
 
-    let context =  { Renderer = mainRenderer; Texture = mainTexture; Surface = surface; WorkSurface = workSurface; lastFrameTick = getTicks() }
+    use mainTexture = mainRenderer |> SDLTexture.create SDLPixel.RGB888Format SDLTexture.Access.Streaming (screenWidth,screenHeight)
+    mainRenderer |> SDLRender.setLogicalSize (screenWidth,screenHeight) |> ignore
+
+    let turkeyTex = SDLTexture.fromSurface mainRenderer bitmap.Pointer
+    
+    let sprites = ["turkey", turkeyTex] |> Map.ofList
+
+    let context =  { Renderer = mainRenderer; Texture = mainTexture; Surface = surface; lastFrameTick = getTicks() }
     let state = 
         {Player1 = {kind = Player(PlayerData.Blank); location = FastPoint(10,10)}
          Player2 = {kind = Player(PlayerData.Blank); location = FastPoint(20,20)}
          Juans = []
-         PressedKeys = Set.empty}
+         PressedKeys = Set.empty
+         Sprites = sprites
+         TurkeyAngle = 0.0 }
 
     eventPump (render context) handleEvent update state
         

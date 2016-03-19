@@ -50,7 +50,6 @@ module private SDLTextureNative =
     [<DllImport(@"SDL2.dll", CallingConvention = CallingConvention.Cdecl)>]
     extern void SDL_UnlockTexture(IntPtr texture)
 
-
 let create format (access: Access) (w: int<px>,h: int<px>) (renderer:SDLUtility.Pointer) =
     let ptr = SDLTextureNative.SDL_CreateTexture(renderer.Pointer,format,access |> int,w / 1<px>,h / 1<px>)
     new SDLUtility.Pointer(ptr, SDLTextureNative.SDL_DestroyTexture)

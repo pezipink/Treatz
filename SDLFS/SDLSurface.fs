@@ -108,7 +108,8 @@ module private SDLSurfaceNative =
     extern int SDL_UpperBlit(IntPtr src, IntPtr srcrect, IntPtr dst, IntPtr dstrect)
     [<DllImport(@"SDL2.dll", CallingConvention = CallingConvention.Cdecl)>]
     extern int SDL_LowerBlit(IntPtr src, IntPtr srcrect, IntPtr dst, IntPtr dstrect)
-
+    [<DllImport(@"SDL2.dll", CallingConvention = CallingConvention.Cdecl)>]
+    extern int SDL_BlitSurface(IntPtr src, IntPtr srcrect, IntPtr dst, IntPtr dstrect)
     //stretching
     [<DllImport(@"SDL2.dll", CallingConvention = CallingConvention.Cdecl)>]
     extern int SDL_SoftStretch(IntPtr src, IntPtr srcrect, IntPtr dst, IntPtr dstrect)
