@@ -1,59 +1,88 @@
+module Treatz
 open System
-
-open SDL2
+open SDLUtility
+open SDLGeometry
+open SDLPixel
+open SDLRender
 
 
 let fps = 60.0;
 let delay_time = 1000.0 / fps;
 let delay_timei = uint32 delay_time
 
+type TreatzState =
+    { placeholder : int }
+
+type RenderingContext =
+    {Renderer:SDLRender.Renderer;
+     Texture:SDLTexture.Texture;
+     Surface:SDLSurface.Surface;
+     WorkSurface:SDLSurface.Surface}
+
+let rec eventPump (renderHandler:'TState->unit) (eventHandler:SDLEvent.Event->'TState->'TState option) (state:'TState) : unit =
+    match SDLEvent.pollEvent() with
+    | Some event ->
+        match state |> eventHandler event with
+        | Some newState -> eventPump renderHandler eventHandler newState
+        | None -> ()
+    | None -> 
+        state
+        |> renderHandler
+        eventPump renderHandler eventHandler state
+
+let handleEvent (event:SDLEvent.Event) (state:TreatzState) : TreatzState option =
+    match event with
+    | SDLEvent.Quit quitDetails -> 
+        None
+    | SDLEvent.KeyDown keyDetails -> 
+        // handle keypress
+        Some state
+        //state |> handleKeyDownEvent sumLocationsFunc setVisibleFunc createFunc random keyDetails
+    | _ -> 
+        // core logic function here
+        Some state
+
+let render(context:RenderingContext) (state:TreatzState) =
+    // clear screen
+    context.Renderer |> SDLRender.setDrawColor (255uy,0uy,255uy,255uy) |> ignore
+    context.Renderer |> SDLRender.clear |> ignore
+
+    context.Surface
+    |> SDLSurface.fillRect None {Red=255uy;Green=0uy;Blue=255uy;Alpha=255uy}
+    |> ignore
+
+    context.Texture
+    |> SDLTexture.update None context.Surface
+    |> ignore
+
+    context.Renderer |> SDLRender.copy context.Texture None None |> ignore
+    context.Renderer |> SDLRender.present 
+
 let main() = 
-    SDL.SDL_Init(SDL.SDL_INIT_EVERYTHING) |> ignore
-    let window = SDL.SDL_CreateWindow("Treatz",0,0,800,600,SDL.SDL_WindowFlags.SDL_WINDOW_BORDERLESS ||| SDL.SDL_WindowFlags.SDL_WINDOW_SHOWN)
-    let renderer = SDL.SDL_CreateRenderer(window,-1,0ul)
-//    let surface = SDL.SDL_CreateRGBSurface(
-//                    0ul, 800,600,32, 
-//                    0x00FF0000ul,
-//                    0x0000FF00ul,
-//                    0x000000FFul,
-//                    0ul)
-    //let texture = SDL.SDL_CreateTextureFromSurface(renderer,surface)
-    let running = ref true
+    use system = new SDL.System(SDL.Init.Video ||| SDL.Init.Events)
 
-    let mutable srcRect = SDL.SDL_Rect()
-    let event = ref (SDL.SDL_Event())
+    use mainWindow = SDLWindow.create "test" 100<px> 100<px> 640<px> 480<px> 0u
 
-    while !running do
-        let frameStart = SDL.SDL_GetTicks()
+    use mainRenderer = SDLRender.create mainWindow -1 SDLRender.Flags.Accelerated
 
-        // handle sdl events
-        while SDL.SDL_PollEvent(event) > 0 do
-            match (!event).``type`` with
-            | SDL.SDL_EventType.SDL_KEYDOWN ->
-                match (!event).key.keysym.scancode with
-                | SDL.SDL_Scancode.SDL_SCANCODE_ESCAPE -> running := false
-                | _ -> ()
-            | SDL.SDL_EventType.SDL_QUIT -> 
-                running := false
-            | _ -> ()
+    use surface = SDLSurface.createRGB (320<px>,240<px>,32<bit/px>) (0x00FF0000u,0x0000FF00u,0x000000FFu,0x00000000u)
 
-        // update
-        ()
+    use workSurface = SDLSurface.createRGB (8<px>,8<px>,32<bit/px>) (0x00FF0000u,0x0000FF00u,0x000000FFu,0x00000000u)
 
-        // render
-        srcRect.h <- 100
-        srcRect.w <- 100
-        srcRect.x <- 400
-        srcRect.y <- 300
-        SDL.SDL_SetRenderDrawColor(renderer, 255uy, 255uy, 255uy, 0uy) |> ignore
-        SDL.SDL_RenderDrawRect(renderer,ref srcRect) |> ignore
+    workSurface
+    |> SDLSurface.setColorKey (Some {Red=0uy;Green=0uy;Blue=0uy;Alpha=0uy})
+    |> ignore
 
-        // present
-        SDL.SDL_RenderPresent(renderer)
+    use mainTexture = mainRenderer |> SDLTexture.create SDLPixel.RGB888Format SDLTexture.Access.Streaming (320<px>,240<px>)
 
-        // lock to 60fps
-        let frameTime = SDL.SDL_GetTicks() - frameStart
-        if frameTime < delay_timei then
-            SDL.SDL_Delay(delay_timei-frameTime)
+    mainRenderer |> SDLRender.setLogicalSize (320<px>,240<px>) |> ignore
+
+    let context = 
+        { Renderer = mainRenderer; Texture = mainTexture; Surface = surface; WorkSurface = workSurface }
+
+    let state = {placeholder = 0}
+
+    eventPump (render context) (handleEvent) state
+
         
 main()

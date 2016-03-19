@@ -1,6 +1,7 @@
-
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 2012
+# Visual Studio 14
+VisualStudioVersion = 14.0.24720.0
+MinimumVisualStudioVersion = 10.0.40219.1
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".paket", ".paket", "{63297B98-5CED-492C-A5B7-A5B4F73CF142}"
 	ProjectSection(SolutionItems) = preProject
 		paket.dependencies = paket.dependencies
@@ -34,6 +35,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{ED8079DD
 EndProject
 Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Treatz.Tests", "tests\Treatz.Tests\Treatz.Tests.fsproj", "{EB767F81-8240-4097-ABC6-D9C342363F30}"
 EndProject
+Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "SDLFS", "SDLFS\SDLFS.fsproj", "{7A206917-2EB2-44C5-94C7-C95C90E63C0E}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -48,6 +51,10 @@ Global
 		{EB767F81-8240-4097-ABC6-D9C342363F30}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{EB767F81-8240-4097-ABC6-D9C342363F30}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{EB767F81-8240-4097-ABC6-D9C342363F30}.Release|Any CPU.Build.0 = Release|Any CPU
+		{7A206917-2EB2-44C5-94C7-C95C90E63C0E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7A206917-2EB2-44C5-94C7-C95C90E63C0E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7A206917-2EB2-44C5-94C7-C95C90E63C0E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7A206917-2EB2-44C5-94C7-C95C90E63C0E}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
