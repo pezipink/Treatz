@@ -12,6 +12,15 @@ open Microsoft.FSharp.NativeInterop
 [<Measure>] type bytes
 [<Measure>] type ms
 
+module private SDLUtil =
+    [<DllImport(@"SDL2.dll", CallingConvention = CallingConvention.Cdecl)>]
+    extern System.UInt32 SDL_GetTicks()
+    [<DllImport(@"SDL2.dll", CallingConvention = CallingConvention.Cdecl)>]
+    extern void SDL_Delay(System.UInt32 ms)
+
+let getTicks() = SDLUtil.SDL_GetTicks()
+let delay ms = SDLUtil.SDL_Delay ms
+
 let internal withUtf8String (func: IntPtr->'T) (text:string) =
     let bytes = Encoding.UTF8.GetBytes(text)
     let pinnedArray = GCHandle.Alloc(bytes, GCHandleType.Pinned)
