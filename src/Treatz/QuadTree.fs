@@ -77,5 +77,56 @@ let rec private insert getItemBounds maxItems maxDepth currentDepth bounds tree 
         | Some(TopLeft, newBounds)      -> Branch(data,TR,BR,BL,insert' newBounds TL item)
         | None                          -> Branch(item::data,TR,BR,BL,TL)
 
+let private walkData f tree =
+    let rec aux = function
+        | Leaf data -> 
+            Leaf (f data)
+        | Branch(data,TR,BR,BL,TL) -> 
+            Branch(f data,aux TR,aux BR,aux BL,aux TL)
+    aux tree
+
+let private collectData tree =
+    let rec aux acc = function
+        // this could be written better...
+        | Leaf data -> acc @ data
+        | Branch(data,TR,BR,BL,TL) -> 
+            let TR = aux data TR
+            let BL = aux data BL
+            let BR = aux data BR
+            let TL = aux data TL
+            data @ TR @ BL @ BR @ TL
+    aux [] tree
+
 let create items getItemBounds maxItems maxDepth bounds  =
     (Leaf [],items) ||> List.fold(insert getItemBounds maxItems maxDepth 0 bounds)
+
+let findNeighbours pred bounds maxBounds tree =
+    let rec aux currentBounds = function
+        | Leaf data -> 
+            match List.tryFind pred data with
+            | Some _ -> data
+            | None -> []            
+        | Branch(data,TR,BR,BL,TL) -> 
+            match List.tryFind pred data with
+            | Some _ -> 
+                // todo - work out which quadrants overlap and return only those
+                [ yield! collectData TR
+                  yield! collectData BR
+                  yield! collectData BL
+                  yield! collectData TL ]
+            | None -> 
+                // recurse down the tree where the bounds fit
+                match getQuadrant bounds currentBounds with
+                | Some(TopRight, newBounds)     -> aux newBounds TR
+                | Some(BottomRight, newBounds)  -> aux newBounds BL
+                | Some(BottomLeft, newBounds)   -> aux newBounds BR
+                | Some(TopLeft, newBounds)      -> aux newBounds TR
+                | None                          -> []
+    aux maxBounds tree
+
+let map f = walkData (List.map f) 
+
+let fold f acc = walkData (List.fold f acc) 
+
+let filter f = walkData (List.filter f)
+

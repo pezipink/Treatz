@@ -114,16 +114,19 @@ let render(context:RenderingContext) (state:TreatzState) =
                         width = bounds.width / 2 
                         height = bounds.height / 2 }
             drawTree (currentDepth+1) TRB TR
+
             let BRB = { x = bounds.x + (bounds.width / 2)
                         y = bounds.y + (bounds.height / 2)
                         width = bounds.width / 2 
                         height = bounds.height / 2 }
             drawTree (currentDepth+1) BRB BR
+
             let BLB = { x = bounds.x 
                         y = bounds.y + (bounds.height / 2)
                         width = bounds.width / 2 
                         height = bounds.height / 2 }
             drawTree (currentDepth+1) BLB BL
+
             let TLB = { x = bounds.x 
                         y = bounds.y 
                         width = bounds.width / 2 
