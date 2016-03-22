@@ -43,6 +43,7 @@ type FastPoint(x: int, y: int) =
     member __.GridX = x / cellWidth
     member __.GridY = y / cellHeight
 
+
 type PlayerData = 
     {speed : int; dragonsCaught : int}
     with static member Blank = {speed = 3; dragonsCaught = 0}
@@ -168,9 +169,7 @@ let main() =
 
     bitmap
     |> SDLSurface.setColorKey (Some {Red=255uy;Green=0uy;Blue=255uy;Alpha=0uy})
-    |> ignore
-
-    
+    |> ignore    
 
     use mainTexture = mainRenderer |> SDLTexture.create SDLPixel.RGB888Format SDLTexture.Access.Streaming (screenWidth,screenHeight)
     mainRenderer |> SDLRender.setLogicalSize (screenWidth,screenHeight) |> ignore

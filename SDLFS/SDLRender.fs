@@ -127,4 +127,6 @@ let copy (texture:SDLTexture.Texture) (srcrect:Rectangle option) (dstrect:Rectan
 
 let copyEx (texture:SDLTexture.Texture) (srcrect:Rectangle option) (dstrect:Rectangle option) angle flip (renderer:Renderer) =
     SDLGeometry.withSDLRectPointer(fun src -> SDLGeometry.withSDLRectPointer(fun dst -> 0 = SDLRenderNative.SDL_RenderCopyEx(renderer.Pointer,texture.Pointer,src,dst,angle,IntPtr.Zero,flip)) dstrect) srcrect
-        
+
+let drawRect (srcrect:Rectangle) (renderer:Renderer) =
+    SDLGeometry.withSDLRectPointer(fun src ->SDLRenderNative.SDL_RenderDrawRect(renderer.Pointer,src)) (Some srcrect)

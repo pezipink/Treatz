@@ -44,13 +44,15 @@
     <Reference Include="System.Numerics" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Treatz.fs" />
+    <Compile Include="QuadTree.fs" />
     <None Include="App.config">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
     <None Include="Script.fsx" />
     <None Include="paket.references" />
     <None Include="paket.template" />
+    <Compile Include="Treatz.fs" />
+    <Compile Include="Treatz_QT_Demo.fs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\SDLFS\SDLFS.fsproj">
