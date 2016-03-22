@@ -118,8 +118,8 @@ let findNeighbours pred bounds maxBounds tree =
                 // recurse down the tree where the bounds fit
                 match getQuadrant bounds currentBounds with
                 | Some(TopRight, newBounds)     -> aux newBounds TR
-                | Some(BottomRight, newBounds)  -> aux newBounds BL
-                | Some(BottomLeft, newBounds)   -> aux newBounds BR
+                | Some(BottomRight, newBounds)  -> aux newBounds BR
+                | Some(BottomLeft, newBounds)   -> aux newBounds BL
                 | Some(TopLeft, newBounds)      -> aux newBounds TR
                 | None                          -> []
     aux maxBounds tree
