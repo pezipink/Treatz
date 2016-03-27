@@ -122,6 +122,7 @@ type TreatzState =
     { Player1 : Juan
       Player2 : Juan
       Juans : Juan list
+//      StaticLookup : Set<double*double> // set of immovable Juans locations for fast lookup
       PressedKeys : Set<ScanCode> 
       Controllers : Set<ControllerButton> * Set<ControllerButton>
       Sprites : Map<string, SDLTexture.Texture>
@@ -146,8 +147,35 @@ let updatePositions state =
         Juans = List.map updateJuan state.Juans        
     }
 
+let overlap(rectA, rectB) =
+    let xa2,xb2 = rectA.X + rectA.Width,rectB.X + rectB.Width
+    let ya2,yb2 = rectA.Y + rectA.Height,rectB.Y + rectB.Height
+    rectA.X < xb2 && xa2 > rectB.X && 
+    rectA.Y < yb2 && ya2 > rectB.Y
+
 let collisionDetection state = 
-    state
+    let treatTree =
+        // create a quadtree of all the treats on the map
+        // (we are currently duplicating this work but we might have not jsut treats in this tree in the future, or different tree params
+        state.Juans
+        |> List.filter(fun k -> match k.kind with Treat -> true | _ -> false)
+        |> QuadTree.create (fun j -> j.asQuadBounds) 3 10 screenQuadBounds
+
+    let update (treats,juans) juan =
+        match juan.kind with
+        | Dragon _ -> 
+            let eatenTreats =
+                treatTree
+                |> QuadTree.findNeighbours (fun _ -> true) juan.asQuadBounds screenQuadBounds
+                |> List.filter(fun treat -> overlap(juan.asRect,treat.asRect))
+            // yum yum treats, reset drag 
+            eatenTreats @ treats, {juan with kind = Dragon(Nothing) } :: juans
+        | _ -> treats, juan :: juans
+    
+    let (treats,juans) = List.fold(fun acc juan -> update acc juan) ([],[]) state.Juans
+    
+    // todo - this is mega ineffectient, sort it out!
+    {state with Juans = List.filter (fun j -> List.contains j treats |> not) juans  }
 
 let intelligence state =
     let treatTree =
@@ -174,7 +202,7 @@ let intelligence state =
                    {juan with kind = Dragon(Temporary(treat.location)); velocity = xd,yd}
             
         | Dragon(Roam frames)  -> { juan with kind = Dragon(Roam (frames+1)) }
-        | Dragon(Seek data)  -> juan
+        | Dragon(Seek data)  -> juan //todo: follow path?
         | Dragon(Temporary(tx,ty)) -> 
             // this really is temporary! jsut to get something moving
             let xd = tx - fst juan.location
@@ -191,8 +219,8 @@ let prepareLevel state =
         (chaos.NextDouble()) * 800.0, (chaos.NextDouble()) * 600.0
     
     // todo: don't let stuff overlap, with an extra margin
-    let dragons = [for _ in 1..25 -> {kind = JuanTypes.Dragon Nothing; location = randomLocation state.Chaos; velocity = (0.0,0.0)} ]
-    let treatz =  [for _ in 1..25 -> {kind = JuanTypes.Treat;  location = randomLocation state.Chaos; velocity = (0.0,0.0)} ]
+    let dragons = [for _ in 1..10 -> {kind = JuanTypes.Dragon Nothing; location = randomLocation state.Chaos; velocity = (0.0,0.0)} ]
+    let treatz =  [for _ in 1..250 -> {kind = JuanTypes.Treat;  location = randomLocation state.Chaos; velocity = (0.0,0.0)} ]
     
     { state with Juans = dragons @ treatz }
 
