@@ -24,17 +24,17 @@ let mapHeight = 120
 [<CustomEquality>]
 [<CustomComparison>]
 // used in the quadtrees and pathfinding algorithms 
-type FastPoint<'a>(x: int, y: int) =
+type FastPoint(x: int, y: int) =
     member __.X = x
     member __.Y = y
     
     override lhs.Equals rhs =
-        let rhs = (rhs :?> FastPoint<'a>)
+        let rhs = (rhs :?> FastPoint)
         lhs.X = lhs.X && lhs.Y = rhs.X
     
     interface System.IComparable with
         member lhs.CompareTo rhs =
-            let rhs = (rhs :?> FastPoint<'a>)
+            let rhs = (rhs :?> FastPoint)
             let c = compare lhs.X rhs.X
             if c <> 0 then c else
             compare lhs.Y rhs.Y
@@ -124,7 +124,7 @@ let intelligence state =
     state
 
 let prepareLevel state = 
-    // create 50 dragons and 50 treats
+    // create some dragons and treats
     let randomLocation (chaos:System.Random) =
         (chaos.NextDouble()) * 800.0, (chaos.NextDouble()) * 600.0
     
