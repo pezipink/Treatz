@@ -63,7 +63,7 @@ type DragonData =
     | Seek of (double * double) list
     | Temporary of treat : double * double // no really, this is going
 
-type JuanTypes =
+type MikishidaKinds =
     | Player of PlayerData
     | Dragon of DragonData
     | Treat
@@ -85,8 +85,8 @@ let (|Player|_|) = function
     | _ -> None
 
     
-type Juan = 
-    { kind : JuanTypes; location : double * double; velocity : double * double }
+type Mikishida = 
+    { kind : MikishidaKinds; location : double * double; velocity : double * double }
     with 
     member this.size =
         match this.kind with
@@ -109,19 +109,19 @@ type Juan =
           width = int w 
           height = int h
         }
-    member this.Distance(other:Juan) =
+    member this.Distance(other:Mikishida) =
         let xd = fst other.location - fst this.location
         let yd = snd other.location - snd this.location
         sqrt(xd*xd+yd*yd)
 
-    member this.ManhattanDistance(other:Juan) =
+    member this.ManhattanDistance(other:Mikishida) =
         abs(fst other.location - fst this.location) + abs(snd other.location - snd this.location)
 
 
 type TreatzState =
-    { Player1 : Juan
-      Player2 : Juan
-      Juans : Juan list
+    { Player1 : Mikishida
+      Player2 : Mikishida
+      Juans : Mikishida list
 //      StaticLookup : Set<double*double> // set of immovable Juans locations for fast lookup
       PressedKeys : Set<ScanCode> 
       Controllers : Set<ControllerButton> * Set<ControllerButton>
@@ -219,8 +219,8 @@ let prepareLevel state =
         (chaos.NextDouble()) * 800.0, (chaos.NextDouble()) * 600.0
     
     // todo: don't let stuff overlap, with an extra margin
-    let dragons = [for _ in 1..10 -> {kind = JuanTypes.Dragon Nothing; location = randomLocation state.Chaos; velocity = (0.0,0.0)} ]
-    let treatz =  [for _ in 1..250 -> {kind = JuanTypes.Treat;  location = randomLocation state.Chaos; velocity = (0.0,0.0)} ]
+    let dragons = [for _ in 1..10 -> {kind = MikishidaKinds.Dragon Nothing; location = randomLocation state.Chaos; velocity = (0.0,0.0)} ]
+    let treatz =  [for _ in 1..250 -> {kind = MikishidaKinds.Treat;  location = randomLocation state.Chaos; velocity = (0.0,0.0)} ]
     
     { state with Juans = dragons @ treatz }
 
