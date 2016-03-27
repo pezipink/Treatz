@@ -98,11 +98,11 @@ let private collectData tree =
     aux tree
     List.ofSeq out
 
-let create items getItemBounds maxItems maxDepth bounds  =
+let create getItemBounds maxItems maxDepth bounds items =
     (Leaf [],items) ||> List.fold(insert getItemBounds maxItems maxDepth 0 bounds)
 
-let findNeighbours pred bounds maxBounds tree =
-    let rec aux currentBounds = function
+let findNeighbours pred itemBounds maxBounds tree =
+    let rec aux outerBounds = function
         | Leaf data -> 
             match List.tryFind pred data with
             | Some _ -> data
@@ -117,13 +117,14 @@ let findNeighbours pred bounds maxBounds tree =
                   yield! collectData TL ]
             | None -> 
                 // recurse down the tree where the bounds fit
-                match getQuadrant bounds currentBounds with
+                match getQuadrant itemBounds outerBounds with
                 | Some(TopRight, newBounds)     -> aux newBounds TR
                 | Some(BottomRight, newBounds)  -> aux newBounds BR
                 | Some(BottomLeft, newBounds)   -> aux newBounds BL
                 | Some(TopLeft, newBounds)      -> aux newBounds TR
                 | None                          -> []
     aux maxBounds tree
+
 
 let map f = walkData (List.map f) 
 

@@ -16,9 +16,16 @@ let screenHeight = 600<px>
 
 let cellWidth = 5
 let cellHeight = 5
+let cellWidthf = 5.0
+let cellHeightf = 5.0
 
 let mapWidth = 160
 let mapHeight = 120
+let mapWidthf = 160.0
+let mapHeightf = 120.0
+
+let screenQuadBounds =
+    { x = 0; y = 0; width = int screenWidth; height = int screenHeight }  : QuadTree.QuadBounds
 
 [<Struct>]
 [<CustomEquality>]
@@ -44,15 +51,21 @@ type FastPoint(x: int, y: int) =
 
     member __.GridX = x / cellWidth
     member __.GridY = y / cellHeight
-
+    
 
 type PlayerData = 
     {dragonsCaught : int}
     with static member Blank = {dragonsCaught = 0}
 
+type DragonData =
+    | Nothing
+    | Roam of roamingFrames : int 
+    | Seek of (double * double) list
+    | Temporary of treat : double * double // no really, this is going
+
 type JuanTypes =
     | Player of PlayerData
-    | Dragon
+    | Dragon of DragonData
     | Treat
     | Wall
     | Water
@@ -64,7 +77,7 @@ type JuanTypes =
     member this.defaultSpeed =
         match this with
         | Player _ -> 3.0
-        | Dragon -> 5.0
+        | Dragon _  -> 5.0
         | _ -> 0.9
 
 let (|Player|_|) = function
@@ -88,6 +101,22 @@ type Juan =
           Width = w
           Height = h 
         }
+    member this.asQuadBounds : QuadTree.QuadBounds = 
+        let w, h = this.size
+        { 
+          x = ((fst this.location) ) |> int
+          y = ((snd this.location) ) |> int
+          width = int w 
+          height = int h
+        }
+    member this.Distance(other:Juan) =
+        let xd = fst other.location - fst this.location
+        let yd = snd other.location - snd this.location
+        sqrt(xd*xd+yd*yd)
+
+    member this.ManhattanDistance(other:Juan) =
+        abs(fst other.location - fst this.location) + abs(snd other.location - snd this.location)
+
 
 type TreatzState =
     { Player1 : Juan
@@ -114,14 +143,47 @@ let updatePositions state =
       state with
         Player1 = updateJuan state.Player1
         Player2 = updateJuan state.Player2
-        Juans = List.map updateJuan state.Juans
+        Juans = List.map updateJuan state.Juans        
     }
 
 let collisionDetection state = 
     state
 
 let intelligence state =
-    state
+    let treatTree =
+        // create a quadtree of all the treats on the map
+        state.Juans
+        |> List.filter(fun k -> match k.kind with Treat -> true | _ -> false)
+        |> QuadTree.create (fun j -> j.asQuadBounds) 5 5 screenQuadBounds
+
+    let update juan =
+        match juan.kind with
+        | Dragon(Nothing)  -> 
+            // if our dragon is doing nothing, see if we can find a nearby treat
+            treatTree
+            |> QuadTree.findNeighbours (fun _ -> true) juan.asQuadBounds screenQuadBounds
+            |> function
+               | [] -> // nothing nearby, pick a random direction to roam in (todo)
+                    {juan with kind = Dragon(Roam 0)}
+               | treats -> // find the cloest treat and head towards it
+                   let treat = List.minBy(fun treat -> juan.Distance treat) treats
+                   let xd = fst treat.location - fst juan.location
+                   let yd = snd treat.location - snd juan.location
+                   let xd = if xd > 0.0 then juan.kind.defaultSpeed else -juan.kind.defaultSpeed
+                   let yd = if yd > 0.0 then juan.kind.defaultSpeed else -juan.kind.defaultSpeed
+                   {juan with kind = Dragon(Temporary(treat.location)); velocity = xd,yd}
+            
+        | Dragon(Roam frames)  -> { juan with kind = Dragon(Roam (frames+1)) }
+        | Dragon(Seek data)  -> juan
+        | Dragon(Temporary(tx,ty)) -> 
+            // this really is temporary! jsut to get something moving
+            let xd = tx - fst juan.location
+            let yd = ty - snd juan.location
+            let xd = if xd > 0.0 then juan.kind.defaultSpeed else -juan.kind.defaultSpeed
+            let yd = if yd > 0.0 then juan.kind.defaultSpeed else -juan.kind.defaultSpeed
+            {juan with velocity = xd,yd}
+        | _ -> juan
+    { state with Juans = List.map update state.Juans }
 
 let prepareLevel state = 
     // create some dragons and treats
@@ -129,7 +191,7 @@ let prepareLevel state =
         (chaos.NextDouble()) * 800.0, (chaos.NextDouble()) * 600.0
     
     // todo: don't let stuff overlap, with an extra margin
-    let dragons = [for _ in 1..25 -> {kind = JuanTypes.Dragon; location = randomLocation state.Chaos; velocity = (0.0,0.0)} ]
+    let dragons = [for _ in 1..25 -> {kind = JuanTypes.Dragon Nothing; location = randomLocation state.Chaos; velocity = (0.0,0.0)} ]
     let treatz =  [for _ in 1..25 -> {kind = JuanTypes.Treat;  location = randomLocation state.Chaos; velocity = (0.0,0.0)} ]
     
     { state with Juans = dragons @ treatz }
@@ -244,9 +306,9 @@ let render(context:RenderingContext) (state:TreatzState) =
     |> ignore
 
     for j in state.Juans do
-        let c = match j.kind with Dragon -> {Red=255uy;Green=0uy;Blue=0uy;Alpha=255uy}
-                                | Treat  -> {Red=0uy;Green=255uy;Blue=0uy;Alpha=255uy}
-                                | _      -> {Red=255uy;Green=255uy;Blue=255uy;Alpha=255uy}
+        let c = match j.kind with Dragon _-> {Red=255uy;Green=0uy;Blue=0uy;Alpha=255uy}
+                                | Treat   -> {Red=0uy;Green=255uy;Blue=0uy;Alpha=255uy}
+                                | _       -> {Red=255uy;Green=255uy;Blue=255uy;Alpha=255uy}
         context.Surface
         |> SDLSurface.fillRect (Some j.asRect) c
         |> ignore

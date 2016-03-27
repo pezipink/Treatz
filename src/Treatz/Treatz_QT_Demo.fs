@@ -51,7 +51,7 @@ let update (state:TreatzState) : TreatzState =
 //        ScanCode.Space , fun state ->  { state with Items  = (createRect ()) :: state.Items}
         ]
     let state = (state,movement) ||> List.fold (fun acc f -> update f acc)
-    { state with QT = QuadTree.create state.Items id 3 treeDepth screenBounds }
+    state
 
 let rec eventPump (renderHandler:'TState->unit) (eventHandler:SDLEvent.Event->'TState->'TState option) (update:'TState->'TState) (state:'TState) : unit =
     match SDLEvent.pollEvent() with
