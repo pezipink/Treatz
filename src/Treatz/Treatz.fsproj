@@ -53,7 +53,10 @@
     <None Include="Script.fsx" />
     <None Include="paket.references" />
     <None Include="paket.template" />
+    <Compile Include="CommonData.fs" />
+    <Compile Include="TreatzGame.fs" />
     <Compile Include="Treatz_QT_Demo.fs" />
+    <Compile Include="Intelligence.fs" />
     <Compile Include="Treatz.fs" />
   </ItemGroup>
   <ItemGroup>
