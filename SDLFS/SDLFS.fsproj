@@ -23,6 +23,7 @@
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <WarningLevel>3</WarningLevel>
     <DocumentationFile>bin\Debug\SDLFS.XML</DocumentationFile>
+    <PlatformTarget>x86</PlatformTarget>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
@@ -49,6 +50,7 @@
     <Compile Include="SDLPixel.fs" />
     <Compile Include="SDLGeometry.fs" />
     <Compile Include="SDLKeyboard.fs" />
+    <Compile Include="SDLGameController.fs" />
     <Compile Include="SDLMouse.fs" />
     <Compile Include="SDLEvent.fs" />
     <Compile Include="SDLRWops.fs" />

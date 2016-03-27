@@ -772,6 +772,24 @@ let private toMouseWheelEvent (event:SDL_MouseWheelEvent) :MouseWheelEvent =
     Y=event.Y;
     Direction=event.Direction |> int32 |> enum<SDLMouse.WheelDirection>}
 
+let private toControllerAxisEvent (event:SDL_ControllerAxisEvent) :ControllerAxisEvent =
+    {Timestamp=event.Timestamp
+     Which = event.Which
+     Axis = event.Axis
+     Padding1 = event.Padding1
+     Padding2 = event.Padding2
+     Padding3 = event.Padding3
+     Value = event.Value
+     Padding4 = event.Padding4}
+
+let private toControllerButtonEvent (event:SDL_ControllerButtonEvent) :ControllerButtonEvent =
+    {Timestamp=event.Timestamp
+     Which = event.Which
+     Button = event.Button
+     State = event.State
+     Padding1 = event.Padding1
+     Padding2 = event.Padding2}
+
 let private convertEvent (result: bool, event:SDL_Event) =
     match result, (event.Type |> int |> enum<EventType>) with
     | true, EventType.Quit -> event.Quit |> toQuitEvent |> Quit |> Some
@@ -781,6 +799,11 @@ let private convertEvent (result: bool, event:SDL_Event) =
     | true, EventType.MouseButtonDown -> event.Button |> toMouseButtonEvent |> MouseButtonDown |> Some
     | true, EventType.MouseButtonUp -> event.Button |> toMouseButtonEvent |> MouseButtonUp |> Some
     | true, EventType.MouseWheel -> event.Wheel |> toMouseWheelEvent |> MouseWheel |> Some
+    | true, EventType.ControllerAxisMotion -> event.Caxis |> toControllerAxisEvent |> ControllerAxisMotion |> Some
+    | true, EventType.ControllerButtonDown -> event.Cbutton |> toControllerButtonEvent |> ControllerButtonDown |> Some
+    | true, EventType.ControllerButtonUp -> event.Cbutton |> toControllerButtonEvent |> ControllerButtonUp |> Some
+    | true, EventType.ControllerDeviceAdded -> event.Type |> Other |> Some
+    | true, EventType.JoyDeviceAdded ->  event.Type |> Other |> Some
     | true, _ -> event.Type |> Other |> Some
     | _, _ -> None
     

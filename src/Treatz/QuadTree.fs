@@ -86,16 +86,17 @@ let private walkData f tree =
     aux tree
 
 let private collectData tree =
-    let rec aux acc = function
-        // this could be written better...
-        | Leaf data -> acc @ data
+    let out = ResizeArray<_>() // ooh mutable state!
+    let rec aux = function
+        | Leaf data -> out.AddRange data
         | Branch(data,TR,BR,BL,TL) -> 
-            let TR = aux data TR
-            let BL = aux data BL
-            let BR = aux data BR
-            let TL = aux data TL
-            data @ TR @ BL @ BR @ TL
-    aux [] tree
+            out.AddRange data
+            aux TR
+            aux BL
+            aux BR
+            aux TL
+    aux tree
+    List.ofSeq out
 
 let create items getItemBounds maxItems maxDepth bounds  =
     (Leaf [],items) ||> List.fold(insert getItemBounds maxItems maxDepth 0 bounds)
