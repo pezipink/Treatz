@@ -64,21 +64,21 @@ type DragonData =
     | Seek of (double * double) list
     | Temporary of treat : double * double // no really, this is going
 
+
 type MikishidaKinds =
     | Player of PlayerData
     | Dragon of DragonData
     | Treat
-    | Wall
-    | Water
-    | AntiDragonFoam
+    | Mountainountain
+    | AntiDragonFoam 
     | Squirrel
     | Cat
     | Otter
     with 
     member this.defaultSpeed =
         match this with
-        | Player _ -> 0.50
-        | Dragon _  -> 0.80
+        | Player _ -> 0.5
+        | Dragon _  -> 1.0
         | _ -> 0.9
 
 type Mikishida = 
@@ -117,7 +117,7 @@ type Mikishida =
 type TreatzState =
     { Player1 : Mikishida
       Player2 : Mikishida
-      Juans : Mikishida list
+      Mikishidas : Mikishida list
 //      StaticLookup : Set<double*double> // set of immovable Juans locations for fast lookup
       PressedKeys : Set<ScanCode> 
       Controllers : Set<ControllerButton> * Set<ControllerButton>
@@ -125,3 +125,5 @@ type TreatzState =
       TurkeyAngle : float
       Chaos : System.Random
       }
+    with member this.findMikishidas pred bounds =
+            this.Mikishidas |> List.filter(fun m -> pred m && overlapq(m.AsQuadBounds, bounds))
