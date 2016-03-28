@@ -53,15 +53,16 @@ type Point = {
      {X = a * point.X ; Y=  a * point.Y}
   static member (+) (pointa , pointb) = 
     {X = pointa.X + pointb.X ; Y= pointa.Y + pointb.Y}
+  static member Zero = {X = 0.0; Y= 0.0}
 
 type PlayerData = 
-    {dragonsCaught : int}
-    with static member Blank = {dragonsCaught = 0}
+    {DragonsCaught : int}
+    with static member Blank = {DragonsCaught = 0}
 
 type DragonData =
     | Nothing
     | Roam of roamingFrames : int 
-    | Seek of (Point) list
+    | Seek of Point list
     | Temporary of treat : Point // no really, this is going
 
 
