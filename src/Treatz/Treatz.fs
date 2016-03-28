@@ -49,7 +49,7 @@ let collisionDetection state =
                 |> QuadTree.findNeighbours (fun k -> overlap(juan.AsRect,k.AsRect)) juan.AsQuadBounds screenQuadBounds
                 |> Set.ofList
             // yum yum treats, reset drag 
-            Set.union eatenTreats treats, {juan with kind = Dragon(Nothing) } :: juans
+            Set.union eatenTreats treats, {juan with kind = if eatenTreats.Count > 0 then Dragon(Nothing) else juan.kind } :: juans
         | _ -> treats, juan :: juans
     
     let (treats,juans) = List.fold(fun acc juan -> update acc juan) (Set.empty,[]) state.Mikishidas
