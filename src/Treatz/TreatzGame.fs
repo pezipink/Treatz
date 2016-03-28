@@ -53,6 +53,13 @@ type Point = {
     {X = pointa.X + pointb.X ; Y= pointa.Y + pointb.Y}
   static member Zero = {X = 0.0; Y= 0.0}
 
+  static member Truncate point max = 
+    let x =  if point.X > max.X then max.X else point.X
+    let y =  if point.Y > max.Y then max.Y else point.Y
+    {X=x; Y=y}
+    
+
+
 type BehaviourState  = {
   CircleRadius : double
   CircleDistance : double
