@@ -39,26 +39,26 @@ let collisionDetection state =
         // create a quadtree of all the treats on the map
         // (we are currently duplicating this work but we might have not jsut treats in this tree in the future, or different tree params
         state.Mikishidas
-        |> List.filter(fun k -> match k.kind with Dragon _ | Treat -> true | _ -> false)
-        |> QuadTree.create (fun j -> j.AsQuadBounds) 3 10 screenQuadBounds
-
+        |> List.filter(fun k -> match k.kind with Treat -> true | _ -> false)
+        |> QuadTree.create (fun j -> j.AsQuadBounds) 5 30 screenQuadBounds
+    
     let update (treats,juans) juan =
         match juan.kind with
         | Dragon _ -> 
             let eatenTreats =
-                let neighours =
-                    treatTree
-                    |> QuadTree.findNeighbours (fun k -> match k.kind with Treat -> true | _ -> false) juan.AsQuadBounds screenQuadBounds
-                neighours 
-                |> List.filter(fun treat -> overlap(juan.AsRect,treat.AsRect))
+                treatTree
+                |> QuadTree.findNeighbours (fun k -> overlap(juan.AsRect,k.AsRect)) juan.AsQuadBounds screenQuadBounds
+                |> Set.ofList
             // yum yum treats, reset drag 
-            eatenTreats @ treats, {juan with kind = Dragon(Nothing) } :: juans
+            Set.union eatenTreats treats, {juan with kind = Dragon(Nothing) } :: juans
         | _ -> treats, juan :: juans
     
-    let (treats,juans) = List.fold(fun acc juan -> update acc juan) ([],[]) state.Mikishidas
+    let (treats,juans) = List.fold(fun acc juan -> update acc juan) (Set.empty,[]) state.Mikishidas
     
+    let mikis = List.filter (fun t -> Set.contains t treats |> not) juans  
+    let lookup = Set.difference state.TreatsLookup (treats|>Set.map(fun t->(int t.location.X, int t.location.Y)))
     // todo - this is mega ineffectient, sort it out!
-    {state with Mikishidas = List.filter (fun j -> List.contains j treats |> not) juans  }
+    {state with Mikishidas = mikis; TreatsLookup = lookup}
 
 
 let prepareLevel state = 
@@ -89,11 +89,12 @@ let prepareLevel state =
 
     let toPoint x = {X = double(fst x) * cellWidthf; Y=double(snd x) * cellHeightf}
 
-    let dragons, blocked = gen 10  (fun p -> {kind = MikishidaKinds.Dragon Nothing; location = toPoint p; velocity = {X=0.0;Y=0.0}} ) mountains
-    let treatz, _  = gen 100 (fun p -> {kind = MikishidaKinds.Treat; location = toPoint p; velocity = {X=0.0;Y=0.0}} ) blocked
+    let dragons, blocked = gen 50  (fun p -> {kind = MikishidaKinds.Dragon Nothing; location = toPoint p; velocity = {X=0.0;Y=0.0}} ) mountains
+    let treatz, _  = gen 1000 (fun p -> {kind = MikishidaKinds.Treat; location = toPoint p; velocity = {X=0.0;Y=0.0}} ) blocked
+    let treatzSet = treatz |> List.map(fun t -> int t.location.X, int t.location.Y ) |> Set.ofList
     let mountains' = mountains |> Set.map(fun p -> {kind = MikishidaKinds.Mountainountain; location = toPoint p; velocity = {X=0.0;Y=0.0}}) |> Set.toList
     
-    { state with Mikishidas = dragons @ treatz @ mountains'; UnpassableLookup = mountains }
+    { state with Mikishidas = dragons @ treatz @ mountains'; UnpassableLookup = mountains; TreatsLookup = treatzSet }
 
 let miscUpdates state = 
     // 60 fps, rotate once every 2 seconds - 120 steps =
@@ -228,6 +229,7 @@ let render(context:RenderingContext) (state:TreatzState) =
     // delay to lock at 60fps (we could do extra work here)
     let frameTime = getTicks() - context.lastFrameTick
     if frameTime < delay_timei then delay(delay_timei - frameTime)
+    else printfn "%A" frameTime
     context.lastFrameTick <- getTicks()    
 
 let main() = 
