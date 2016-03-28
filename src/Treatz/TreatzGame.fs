@@ -36,13 +36,16 @@ type Point = {
    X: double 
    Y: double  
   } with 
-  member this.lenght = sqrt(this.X * this.X + this.Y * this.Y)
+  member this.length = sqrt(this.X * this.X + this.Y * this.Y)
      
+  member this.GridX = int(this.X / cellWidthf)
+  member this.GridY = int(this.Y / cellHeightf)
+
   static member (-) (pointa, pointb) = 
     {X = pointa.X - pointb.X ; Y= pointa.Y - pointb.Y}
 
   member this.normalize  =        
-    let len= this.lenght 
+    let len= this.length 
     match len with
     | x when x <> 0.0 -> { X = this.X/len; Point.Y = this.Y/len }
     | _ -> {X=0.0; Y=0.0}

@@ -24,7 +24,46 @@ type RenderingContext =
 let updatePositions state = 
     let updateJuan juan = 
         let loc = juan.location + juan.velocity
-        { juan with location = loc }
+        let (|Positive|Negative|Neither|) (x:double) =
+            if x = 0.0 then Neither 
+            elif x > 0.0 then Positive
+            else Negative
+
+        match juan.velocity.X,juan.velocity.Y with
+        | Neither, Neither -> None
+        | Positive, Positive -> 
+            // SE
+            Some(loc.GridX+1, loc.GridY+1)
+        | Positive, Negative -> 
+            // NE
+            Some(loc.GridX+1, loc.GridY)
+        | Positive, Neither -> 
+            // E
+            Some(loc.GridX+1, loc.GridY)
+
+        | Negative, Negative-> 
+            // NW
+            Some(loc.GridX, loc.GridY)
+        | Negative, Positive -> 
+            // SW
+            Some(loc.GridX, loc.GridY+1)
+        | Negative, Neither -> 
+            // W
+            Some(loc.GridX, loc.GridY)
+
+        | Neither, Negative -> 
+            // N
+            Some(loc.GridX, loc.GridY)
+        | Neither, Positive -> 
+            // S
+            Some(loc.GridX, loc.GridY+1)
+        |> function
+            | Some(x,y) -> 
+                if x <= 0 || y <= 0 || x >= mapWidth || y >= mapHeight ||  Set.contains (x,y) state.UnpassableLookup then juan 
+                else { juan with location = loc }
+            | _ -> juan
+                
+        
     { 
       state with
         Player1 = updateJuan state.Player1
@@ -54,6 +93,8 @@ let collisionDetection state =
     
     let (treats,juans) = List.fold(fun acc juan -> update acc juan) (Set.empty,[]) state.Mikishidas
     
+    if treats |> Set.exists(fun t -> match t.kind with Dragon _ -> true | _ -> false ) then System.Diagnostics.Debugger.Break()
+
     let mikis = List.filter (fun t -> Set.contains t treats |> not) juans  
     let lookup = Set.difference state.TreatsLookup (treats|>Set.map(fun t->(int t.location.X, int t.location.Y)))
     // todo - this is mega ineffectient, sort it out!
