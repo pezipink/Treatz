@@ -6,7 +6,6 @@ open CommonData
 open Intelligence
 
 open SDLUtility
-//open SDLGeometry
 open SDLPixel
 open SDLRender
 open SDLKeyboard
@@ -20,7 +19,7 @@ type RenderingContext =
     {Renderer:SDLRender.Renderer;
      Texture:SDLTexture.Texture;
      Surface:SDLSurface.Surface;
-     mutable lastFrameTick : uint32 }
+     mutable LastFrameTick : uint32 }
 
 let updatePositions state = 
     let updateJuan juan = 
@@ -63,9 +62,6 @@ let collisionDetection state =
 
 let prepareLevel state = 
     // create some dragons and treats
-    let randomLocation (chaos:System.Random) =
-        (chaos.Next(mapWidth)),(chaos.Next(mapHeight))
-
     let mountains = 
         [for y = 30 to 80 do             
             for x = 30 to 40 do
@@ -82,15 +78,15 @@ let prepareLevel state =
     let gen n f s =
         let rec aux acc i s =
             if i = n then acc, s else
-            let p = randomLocation state.Chaos
+            let p = randomGridLocation state.Chaos
             if Set.contains p s then aux acc i s
             else aux (f p::acc) (i+1) (Set.add p s)
         aux [] 0 s 
 
     let toPoint x = {X = double(fst x) * cellWidthf; Y=double(snd x) * cellHeightf}
 
-    let dragons, blocked = gen 50  (fun p -> {kind = MikishidaKinds.Dragon Nothing; location = toPoint p; velocity = {X=0.0;Y=0.0}} ) mountains
-    let treatz, _  = gen 1000 (fun p -> {kind = MikishidaKinds.Treat; location = toPoint p; velocity = {X=0.0;Y=0.0}} ) blocked
+    let dragons, blocked = gen 25  (fun p -> {kind = MikishidaKinds.Dragon Nothing; location = toPoint p; velocity = {X=0.0;Y=0.0}} ) mountains
+    let treatz, _  = gen maxTreats (fun p -> {kind = MikishidaKinds.Treat; location = toPoint p; velocity = {X=0.0;Y=0.0}} ) blocked
     let treatzSet = treatz |> List.map(fun t -> int t.location.X, int t.location.Y ) |> Set.ofList
     let mountains' = mountains |> Set.map(fun p -> {kind = MikishidaKinds.Mountainountain; location = toPoint p; velocity = {X=0.0;Y=0.0}}) |> Set.toList
     
@@ -101,7 +97,20 @@ let miscUpdates state =
     let angle = 
         let angle = state.TurkeyAngle + (360.0 / 120.0)
         if angle > 360.0 then 0. else angle
-    { state with TurkeyAngle = angle }
+    
+    let (treats, lookups) =
+        let toPoint x = {X = double(fst x) * cellWidthf; Y=double(snd x) * cellHeightf}
+        let rec aux treats lookups =
+            if Set.count lookups = maxTreats then (treats,lookups) else
+            let p = randomGridLocation state.Chaos
+            if Set.contains p lookups || Set.contains p state.UnpassableLookup then aux treats lookups
+            else
+                let t = {kind = MikishidaKinds.Treat; location = toPoint p; velocity = {X=0.0;Y=0.0}}
+                (t::treats,Set.add p lookups)
+        aux [] state.TreatsLookup
+        
+        
+    { state with TurkeyAngle = angle; TreatsLookup = lookups; Mikishidas =  state.Mikishidas @ treats }
 
 let updateInputs state =     
     let controller1 = fun s -> fst s.Controllers
@@ -227,10 +236,10 @@ let render(context:RenderingContext) (state:TreatzState) =
     context.Renderer |> SDLRender.present 
 
     // delay to lock at 60fps (we could do extra work here)
-    let frameTime = getTicks() - context.lastFrameTick
+    let frameTime = getTicks() - context.LastFrameTick
     if frameTime < delay_timei then delay(delay_timei - frameTime)
     else printfn "%A" frameTime
-    context.lastFrameTick <- getTicks()    
+    context.LastFrameTick <- getTicks()    
 
 let main() = 
     use system = new SDL.System(SDL.Init.Everything)
@@ -251,7 +260,7 @@ let main() =
     
     let sprites = ["turkey", turkeyTex] |> Map.ofList
 
-    let context =  { Renderer = mainRenderer; Texture = mainTexture; Surface = surface; lastFrameTick = getTicks() }
+    let context =  { Renderer = mainRenderer; Texture = mainTexture; Surface = surface; LastFrameTick = getTicks() }
     let state = 
         {Player1 = {kind = Player(PlayerData.Blank); location = {X=10.; Y=10.}; velocity = {X=0.0; Y=0.0}}
          Player2 = {kind = Player(PlayerData.Blank); location = {X=20.; Y=20.}; velocity = {X=0.0; Y=0.0}}
