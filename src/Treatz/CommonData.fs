@@ -18,6 +18,8 @@ let cellHeight = 5
 let cellWidthf = 5.0
 let cellHeightf = 5.0
 
+let maxTreats = 250
+
 let screenQuadBounds =
     { x = 0; y = 0; width = int screenWidth; height = int screenHeight }  : QuadTree.QuadBounds
 
@@ -47,3 +49,6 @@ let overlapq(rectA, rectB) =
     let y2' = rectB.y + rectB.height
 
     x2' >= x1 && x1' <= x2 && y2' >= y1 && y1' <= y2
+
+let randomGridLocation (chaos:System.Random) =
+    (chaos.Next(mapWidth)),(chaos.Next(mapHeight))

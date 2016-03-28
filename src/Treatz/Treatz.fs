@@ -38,33 +38,30 @@ let collisionDetection state =
         // create a quadtree of all the treats on the map
         // (we are currently duplicating this work but we might have not jsut treats in this tree in the future, or different tree params
         state.Mikishidas
-        |> List.filter(fun k -> match k.kind with Dragon _ | Treat -> true | _ -> false)
-        |> QuadTree.create (fun j -> j.AsQuadBounds) 3 10 screenQuadBounds
-
+        |> List.filter(fun k -> match k.kind with Treat -> true | _ -> false)
+        |> QuadTree.create (fun j -> j.AsQuadBounds) 5 30 screenQuadBounds
+    
     let update (treats,juans) juan =
         match juan.kind with
         | Dragon _ -> 
             let eatenTreats =
-                let neighours =
-                    treatTree
-                    |> QuadTree.findNeighbours (fun k -> match k.kind with Treat -> true | _ -> false) juan.AsQuadBounds screenQuadBounds
-                neighours 
-                |> List.filter(fun treat -> overlap(juan.AsRect,treat.AsRect))
+                treatTree
+                |> QuadTree.findNeighbours (fun k -> overlap(juan.AsRect,k.AsRect)) juan.AsQuadBounds screenQuadBounds
+                |> Set.ofList
             // yum yum treats, reset drag 
-            eatenTreats @ treats, {juan with kind = Dragon(Nothing) } :: juans
+            Set.union eatenTreats treats, {juan with kind = Dragon(Nothing) } :: juans
         | _ -> treats, juan :: juans
     
-    let (treats,juans) = List.fold(fun acc juan -> update acc juan) ([],[]) state.Mikishidas
+    let (treats,juans) = List.fold(fun acc juan -> update acc juan) (Set.empty,[]) state.Mikishidas
     
+    let mikis = List.filter (fun t -> Set.contains t treats |> not) juans  
+    let lookup = Set.difference state.TreatsLookup (treats|>Set.map(fun t->(int t.location.X, int t.location.Y)))
     // todo - this is mega ineffectient, sort it out!
-    {state with Mikishidas = List.filter (fun j -> List.contains j treats |> not) juans  }
+    {state with Mikishidas = mikis; TreatsLookup = lookup}
 
 
 let prepareLevel state = 
     // create some dragons and treats
-    let randomLocation (chaos:System.Random) =
-        (chaos.Next(mapWidth)),(chaos.Next(mapHeight))
-
     let mountains = 
         [for y = 30 to 80 do             
             for x = 30 to 40 do
@@ -81,25 +78,39 @@ let prepareLevel state =
     let gen n f s =
         let rec aux acc i s =
             if i = n then acc, s else
-            let p = randomLocation state.Chaos
+            let p = randomGridLocation state.Chaos
             if Set.contains p s then aux acc i s
             else aux (f p::acc) (i+1) (Set.add p s)
         aux [] 0 s 
 
     let toPoint x = {X = double(fst x) * cellWidthf; Y=double(snd x) * cellHeightf}
 
-    let dragons, blocked = gen 10  (fun p -> {kind = MikishidaKinds.Dragon Nothing; location = toPoint p; velocity = {X=0.0;Y=0.0}} ) mountains
-    let treatz, _  = gen 100 (fun p -> {kind = MikishidaKinds.Treat; location = toPoint p; velocity = {X=0.0;Y=0.0}} ) blocked
-    let mountains = mountains |> Set.map(fun p -> {kind = MikishidaKinds.Mountainountain; location = toPoint p; velocity = {X=0.0;Y=0.0}}) |> Set.toList
+    let dragons, blocked = gen 25  (fun p -> {kind = MikishidaKinds.Dragon Nothing; location = toPoint p; velocity = {X=0.0;Y=0.0}} ) mountains
+    let treatz, _  = gen maxTreats (fun p -> {kind = MikishidaKinds.Treat; location = toPoint p; velocity = {X=0.0;Y=0.0}} ) blocked
+    let treatzSet = treatz |> List.map(fun t -> int t.location.X, int t.location.Y ) |> Set.ofList
+    let mountains' = mountains |> Set.map(fun p -> {kind = MikishidaKinds.Mountainountain; location = toPoint p; velocity = {X=0.0;Y=0.0}}) |> Set.toList
     
-    { state with Mikishidas = dragons @ treatz @ mountains }
+    { state with Mikishidas = dragons @ treatz @ mountains'; UnpassableLookup = mountains; TreatsLookup = treatzSet }
 
 let miscUpdates state = 
     // 60 fps, rotate once every 2 seconds - 120 steps =
     let angle = 
         let angle = state.TurkeyAngle + (360.0 / 120.0)
         if angle > 360.0 then 0. else angle
-    { state with TurkeyAngle = angle }
+    
+    let (treats, lookups) =
+        let toPoint x = {X = double(fst x) * cellWidthf; Y=double(snd x) * cellHeightf}
+        let rec aux treats lookups =
+            if Set.count lookups = maxTreats then (treats,lookups) else
+            let p = randomGridLocation state.Chaos
+            if Set.contains p lookups || Set.contains p state.UnpassableLookup then aux treats lookups
+            else
+                let t = {kind = MikishidaKinds.Treat; location = toPoint p; velocity = {X=0.0;Y=0.0}}
+                (t::treats,Set.add p lookups)
+        aux [] state.TreatsLookup
+        
+        
+    { state with TurkeyAngle = angle; TreatsLookup = lookups; Mikishidas =  state.Mikishidas @ treats }
 
 let updateInputs state =     
     let controller1 = fun s -> fst s.Controllers
@@ -227,6 +238,7 @@ let render(context:RenderingContext) (state:TreatzState) =
     // delay to lock at 60fps (we could do extra work here)
     let frameTime = getTicks() - context.LastFrameTick
     if frameTime < delay_timei then delay(delay_timei - frameTime)
+    else printfn "%A" frameTime
     context.LastFrameTick <- getTicks()    
 
 let main() = 
