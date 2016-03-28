@@ -20,8 +20,9 @@
             
             state.findMikishidas(fun m -> match m.kind with Treat -> true | _ -> false) bounds
             |> function
-                | [] -> // nothing nearby, pick a random direction to roam in (todo)
-                    {mikishida with kind = Dragon(Roam 0); velocity = {X=0.; Y=0.} }
+                | [] -> 
+                    let steering = { BehaviourState.RateOfChangeOfDirection = 1.5; BehaviourState.CircleDistance = 222.0 ;  BehaviourState.CircleRadius = 350.0 ; BehaviourState.WanderingAngle =0.0; SteeringDirection = Point.Zero }    
+                    {mikishida with kind = Dragon(Wander steering)  }
                 | treats -> // find the cloest treat and head towards it
                     let treat = List.minBy(mikishida.Distance) treats
                     let xd = treat.location.X - mikishida.location.X
@@ -30,19 +31,22 @@
                     let yd = if yd > 0.0 then mikishida.kind.defaultSpeed else -mikishida.kind.defaultSpeed
                     {mikishida with kind = Dragon(Temporary(treat.location)); velocity = {X=xd;Y=yd}}
             
+          | Dragon(Wander steering)  -> 
+           
+                  let w = wander state.Chaos mikishida steering 
+                  {mikishida with kind = Dragon(Roam 0);velocity = w.SteeringDirection }
+
           | Dragon(Roam frames)  -> { mikishida with kind = Dragon(Roam (frames+1)) }
           | Dragon(Seek data)  -> mikishida //todo: follow path?
           | Dragon(Temporary(p)) -> 
-              let steering = { BehaviourState.RateOfChangeOfDirection = 1.5; BehaviourState.CircleDistance = 222.0 ;  BehaviourState.CircleRadius = 350.0 ; BehaviourState.WanderingAngle =0.0; SteeringDirection = Point.Zero }    
-              let w = wander state.Chaos mikishida steering 
-              {mikishida with location = w.SteeringDirection }
+              
               // this really is temporary! jsut to get something moving
              
-//              let xd = p.X - mikishida.location.X
-//              let yd = p.Y - mikishida.location.Y
-//              let xd = if xd > 0.0 then mikishida.kind.defaultSpeed else -mikishida.kind.defaultSpeed
-//              let yd = if yd > 0.0 then mikishida.kind.defaultSpeed else -mikishida.kind.defaultSpeed
-//              {mikishida with velocity = {X=xd;Y=yd}}
+              let xd = p.X - mikishida.location.X
+              let yd = p.Y - mikishida.location.Y
+              let xd = if xd > 0.0 then mikishida.kind.defaultSpeed else -mikishida.kind.defaultSpeed
+              let yd = if yd > 0.0 then mikishida.kind.defaultSpeed else -mikishida.kind.defaultSpeed
+              {mikishida with velocity = {X=xd;Y=yd}}
           | _ -> mikishida
       { state with Mikishidas = List.map update state.Mikishidas }
 

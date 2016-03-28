@@ -32,8 +32,6 @@ type FastPoint(x: int, y: int) =
     member __.GridX = x / cellWidth
     member __.GridY = y / cellHeight
     
-
-
 type Point = {
    X: double 
    Y: double  
@@ -55,6 +53,15 @@ type Point = {
     {X = pointa.X + pointb.X ; Y= pointa.Y + pointb.Y}
   static member Zero = {X = 0.0; Y= 0.0}
 
+type BehaviourState  = {
+  CircleRadius : double
+  CircleDistance : double
+  RateOfChangeOfDirection : double
+
+  WanderingAngle: double
+  SteeringDirection : Point
+  }
+
 type PlayerData = 
     {DragonsCaught : int}
     with static member Blank = {DragonsCaught = 0}
@@ -63,6 +70,7 @@ type DragonData =
     | Nothing
     | Roam of roamingFrames : int 
     | Seek of Point list
+    | Wander of BehaviourState
     | Temporary of treat : Point // no really, this is going
 
 
