@@ -6,7 +6,6 @@ open CommonData
 open Intelligence
 
 open SDLUtility
-//open SDLGeometry
 open SDLPixel
 open SDLRender
 open SDLKeyboard
@@ -20,7 +19,7 @@ type RenderingContext =
     {Renderer:SDLRender.Renderer;
      Texture:SDLTexture.Texture;
      Surface:SDLSurface.Surface;
-     mutable lastFrameTick : uint32 }
+     mutable LastFrameTick : uint32 }
 
 let updatePositions state = 
     let updateJuan juan = 
@@ -226,9 +225,9 @@ let render(context:RenderingContext) (state:TreatzState) =
     context.Renderer |> SDLRender.present 
 
     // delay to lock at 60fps (we could do extra work here)
-    let frameTime = getTicks() - context.lastFrameTick
+    let frameTime = getTicks() - context.LastFrameTick
     if frameTime < delay_timei then delay(delay_timei - frameTime)
-    context.lastFrameTick <- getTicks()    
+    context.LastFrameTick <- getTicks()    
 
 let main() = 
     use system = new SDL.System(SDL.Init.Everything)
@@ -249,7 +248,7 @@ let main() =
     
     let sprites = ["turkey", turkeyTex] |> Map.ofList
 
-    let context =  { Renderer = mainRenderer; Texture = mainTexture; Surface = surface; lastFrameTick = getTicks() }
+    let context =  { Renderer = mainRenderer; Texture = mainTexture; Surface = surface; LastFrameTick = getTicks() }
     let state = 
         {Player1 = {kind = Player(PlayerData.Blank); location = {X=10.; Y=10.}; velocity = {X=0.0; Y=0.0}}
          Player2 = {kind = Player(PlayerData.Blank); location = {X=20.; Y=20.}; velocity = {X=0.0; Y=0.0}}
