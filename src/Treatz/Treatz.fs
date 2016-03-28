@@ -16,8 +16,6 @@ let fps = 60.0;
 let delay_time = 1000.0 / fps;
 let delay_timei = uint32 delay_time
 
-
-
 type RenderingContext =
     {Renderer:SDLRender.Renderer;
      Texture:SDLTexture.Texture;
@@ -41,15 +39,17 @@ let collisionDetection state =
         // create a quadtree of all the treats on the map
         // (we are currently duplicating this work but we might have not jsut treats in this tree in the future, or different tree params
         state.Mikishidas
-        |> List.filter(fun k -> match k.kind with Treat -> true | _ -> false)
+        |> List.filter(fun k -> match k.kind with Dragon _ | Treat -> true | _ -> false)
         |> QuadTree.create (fun j -> j.AsQuadBounds) 3 10 screenQuadBounds
 
     let update (treats,juans) juan =
         match juan.kind with
         | Dragon _ -> 
             let eatenTreats =
-                treatTree
-                |> QuadTree.findNeighbours (fun _ -> true) juan.AsQuadBounds screenQuadBounds
+                let neighours =
+                    treatTree
+                    |> QuadTree.findNeighbours (fun k -> match k.kind with Treat -> true | _ -> false) juan.AsQuadBounds screenQuadBounds
+                neighours 
                 |> List.filter(fun treat -> overlap(juan.AsRect,treat.AsRect))
             // yum yum treats, reset drag 
             eatenTreats @ treats, {juan with kind = Dragon(Nothing) } :: juans
@@ -63,24 +63,37 @@ let collisionDetection state =
 
 let prepareLevel state = 
     // create some dragons and treats
-    let randomLocation (chaos:System.Random) : Point =
-        {X=(chaos.NextDouble()) * 800.0; Y=(chaos.NextDouble()) * 600.0} : Point
-//    
-//    let mountains = 
-//        [for x = 50 to 100 do             
-//            yield {kind = MikishidaKinds.Mountainountain; location = x,x; velocity= 0.0,0.0 }
-//            yield {kind = MikishidaKinds.Mountainountain; location = x+1,x; velocity= 0.0,0.0 }
-//            yield {kind = MikishidaKinds.Mountainountain; location = x+1,x; velocity= 0.0,0.0 }
-//            yield {kind = MikishidaKinds.Mountainountain; location = x,x; velocity= 0.0,0.0 }
-//            yield {kind = MikishidaKinds.Mountainountain; location = x,x; velocity= 0.0,0.0 }
-//        ]
-//            
+    let randomLocation (chaos:System.Random) =
+        (chaos.Next(mapWidth)),(chaos.Next(mapHeight))
 
-    // todo: don't let stuff overlap, with an extra margin
-    let dragons = [for _ in 1..10 -> {kind = MikishidaKinds.Dragon Nothing; location = randomLocation state.Chaos; velocity = {X=0.0;Y=0.0}} ]
-    let treatz =  [for _ in 1..250 -> {kind = MikishidaKinds.Treat;  location = randomLocation state.Chaos; velocity = {X=0.0;Y=0.0}} ]
+    let mountains = 
+        [for y = 30 to 80 do             
+            for x = 30 to 40 do
+                yield x,y
+                yield x+90,y
+        ] @
+        [for y = 10 to 20 do             
+            for x = 50 to 110 do
+                yield x,y
+                yield x,y + 80]    
+        |> Set.ofList
     
-    { state with Mikishidas = dragons @ treatz }
+ 
+    let gen n f s =
+        let rec aux acc i s =
+            if i = n then acc, s else
+            let p = randomLocation state.Chaos
+            if Set.contains p s then aux acc i s
+            else aux (f p::acc) (i+1) (Set.add p s)
+        aux [] 0 s 
+
+    let toPoint x = {X = double(fst x) * cellWidthf; Y=double(snd x) * cellHeightf}
+
+    let dragons, blocked = gen 10  (fun p -> {kind = MikishidaKinds.Dragon Nothing; location = toPoint p; velocity = {X=0.0;Y=0.0}} ) mountains
+    let treatz, _  = gen 100 (fun p -> {kind = MikishidaKinds.Treat; location = toPoint p; velocity = {X=0.0;Y=0.0}} ) blocked
+    let mountains = mountains |> Set.map(fun p -> {kind = MikishidaKinds.Mountainountain; location = toPoint p; velocity = {X=0.0;Y=0.0}}) |> Set.toList
+    
+    { state with Mikishidas = dragons @ treatz @ mountains }
 
 let miscUpdates state = 
     // 60 fps, rotate once every 2 seconds - 120 steps =
@@ -193,6 +206,7 @@ let render(context:RenderingContext) (state:TreatzState) =
     for j in state.Mikishidas do
         let c = match j.kind with Dragon _-> {Red=255uy;Green=0uy;Blue=0uy;Alpha=255uy}
                                 | Treat   -> {Red=0uy;Green=255uy;Blue=0uy;Alpha=255uy}
+                                | Mountainountain -> {Red=139uy;Green=69uy;Blue=19uy;Alpha=255uy}
                                 | _       -> {Red=255uy;Green=255uy;Blue=255uy;Alpha=255uy}
         context.Surface
         |> SDLSurface.fillRect (Some j.AsRect) c

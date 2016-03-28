@@ -85,18 +85,19 @@ let private walkData f tree =
             Branch(f data,aux TR,aux BR,aux BL,aux TL)
     aux tree
 
-let private collectData tree =
+let private collectData pred tree =
     let out = ResizeArray<_>() // ooh mutable state!
     let rec aux = function
-        | Leaf data -> out.AddRange data
+        | Leaf data -> out.AddRange (List.filter pred data)
         | Branch(data,TR,BR,BL,TL) -> 
-            out.AddRange data
+            out.AddRange (List.filter pred data)
             aux TR
             aux BL
             aux BR
             aux TL
     aux tree
     List.ofSeq out
+
 
 let create getItemBounds maxItems maxDepth bounds items =
     (Leaf [],items) ||> List.fold(insert getItemBounds maxItems maxDepth 0 bounds)
@@ -105,24 +106,30 @@ let findNeighbours pred itemBounds maxBounds tree =
     let rec aux outerBounds = function
         | Leaf data -> 
             match List.tryFind pred data with
-            | Some _ -> data
+            | Some _ -> List.filter pred data
             | None -> []            
         | Branch(data,TR,BR,BL,TL) -> 
             match List.tryFind pred data with
             | Some _ -> 
                 // todo - work out which quadrants overlap and return only those
-                [ yield! collectData TR
-                  yield! collectData BR
-                  yield! collectData BL
-                  yield! collectData TL ]
+                [ yield! List.filter pred data
+                  yield! collectData pred TR
+                  yield! collectData pred BR
+                  yield! collectData pred BL
+                  yield! collectData pred TL ]
             | None -> 
                 // recurse down the tree where the bounds fit
                 match getQuadrant itemBounds outerBounds with
                 | Some(TopRight, newBounds)     -> aux newBounds TR
                 | Some(BottomRight, newBounds)  -> aux newBounds BR
                 | Some(BottomLeft, newBounds)   -> aux newBounds BL
-                | Some(TopLeft, newBounds)      -> aux newBounds TR
-                | None                          -> []
+                | Some(TopLeft, newBounds)      -> aux newBounds TL
+                | None                          -> 
+                    // todo - work out which quadrants we overlap and return only those
+                    [ yield! collectData pred TR
+                      yield! collectData pred BR
+                      yield! collectData pred BL
+                      yield! collectData pred TL ]
     aux maxBounds tree
 
 

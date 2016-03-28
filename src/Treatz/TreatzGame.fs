@@ -77,8 +77,8 @@ type MikishidaKinds =
     with 
     member this.defaultSpeed =
         match this with
-        | Player _ -> 0.5
-        | Dragon _  -> 1.0
+        | Player _ -> 1.4
+        | Dragon _  -> 1.5
         | _ -> 0.9
 
 type Mikishida = 
@@ -86,8 +86,10 @@ type Mikishida =
     with 
     member this.Size =
         match this.kind with
-        | Treat -> 5<px>, 5<px>
-        | _ -> 10<px>, 10<px>
+        // presently everything must be at most the size of a cell
+        | _ -> cellWidth * 1<px>,cellHeight * 1<px>
+//        | Treat -> 5<px>, 5<px>
+//        | _ -> 5<px>, 5<px>
 
     member this.AsRect = 
         let w, h = this.Size
@@ -118,8 +120,8 @@ type TreatzState =
     { Player1 : Mikishida
       Player2 : Mikishida
       Mikishidas : Mikishida list
-      UnpassableLookup : Set<double*double> 
-      TreatsLookup : Set<double*double> 
+      UnpassableLookup : Set<int*int> 
+      TreatsLookup : Set<int*int> 
       PressedKeys : Set<ScanCode> 
       Controllers : Set<ControllerButton> * Set<ControllerButton>
       Sprites : Map<string, SDLTexture.Texture>
