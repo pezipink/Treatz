@@ -33,6 +33,27 @@ type FastPoint(x: int, y: int) =
     member __.GridY = y / cellHeight
     
 
+
+type Point = {
+   X: double 
+   Y: double  
+  } with 
+  member this.lenght = sqrt(this.X * this.X + this.Y * this.Y)
+     
+  static member (-) (pointa, pointb) = 
+    {X = pointa.X - pointb.X ; Y= pointa.Y - pointb.Y}
+
+  member this.normalize  =        
+    let len= this.lenght 
+    match len with
+    | x when x <> 0.0 -> { X = this.X/len; Point.Y = this.Y/len }
+    | _ -> {X=0.0; Y=0.0}
+  
+  static member (*) (a, point: Point) =
+     {X = a * point.X ; Y=  a * point.Y}
+  static member (+) (pointa , pointb) = 
+    {X = pointa.X + pointb.X ; Y= pointa.Y + pointb.Y}
+
 type PlayerData = 
     {dragonsCaught : int}
     with static member Blank = {dragonsCaught = 0}
