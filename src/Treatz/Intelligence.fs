@@ -34,9 +34,9 @@
           | Dragon(Wander steering)  -> 
            
                   let w = wander state.Chaos mikishida steering 
-                  {mikishida with kind = Dragon(Roam 0);velocity = w.SteeringDirection }
+                  {mikishida with kind = Dragon(Wander w);velocity = w.SteeringDirection }
 
-          | Dragon(Roam frames)  -> { mikishida with kind = Dragon(Roam (frames+1)) }
+          
           | Dragon(Seek data)  -> mikishida //todo: follow path?
           | Dragon(Temporary(p)) -> 
               

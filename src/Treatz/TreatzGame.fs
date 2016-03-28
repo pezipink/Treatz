@@ -67,8 +67,7 @@ type PlayerData =
     with static member Blank = {DragonsCaught = 0}
 
 type DragonData =
-    | Nothing
-    | Roam of roamingFrames : int 
+    | Nothing    
     | Seek of Point list
     | Wander of BehaviourState
     | Temporary of treat : Point // no really, this is going
