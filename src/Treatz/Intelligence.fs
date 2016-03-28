@@ -10,8 +10,8 @@
 //          |> List.filter(fun k -> match k.kind with Treat -> true | _ -> false)
 //          |> QuadTree.create (fun j -> j.AsQuadBounds) 5 5 screenQuadBounds
 
-      let update juan =
-          match juan.kind with
+      let update mikishida =
+          match mikishida.kind with
           | Dragon(Nothing)  -> 
             // if our dragon is doing nothing, see if we can find a nearby treat within 50 px
             let clamp x = if x < 0 then 0 else x
@@ -34,11 +34,11 @@
           | Dragon(Seek data)  -> juan //todo: follow path?
           | Dragon(Temporary(tx,ty)) -> 
               // this really is temporary! jsut to get something moving
-              let xd = tx - fst juan.location
-              let yd = ty - snd juan.location
-              let xd = if xd > 0.0 then juan.kind.defaultSpeed else -juan.kind.defaultSpeed
-              let yd = if yd > 0.0 then juan.kind.defaultSpeed else -juan.kind.defaultSpeed
-              {juan with velocity = xd,yd}
-          | _ -> juan
+              let xd = tx - fst mikishida.location
+              let yd = ty - snd mikishida.location
+              let xd = if xd > 0.0 then mikishida.kind.defaultSpeed else -mikishida.kind.defaultSpeed
+              let yd = if yd > 0.0 then mikishida.kind.defaultSpeed else -mikishida.kind.defaultSpeed
+              {mikishida with velocity = xd,yd}
+          | _ -> mikishida
       { state with Mikishidas = List.map update state.Mikishidas }
 
