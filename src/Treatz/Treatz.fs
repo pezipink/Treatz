@@ -6,7 +6,6 @@ open CommonData
 open Intelligence
 
 open SDLUtility
-//open SDLGeometry
 open SDLPixel
 open SDLRender
 open SDLKeyboard

@@ -23,7 +23,7 @@
                 | [] -> // nothing nearby, pick a random direction to roam in (todo)
                     {mikishida with kind = Dragon(Roam 0); velocity = {X=0.; Y=0.} }
                 | treats -> // find the cloest treat and head towards it
-                    let treat = List.minBy(fun treat -> mikishida.Distance treat) treats
+                    let treat = List.minBy(mikishida.Distance) treats
                     let xd = treat.location.X - mikishida.location.X
                     let yd = treat.location.Y - mikishida.location.Y
                     let xd = if xd > 0.0 then mikishida.kind.defaultSpeed else -mikishida.kind.defaultSpeed
