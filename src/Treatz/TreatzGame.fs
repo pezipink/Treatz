@@ -61,8 +61,8 @@ type PlayerData =
 type DragonData =
     | Nothing
     | Roam of roamingFrames : int 
-    | Seek of (double * double) list
-    | Temporary of treat : double * double // no really, this is going
+    | Seek of (Point) list
+    | Temporary of treat : Point // no really, this is going
 
 
 type MikishidaKinds =
@@ -82,7 +82,7 @@ type MikishidaKinds =
         | _ -> 0.9
 
 type Mikishida = 
-    { kind : MikishidaKinds; location : double * double; velocity : double * double }
+    { kind : MikishidaKinds; location : Point; velocity : Point }
     with 
     member this.Size =
         match this.kind with
@@ -92,26 +92,26 @@ type Mikishida =
     member this.AsRect = 
         let w, h = this.Size
         { 
-          X = (fst this.location |> int)*1<px> 
-          Y = (snd this.location |> int)*1<px>
+          X = (this.location.X |> int)*1<px> 
+          Y = (this.location.Y |> int)*1<px>
           Width = w
           Height = h 
         }
     member this.AsQuadBounds : QuadTree.QuadBounds = 
         let w, h = this.Size
         { 
-          x = ((fst this.location) ) |> int
-          y = ((snd this.location) ) |> int
+          x = (this.location.X ) |> int
+          y = (this.location.Y ) |> int
           width = int w 
           height = int h
         }
     member this.Distance(other:Mikishida) =
-        let xd = fst other.location - fst this.location
-        let yd = snd other.location - snd this.location
+        let xd = other.location.X - this.location.X
+        let yd = other.location.Y - this.location.Y
         sqrt(xd*xd+yd*yd)
 
     member this.ManhattanDistance(other:Mikishida) =
-        abs(fst other.location - fst this.location) + abs(snd other.location - snd this.location)
+        abs(other.location.X - this.location.X) + abs(other.location.Y - this.location.Y)
 
 
 type TreatzState =

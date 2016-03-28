@@ -15,30 +15,31 @@
           | Dragon(Nothing)  -> 
             // if our dragon is doing nothing, see if we can find a nearby treat within 50 px
             let clamp x = if x < 0 then 0 else x
-            let r = juan.AsQuadBounds
+            let r = mikishida.AsQuadBounds
             let bounds = {r with x = clamp r.x - 50; y = clamp r.y - 50; width = 100; height = 100; }
             
             state.findMikishidas(fun m -> match m.kind with Treat -> true | _ -> false) bounds
             |> function
                 | [] -> // nothing nearby, pick a random direction to roam in (todo)
-                    {juan with kind = Dragon(Roam 0); velocity = (0.,0.) }
+                    {mikishida with kind = Dragon(Roam 0); velocity = {X=0.; Y=0.} }
                 | treats -> // find the cloest treat and head towards it
-                    let treat = List.minBy(fun treat -> juan.Distance treat) treats
-                    let xd = fst treat.location - fst juan.location
-                    let yd = snd treat.location - snd juan.location
-                    let xd = if xd > 0.0 then juan.kind.defaultSpeed else -juan.kind.defaultSpeed
-                    let yd = if yd > 0.0 then juan.kind.defaultSpeed else -juan.kind.defaultSpeed
-                    {juan with kind = Dragon(Temporary(treat.location)); velocity = xd,yd}
+                    let treat = List.minBy(fun treat -> mikishida.Distance treat) treats
+                    let xd = treat.location.X - mikishida.location.X
+                    let yd = treat.location.Y - mikishida.location.Y
+                    let xd = if xd > 0.0 then mikishida.kind.defaultSpeed else -mikishida.kind.defaultSpeed
+                    let yd = if yd > 0.0 then mikishida.kind.defaultSpeed else -mikishida.kind.defaultSpeed
+                    {mikishida with kind = Dragon(Temporary(treat.location)); velocity = {X=xd;Y=yd}}
             
-          | Dragon(Roam frames)  -> { juan with kind = Dragon(Roam (frames+1)) }
-          | Dragon(Seek data)  -> juan //todo: follow path?
-          | Dragon(Temporary(tx,ty)) -> 
+          | Dragon(Roam frames)  -> { mikishida with kind = Dragon(Roam (frames+1)) }
+          | Dragon(Seek data)  -> mikishida //todo: follow path?
+          | Dragon(Temporary(p)) -> 
+            
               // this really is temporary! jsut to get something moving
-              let xd = tx - fst mikishida.location
-              let yd = ty - snd mikishida.location
+              let xd = p.X - mikishida.location.X
+              let yd = p.Y - mikishida.location.Y
               let xd = if xd > 0.0 then mikishida.kind.defaultSpeed else -mikishida.kind.defaultSpeed
               let yd = if yd > 0.0 then mikishida.kind.defaultSpeed else -mikishida.kind.defaultSpeed
-              {mikishida with velocity = xd,yd}
+              {mikishida with velocity = {X=xd;Y=yd}}
           | _ -> mikishida
       { state with Mikishidas = List.map update state.Mikishidas }
 
