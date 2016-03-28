@@ -97,7 +97,8 @@ type TreatzState =
     { Player1 : Mikishida
       Player2 : Mikishida
       Mikishidas : Mikishida list
-//      StaticLookup : Set<double*double> // set of immovable Juans locations for fast lookup
+      UnpassableLookup : Set<double*double> 
+      TreatsLookup : Set<double*double> 
       PressedKeys : Set<ScanCode> 
       Controllers : Set<ControllerButton> * Set<ControllerButton>
       Sprites : Map<string, SDLTexture.Texture>

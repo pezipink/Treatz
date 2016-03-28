@@ -66,6 +66,13 @@ let prepareLevel state =
     let randomLocation (chaos:System.Random) =
         (chaos.NextDouble()) * 800.0, (chaos.NextDouble()) * 600.0
     
+    let mountains = 
+        [for x = 50 to 100 do 
+            let x' = double x
+            yield {kind = MikishidaKinds.Mountainountain; location = x',x'; velocity= 0.0,0.0 }
+        ]
+            
+
     // todo: don't let stuff overlap, with an extra margin
     let dragons = [for _ in 1..10 -> {kind = MikishidaKinds.Dragon Nothing; location = randomLocation state.Chaos; velocity = (0.0,0.0)} ]
     let treatz =  [for _ in 1..250 -> {kind = MikishidaKinds.Treat;  location = randomLocation state.Chaos; velocity = (0.0,0.0)} ]
@@ -231,6 +238,8 @@ let main() =
         {Player1 = {kind = Player(PlayerData.Blank); location = (10.,10.); velocity = (0.0,0.0)}
          Player2 = {kind = Player(PlayerData.Blank); location = (20.,20.); velocity = (0.0,0.0)}
          Mikishidas = []
+         UnpassableLookup = Set.empty
+         TreatsLookup = Set.empty
          PressedKeys = Set.empty
          Sprites = sprites
          Controllers = Set.empty, Set.empty
