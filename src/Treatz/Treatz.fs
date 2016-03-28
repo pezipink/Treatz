@@ -17,10 +17,6 @@ let delay_time = 1000.0 / fps;
 let delay_timei = uint32 delay_time
 
 
-let (|Player|_|) = function
-    | Player data -> Some data
-    | _ -> None
-    
 
 type RenderingContext =
     {Renderer:SDLRender.Renderer;
@@ -36,20 +32,15 @@ let updatePositions state =
       state with
         Player1 = updateJuan state.Player1
         Player2 = updateJuan state.Player2
-        Juans = List.map updateJuan state.Juans        
+        Mikishidas = List.map updateJuan state.Mikishidas        
     }
 
-let overlap(rectA, rectB) =
-    let xa2,xb2 = rectA.X + rectA.Width,rectB.X + rectB.Width
-    let ya2,yb2 = rectA.Y + rectA.Height,rectB.Y + rectB.Height
-    rectA.X < xb2 && xa2 > rectB.X && 
-    rectA.Y < yb2 && ya2 > rectB.Y
 
 let collisionDetection state = 
     let treatTree =
         // create a quadtree of all the treats on the map
         // (we are currently duplicating this work but we might have not jsut treats in this tree in the future, or different tree params
-        state.Juans
+        state.Mikishidas
         |> List.filter(fun k -> match k.kind with Treat -> true | _ -> false)
         |> QuadTree.create (fun j -> j.AsQuadBounds) 3 10 screenQuadBounds
 
@@ -64,10 +55,10 @@ let collisionDetection state =
             eatenTreats @ treats, {juan with kind = Dragon(Nothing) } :: juans
         | _ -> treats, juan :: juans
     
-    let (treats,juans) = List.fold(fun acc juan -> update acc juan) ([],[]) state.Juans
+    let (treats,juans) = List.fold(fun acc juan -> update acc juan) ([],[]) state.Mikishidas
     
     // todo - this is mega ineffectient, sort it out!
-    {state with Juans = List.filter (fun j -> List.contains j treats |> not) juans  }
+    {state with Mikishidas = List.filter (fun j -> List.contains j treats |> not) juans  }
 
 
 let prepareLevel state = 
@@ -79,7 +70,7 @@ let prepareLevel state =
     let dragons = [for _ in 1..10 -> {kind = MikishidaKinds.Dragon Nothing; location = randomLocation state.Chaos; velocity = (0.0,0.0)} ]
     let treatz =  [for _ in 1..250 -> {kind = MikishidaKinds.Treat;  location = randomLocation state.Chaos; velocity = (0.0,0.0)} ]
     
-    { state with Juans = dragons @ treatz }
+    { state with Mikishidas = dragons @ treatz }
 
 let miscUpdates state = 
     // 60 fps, rotate once every 2 seconds - 120 steps =
@@ -190,7 +181,7 @@ let render(context:RenderingContext) (state:TreatzState) =
     |> SDLSurface.fillRect (Some state.Player2.AsRect) {Red=0uy;Green=0uy;Blue=255uy;Alpha=255uy}
     |> ignore
 
-    for j in state.Juans do
+    for j in state.Mikishidas do
         let c = match j.kind with Dragon _-> {Red=255uy;Green=0uy;Blue=0uy;Alpha=255uy}
                                 | Treat   -> {Red=0uy;Green=255uy;Blue=0uy;Alpha=255uy}
                                 | _       -> {Red=255uy;Green=255uy;Blue=255uy;Alpha=255uy}
@@ -239,7 +230,7 @@ let main() =
     let state = 
         {Player1 = {kind = Player(PlayerData.Blank); location = (10.,10.); velocity = (0.0,0.0)}
          Player2 = {kind = Player(PlayerData.Blank); location = (20.,20.); velocity = (0.0,0.0)}
-         Juans = []
+         Mikishidas = []
          PressedKeys = Set.empty
          Sprites = sprites
          Controllers = Set.empty, Set.empty

@@ -24,7 +24,7 @@ type Init =
     | Haptic         = 0x00001000
     | GameController = 0x00002000
     | Events         = 0x00004000
-    | Everything     = 0x00007231
+    | Everything     = 0x0000FFFF
 
 type System(flags:Init) =
     do
