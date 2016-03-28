@@ -91,9 +91,9 @@ let prepareLevel state =
 
     let dragons, blocked = gen 10  (fun p -> {kind = MikishidaKinds.Dragon Nothing; location = toPoint p; velocity = {X=0.0;Y=0.0}} ) mountains
     let treatz, _  = gen 100 (fun p -> {kind = MikishidaKinds.Treat; location = toPoint p; velocity = {X=0.0;Y=0.0}} ) blocked
-    let mountains = mountains |> Set.map(fun p -> {kind = MikishidaKinds.Mountainountain; location = toPoint p; velocity = {X=0.0;Y=0.0}}) |> Set.toList
+    let mountains' = mountains |> Set.map(fun p -> {kind = MikishidaKinds.Mountainountain; location = toPoint p; velocity = {X=0.0;Y=0.0}}) |> Set.toList
     
-    { state with Mikishidas = dragons @ treatz @ mountains }
+    { state with Mikishidas = dragons @ treatz @ mountains'; UnpassableLookup = mountains }
 
 let miscUpdates state = 
     // 60 fps, rotate once every 2 seconds - 120 steps =
