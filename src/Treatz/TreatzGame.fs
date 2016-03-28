@@ -77,8 +77,8 @@ type MikishidaKinds =
     with 
     member this.defaultSpeed =
         match this with
-        | Player _ -> 3.0
-        | Dragon _  -> 5.0
+        | Player _ -> 0.50
+        | Dragon _  -> 0.80
         | _ -> 0.9
 
 type Mikishida = 
