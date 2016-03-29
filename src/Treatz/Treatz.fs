@@ -28,7 +28,6 @@ let updatePositions state =
             if x = 0.0 then Neither 
             elif x > 0.0 then Positive
             else Negative
-
         match juan.velocity.X,juan.velocity.Y with
         | Neither, Neither -> None
         | Positive, Positive -> 
@@ -40,7 +39,6 @@ let updatePositions state =
         | Positive, Neither -> 
             // E
             Some(loc.GridX+1, loc.GridY)
-
         | Negative, Negative-> 
             // NW
             Some(loc.GridX, loc.GridY)
@@ -50,7 +48,6 @@ let updatePositions state =
         | Negative, Neither -> 
             // W
             Some(loc.GridX, loc.GridY)
-
         | Neither, Negative -> 
             // N
             Some(loc.GridX, loc.GridY)
@@ -62,8 +59,6 @@ let updatePositions state =
                 if x <= 0 || y <= 0 || x >= mapWidth || y >= mapHeight ||  Set.contains (x,y) state.UnpassableLookup then juan 
                 else { juan with location = loc }
             | _ -> juan
-                
-        
     { 
       state with
         Player1 = updateJuan state.Player1
@@ -74,30 +69,36 @@ let updatePositions state =
 
 let collisionDetection state = 
     let treatTree =
-        // create a quadtree of all the treats on the map
-        // (we are currently duplicating this work but we might have not jsut treats in this tree in the future, or different tree params
-        state.Mikishidas
-        |> List.filter(fun k -> match k.kind with Treat -> true | _ -> false)
+        // create a quadtree of all the things dragons can collide with on the map
+        state.Player1 :: state.Player2 :: state.Mikishidas
+        |> List.filter(fun k -> match k.kind with Treat -> true | Player _ -> true | _ -> false)
         |> QuadTree.create (fun j -> j.AsQuadBounds) 5 30 screenQuadBounds
     
-    let update (treats,juans) juan =
+    let update (mikis,juans) juan =
         match juan.kind with
         | Dragon _ -> 
-            let eatenTreats =
+            let collisions =
                 treatTree
                 |> QuadTree.findNeighbours (fun k -> overlap(juan.AsRect,k.AsRect)) juan.AsQuadBounds screenQuadBounds
-                |> Set.ofList
-            // yum yum treats, reset drag 
-            Set.union eatenTreats treats, {juan with kind = if eatenTreats.Count > 0 then Dragon(Nothing) else juan.kind } :: juans
-        | _ -> treats, juan :: juans
+                
+            match collisions |> List.tryFind(fun t -> match t.kind with Player _ -> true | _ -> false) with
+            | Some p -> 
+                // a dragon in contact with a player means the dragon is caught!
+                match p.kind with 
+                | Player data ->  data.DragonsCaught <- data.DragonsCaught + 1
+                | _ -> ()
+                // add the dragon to the removal pile
+                Set.add juan mikis, juans
+            | None -> 
+                // yum yum treats, reset drag to no behaviour
+                Set.union (Set.ofList collisions) mikis, {juan with kind = if collisions.Length > 0 then Dragon(Nothing) else juan.kind } :: juans
+        | _ -> mikis, juan :: juans
     
     let (treats,juans) = List.fold(fun acc juan -> update acc juan) (Set.empty,[]) state.Mikishidas
     
-    if treats |> Set.exists(fun t -> match t.kind with Dragon _ -> true | _ -> false ) then System.Diagnostics.Debugger.Break()
-
     let mikis = List.filter (fun t -> Set.contains t treats |> not) juans  
-    let lookup = Set.difference state.TreatsLookup (treats|>Set.map(fun t->(int t.location.X, int t.location.Y)))
-    // todo - this is mega ineffectient, sort it out!
+    let lookup = Set.difference state.TreatsLookup (treats|>Set.map(fun t->(int t.location.X, int t.location.Y)))  
+
     {state with Mikishidas = mikis; TreatsLookup = lookup}
 
 
@@ -126,7 +127,7 @@ let prepareLevel state =
 
     let toPoint x = {X = double(fst x) * cellWidthf; Y=double(snd x) * cellHeightf}
 
-    let dragons, blocked = gen 25  (fun p -> {kind = MikishidaKinds.Dragon Nothing; location = toPoint p; velocity = {X=0.0;Y=0.0}} ) mountains
+    let dragons, blocked = gen 10  (fun p -> {kind = MikishidaKinds.Dragon Nothing; location = toPoint p; velocity = {X=0.0;Y=0.0}} ) mountains
     let treatz, _  = gen maxTreats (fun p -> {kind = MikishidaKinds.Treat; location = toPoint p; velocity = {X=0.0;Y=0.0}} ) blocked
     let treatzSet = treatz |> List.map(fun t -> int t.location.X, int t.location.Y ) |> Set.ofList
     let mountains' = mountains |> Set.map(fun p -> {kind = MikishidaKinds.Mountainountain; location = toPoint p; velocity = {X=0.0;Y=0.0}}) |> Set.toList
@@ -147,7 +148,7 @@ let miscUpdates state =
             if Set.contains p lookups || Set.contains p state.UnpassableLookup then aux treats lookups
             else
                 let t = {kind = MikishidaKinds.Treat; location = toPoint p; velocity = {X=0.0;Y=0.0}}
-                (t::treats,Set.add p lookups)
+                aux (t::treats) (Set.add p lookups)
         aux [] state.TreatsLookup
         
         
@@ -162,6 +163,13 @@ let updateInputs state =
     let up1 x y = down1 x y |> not
     let up2 x y = down2 x y |> not
     
+//    let updateFoam p = 
+//        match p.kind with
+//        | Player data -> 
+//            if data.FoamDuration = 0 then
+//
+//        | _ -> ()
+        
     // yuuuuck!
     let moves = 
         [
@@ -188,6 +196,8 @@ let updateInputs state =
                   && up2 ControllerButton.BUTTON_DPAD_RIGHT s ), fun state -> { state with Player2 = { state.Player2 with velocity = {X =0.0; Y = state.Player2.velocity.Y }} } 
             (fun s-> up2 ControllerButton.BUTTON_DPAD_UP  s
                   && up2 ControllerButton.BUTTON_DPAD_DOWN s ), fun state -> { state with Player2 = { state.Player2 with velocity = {X=state.Player2.velocity.X;Y=0.} } } 
+
+//            (down1 ControllerButton.BUTTON_A), fun state -> if state.Player1.
         ]
     (state,moves) ||> List.fold (fun acc (pred,f) -> if pred acc then f acc else acc)
 
