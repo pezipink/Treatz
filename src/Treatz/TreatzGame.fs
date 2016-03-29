@@ -66,8 +66,10 @@ type BehaviourState  = {
   }
 
 type PlayerData = 
-    {DragonsCaught : int}
-    with static member Blank = {DragonsCaught = 0}
+    {mutable DragonsCaught : int 
+     mutable FoamDuration : int
+     mutable Foam : Set<int*int> }
+    with static member Blank = {DragonsCaught = 0; FoamDuration = 0; Foam = Set.empty}
 
 type DragonData =
     | Nothing    

@@ -24,13 +24,15 @@
                     let steering = { BehaviourState.RateOfChangeOfDirection = 1.5; BehaviourState.CircleDistance = 222.0 ;  BehaviourState.CircleRadius = 350.0 ; BehaviourState.WanderingAngle =0.0; SteeringDirection = Point.Zero }    
                     {mikishida with kind = Dragon(Wander steering)  }
                 | treats -> // find the cloest treat and head towards it
-                    let treat = List.minBy(mikishida.Distance) treats
-                    let xd = treat.location.X - mikishida.location.X
-                    let yd = treat.location.Y - mikishida.location.Y
-                    let xd = if xd > 0.0 then mikishida.kind.defaultSpeed else -mikishida.kind.defaultSpeed
-                    let yd = if yd > 0.0 then mikishida.kind.defaultSpeed else -mikishida.kind.defaultSpeed
-                    {mikishida with kind = Dragon(Temporary(treat.location)); velocity = {X=xd;Y=yd}}
-            
+                    let treat = List.minBy(mikishida.ManhattanDistance) treats
+                    match treat.kind with 
+                    | Treat -> 
+                        let xd = treat.location.X - mikishida.location.X
+                        let yd = treat.location.Y - mikishida.location.Y
+                        let xd = if xd > 0.0 then mikishida.kind.defaultSpeed else -mikishida.kind.defaultSpeed
+                        let yd = if yd > 0.0 then mikishida.kind.defaultSpeed else -mikishida.kind.defaultSpeed
+                        {mikishida with kind = Dragon(Temporary(treat.location)); velocity = {X=xd;Y=yd}}
+                    | _ -> System.Diagnostics.Debugger.Break(); mikishida
           | Dragon(Wander steering)  -> 
            
                   let w = wander state.Chaos mikishida steering 
@@ -39,9 +41,7 @@
           
           | Dragon(Seek data)  -> mikishida //todo: follow path?
           | Dragon(Temporary(p)) -> 
-              
-              // this really is temporary! jsut to get something moving
-             
+             // this really is temporary! jsut to get something moving
               let xd = p.X - mikishida.location.X
               let yd = p.Y - mikishida.location.Y
               let xd = if xd > 0.0 then mikishida.kind.defaultSpeed else -mikishida.kind.defaultSpeed
