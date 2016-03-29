@@ -2,6 +2,7 @@
   open TreatzGame
   open CommonData
   open Behaviours  
+  open SDLUtility
 
   let intelligence (state: TreatzState) =
 //      let treatTree =
@@ -9,6 +10,8 @@
 //          state.Mikishidas
 //          |> List.filter(fun k -> match k.kind with Treat -> true | _ -> false)
 //          |> QuadTree.create (fun j -> j.AsQuadBounds) 5 5 screenQuadBounds
+
+      let toSeconds (ticks: uint32) = ticks / uint32 1000 
 
       let update mikishida =
           match mikishida.kind with
@@ -21,7 +24,12 @@
             state.findMikishidas(fun m -> match m.kind with Treat -> true | _ -> false) bounds
             |> function
                 | [] -> 
-                    let steering = { BehaviourState.RateOfChangeOfDirection = 1.5; BehaviourState.CircleDistance = 222.0 ;  BehaviourState.CircleRadius = 350.0 ; BehaviourState.WanderingAngle =0.0; SteeringDirection = Point.Zero }    
+                    let steering = { 
+                      BehaviourState.RateOfChangeOfDirection = 1.5; 
+                      BehaviourState.CircleDistance = 50.0 ;  
+                      BehaviourState.CircleRadius = 35.0 ; 
+                      BehaviourState.WanderingAngle = 0.0; 
+                      SteeringDirection = Point.Zero }    
                     {mikishida with kind = Dragon(Wander steering)  }
                 | treats -> // find the cloest treat and head towards it
                     let treat = List.minBy(mikishida.Distance) treats
@@ -34,7 +42,10 @@
           | Dragon(Wander steering)  -> 
            
                   let w = wander state.Chaos mikishida steering 
-                  {mikishida with kind = Dragon(Wander w);velocity = w.SteeringDirection }
+                  let v = (getTicks() |> toSeconds |> double) * w.SteeringDirection
+//                          |> Point.Truncate mikishida.kind.defaultSpeed
+
+                  {mikishida with kind = Dragon(Wander w);velocity = v}
 
           
           | Dragon(Seek data)  -> mikishida //todo: follow path?
