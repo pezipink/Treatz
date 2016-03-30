@@ -32,7 +32,7 @@ type FastPoint(x: int, y: int) =
     member __.GridX = x / cellWidth
     member __.GridY = y / cellHeight
     
-type Point = {
+type Vector2 = {
    X: double 
    Y: double  
   } with 
@@ -47,10 +47,10 @@ type Point = {
   member this.normalize  =        
     let len= this.length 
     match len with
-    | x when x <> 0.0 -> { X = this.X/len; Point.Y = this.Y/len }
+    | x when x <> 0.0 -> { X = this.X/len; Vector2.Y = this.Y/len }
     | _ -> {X=0.0; Y=0.0}
   
-  static member (*) (a, point: Point) =
+  static member (*) (a, point: Vector2) =
      {X = a * point.X ; Y=  a * point.Y}
   static member (+) (pointa , pointb) = 
     {X = pointa.X + pointb.X ; Y= pointa.Y + pointb.Y}
@@ -69,7 +69,7 @@ type BehaviourState  = {
   RateOfChangeOfDirection : double
 
   WanderingAngle: double
-  SteeringDirection : Point
+  SteeringDirection : Vector2
   }
 
 type PlayerData = 
@@ -80,9 +80,9 @@ type PlayerData =
 
 type DragonData =
     | Nothing    
-    | Seek of Point list
+    | Seek of Vector2 list
     | Wander of BehaviourState
-    | Temporary of treat : Point // no really, this is going
+    | Temporary of treat : Vector2 // no really, this is going
 
 
 type MikishidaKinds =
@@ -97,12 +97,12 @@ type MikishidaKinds =
     with 
     member this.defaultSpeed =
         match this with
-        | Player _ -> 1.4
-        | Dragon _  -> 1.5
+        | Player _ -> 5.4
+        | Dragon _  -> 3.5
         | _ -> 0.9
 
 type Mikishida = 
-    { kind : MikishidaKinds; location : Point; velocity : Point }
+    { kind : MikishidaKinds; location : Vector2; velocity : Vector2 }
     with 
     member this.Size =
         match this.kind with

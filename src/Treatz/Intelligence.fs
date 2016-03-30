@@ -3,6 +3,7 @@
   open CommonData
   open Behaviours  
   open SDLUtility
+  open System
 
   let intelligence (state: TreatzState) =
 //      let treatTree =
@@ -14,7 +15,8 @@
       let toSeconds (ticks: uint32) = ticks / uint32 1000 
 
       let update mikishida =
-          match mikishida.kind with
+          
+          match mikishida.kind with          
           | Dragon(Nothing)  -> 
             // if our dragon is doing nothing, see if we can find a nearby treat within 50 px
             let clamp x = if x < 0 then 0 else x
@@ -25,11 +27,11 @@
             |> function
                 | [] -> 
                     let steering = { 
-                      BehaviourState.RateOfChangeOfDirection = 1.5; 
-                      BehaviourState.CircleDistance = 50.0 ;  
-                      BehaviourState.CircleRadius = 35.0 ; 
-                      BehaviourState.WanderingAngle = 0.0; 
-                      SteeringDirection = Point.Zero }    
+                      BehaviourState.RateOfChangeOfDirection = 0.5; 
+                      BehaviourState.CircleDistance = 1.00 ;  
+                      BehaviourState.CircleRadius = 2.50 ; 
+                      BehaviourState.WanderingAngle = 0.10; 
+                      SteeringDirection = Vector2.Zero }    
                     {mikishida with kind = Dragon(Wander steering)  }
                 | treats -> // find the cloest treat and head towards it
                     let treat = List.minBy(mikishida.ManhattanDistance) treats
@@ -42,14 +44,10 @@
                         {mikishida with kind = Dragon(Temporary(treat.location)); velocity = {X=xd;Y=yd}}
                     | _ -> System.Diagnostics.Debugger.Break(); mikishida
           | Dragon(Wander steering)  -> 
-           
-                  let w = wander state.Chaos mikishida steering 
-                  let v = (getTicks() |> toSeconds |> double) * w.SteeringDirection
-//                          |> Point.Truncate mikishida.kind.defaultSpeed
-
-                  {mikishida with kind = Dragon(Wander w);velocity = v}
-
-          
+              
+              let w = wander state.Chaos mikishida steering 
+              let v = (getTicks() |> toSeconds |> double) * ( mikishida.kind.defaultSpeed * w.SteeringDirection.normalize )                      
+              {mikishida with kind = Dragon(Wander w);velocity = v}
           | Dragon(Seek data)  -> mikishida //todo: follow path?
           | Dragon(Temporary(p)) -> 
              // this really is temporary! jsut to get something moving
@@ -58,6 +56,7 @@
               let xd = if xd > 0.0 then mikishida.kind.defaultSpeed else -mikishida.kind.defaultSpeed
               let yd = if yd > 0.0 then mikishida.kind.defaultSpeed else -mikishida.kind.defaultSpeed
               {mikishida with velocity = {X=xd;Y=yd}}
+                
           | _ -> mikishida
       { state with Mikishidas = List.map update state.Mikishidas }
 
