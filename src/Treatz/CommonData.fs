@@ -7,7 +7,6 @@ open QuadTree
 let screenWidth = 800<px>
 let screenHeight = 600<px>
 
-
 let mapWidth = 160
 let mapHeight = 120
 let mapWidthf = 160.0

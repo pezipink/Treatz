@@ -60,7 +60,9 @@ type Vector2 = {
     let x =  if point.X > max.X then max.X else point.X
     let y =  if point.Y > max.Y then max.Y else point.Y
     {X=x; Y=y}
-    
+  override this.ToString() =
+     this.X.ToString() + " " + this.Y.ToString()
+
 
 
 type BehaviourState  = {
@@ -97,8 +99,8 @@ type MikishidaKinds =
     with 
     member this.defaultSpeed =
         match this with
-        | Player _ -> 5.4
-        | Dragon _  -> 3.5
+        | Player _ -> 0.4
+        | Dragon _  -> 0.9
         | _ -> 0.9
 
 type Mikishida = 

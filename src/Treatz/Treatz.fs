@@ -101,6 +101,11 @@ let collisionDetection state =
 
     {state with Mikishidas = mikis; TreatsLookup = lookup}
 
+type Node = {        
+    Identity: string
+    CostFromParent: float 
+    mutable Neighbours : Node list       
+  }
 
 let prepareLevel state = 
     // create some dragons and treats
@@ -116,7 +121,7 @@ let prepareLevel state =
                 yield x,y + 80]    
         |> Set.ofList
     
- 
+    
     let gen n f s =
         let rec aux acc i s =
             if i = n then acc, s else
@@ -127,11 +132,34 @@ let prepareLevel state =
 
     let toPoint x = {X = double(fst x) * cellWidthf; Y=double(snd x) * cellHeightf}
 
-    let dragons, blocked = gen 10  (fun p -> {kind = MikishidaKinds.Dragon Nothing; location = toPoint p; velocity = {X=0.0;Y=0.0}} ) mountains
+    let dragons, blocked = gen 1 (fun p -> {kind = MikishidaKinds.Dragon Nothing; location = toPoint p; velocity = {X=0.0;Y=0.0}} ) mountains
     let treatz, _  = gen maxTreats (fun p -> {kind = MikishidaKinds.Treat; location = toPoint p; velocity = {X=0.0;Y=0.0}} ) blocked
     let treatzSet = treatz |> List.map(fun t -> int t.location.X, int t.location.Y ) |> Set.ofList
     let mountains' = mountains |> Set.map(fun p -> {kind = MikishidaKinds.Mountainountain; location = toPoint p; velocity = {X=0.0;Y=0.0}}) |> Set.toList
     
+    //setup graph for pathfinding
+    let mutable allNodes : Node list = []
+    for i=1 to mapHeight do 
+      for j = 1 to mapWidth do 
+        let newNode = {Node.Identity=i.ToString() + j.ToString() ;Node.CostFromParent = 1.0; Node.Neighbours = [] } 
+        allNodes <- newNode :: allNodes
+
+    let getNeighbours n allNodes=
+        let identites = [1; -1; mapWidth; -mapWidth]
+                          |> List.map(fun o -> 
+                                  let x = (n + o) % mapWidth          
+                                  let y = (n + o) / mapWidth  
+                                  x.ToString()+y.ToString())        
+        allNodes
+        |> List.filter(fun node -> identites |> List.contains(node.Identity))
+            
+    allNodes
+    |> List.iteri(fun index node ->           
+            let neib =  getNeighbours index allNodes
+            node.Neighbours <- neib            
+            )
+            
+
     { state with Mikishidas = dragons @ treatz @ mountains'; UnpassableLookup = mountains; TreatsLookup = treatzSet }
 
 let miscUpdates state = 
