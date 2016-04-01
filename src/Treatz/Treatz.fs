@@ -102,7 +102,7 @@ let collisionDetection state =
     {state with Mikishidas = mikis; TreatsLookup = lookup}
 
 type Node = {        
-    Identity: string
+    Identity: Vector2
     //CostFromParent: float 
     mutable Neighbours : Node seq       
   }
@@ -139,40 +139,34 @@ let prepareLevel state =
     
     //setup graph for pathfinding
     let graphForPathfinding =
-        let getIdentity x y = x.ToString() + "<>" + y.ToString()
+        let getIdentity x y = {X= x; Y = y}
 
         let createGraph() =
           let mutable allNodes : Node list = []
-          let mapHeight = 3
-          let mapWidth = 3
           for i = 0 to mapHeight-1 do 
             for j = 0 to mapWidth-1 do 
-              let newNode = {Node.Identity= (getIdentity i j) ;Node.Neighbours = Seq.empty} 
+              let newNode = {Node.Identity= (getIdentity (double i) (double j)) ;Node.Neighbours = Seq.empty} 
               allNodes <- newNode :: allNodes
               
           List.toSeq allNodes
     
-        let getNeighbours n allNodes =            
-            let x = (n) % mapWidth          
-            let y = (n) / mapWidth
-            let identites = [(1,0); (-1, 0); (0, -1); (0, 1)]
+        let getNeighbours node allNodes =            
+            let x = node.Identity.X
+            let y = node.Identity.Y
+            let identites = [(1.,0.); (-1., 0.); (0., -1.); (0., 1.)]
                             |> List.map(fun (o,r) -> 
                                 getIdentity (x + o) (y + r) )
-            printfn "Identities %A" identites
             allNodes
             |> Seq.filter(fun node ->                                           
-                  identites |> List.map(fun x-> 
-                                    printfn "%A | %A" node.Identity x
-                                    x) |> List.contains(node.Identity))
+                  identites |> List.contains(node.Identity))
             
-        let graph = createGraph()
+        let graph = createGraph()     
         graph
-        |> Seq.iteri(fun index node ->                
-                          let nei = (getNeighbours index graph)
+        |> Seq.iter(fun node ->                
+                          let nei = (getNeighbours node graph)
                           printfn "neighbours %A" nei
                           node.Neighbours <- nei)
 
-        graph |> Seq.tail |> Seq.rev |> Seq.head 
 
     { state with Mikishidas = dragons @ treatz @ mountains'; UnpassableLookup = mountains; TreatsLookup = treatzSet }
 
