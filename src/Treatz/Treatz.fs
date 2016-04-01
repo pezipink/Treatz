@@ -138,7 +138,7 @@ let prepareLevel state =
     let mountains' = mountains |> Set.map(fun p -> {kind = MikishidaKinds.Mountainountain; location = toPoint p; velocity = {X=0.0;Y=0.0}}) |> Set.toList
     
     //setup graph for pathfinding
-    let graphForPathfinding =
+    let graphForPathfinding() =
         let getIdentity x y = {X= x; Y = y}
 
         let createGraph() =
@@ -159,14 +159,17 @@ let prepareLevel state =
             allNodes
             |> Seq.filter(fun node ->                                           
                   identites |> List.contains(node.Identity))
-            
+            // Maybe here we can do a thing where instead of checking each grid
+            //   you can have a list of non existing nodes and compare against that?
+            // this is just a first pass
+                        
         let graph = createGraph()     
         graph
         |> Seq.iter(fun node ->                
                           let nei = (getNeighbours node graph)
                           printfn "neighbours %A" nei
                           node.Neighbours <- nei)
-
+        graph
 
     { state with Mikishidas = dragons @ treatz @ mountains'; UnpassableLookup = mountains; TreatsLookup = treatzSet }
 
