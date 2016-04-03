@@ -74,6 +74,24 @@ type BehaviourState  = {
   SteeringDirection : Vector2
   }
 
+[<CustomComparison; CustomEquality>]
+type Node = 
+  {        
+    Identity: Vector2
+    mutable Neighbours : Node seq       
+  }
+  override x.Equals(yobj) =
+      match yobj with
+      | :? Node as y -> (x.Identity= y.Identity)
+      | _ -> false
+
+  override x.GetHashCode() = hash x.Identity
+  interface System.IComparable with
+    member x.CompareTo yobj =
+        match yobj with
+        | :? Node as y -> compare x.Identity y.Identity
+        | _ -> invalidArg "yobj" "canno"
+
 type PlayerData = 
     {mutable DragonsCaught : int 
      mutable FoamDuration : int
@@ -84,6 +102,7 @@ type DragonData =
     | Nothing    
     | Seek of Vector2 list
     | Wander of BehaviourState
+    | PathFind of Node
     | Temporary of treat : Vector2 // no really, this is going
 
 
@@ -136,7 +155,6 @@ type Mikishida =
 
     member this.ManhattanDistance(other:Mikishida) =
         abs(other.location.X - this.location.X) + abs(other.location.Y - this.location.Y)
-
 
 type TreatzState =
     { Player1 : Mikishida

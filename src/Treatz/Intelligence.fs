@@ -65,7 +65,9 @@
               
               {mikishida with velocity = {X=xd;Y=yd}}
               
-                
+          | Dragon(PathFind( node)) -> 
+              printfn "In pathfinding %A" node
+              mikishida      
           | _ -> mikishida
       { state with Mikishidas = List.map update state.Mikishidas }
 

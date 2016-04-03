@@ -101,11 +101,6 @@ let collisionDetection state =
 
     {state with Mikishidas = mikis; TreatsLookup = lookup}
 
-type Node = {        
-    Identity: Vector2
-    //CostFromParent: float 
-    mutable Neighbours : Node seq       
-  }
 
 let prepareLevel state = 
     // create some dragons and treats
@@ -159,10 +154,11 @@ let prepareLevel state =
             allNodes
             |> Seq.filter(fun node ->                                           
                   identites |> List.contains(node.Identity))
-            // Maybe here we can do a thing where instead of checking each grid
-            //   you can have a list of non existing nodes and compare against that?
-            // this is just a first pass
-                        
+            
+            
+        // Maybe here we can do a thing where instead of checking each grid
+        //   you can have a list of non existing nodes and compare against that?
+        // this is just a first pass                
         let graph = createGraph()     
         graph
         |> Seq.iter(fun node ->                

@@ -57,6 +57,7 @@
     <Compile Include="TreatzGame.fs" />
     <Compile Include="Treatz_QT_Demo.fs" />
     <Compile Include="Behaviours.fs" />
+    <Compile Include="PathFinding.fs" />
     <Compile Include="Intelligence.fs" />
     <Compile Include="Treatz.fs" />
   </ItemGroup>

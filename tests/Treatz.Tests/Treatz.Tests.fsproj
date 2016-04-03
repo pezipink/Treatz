@@ -67,13 +67,6 @@
     <Reference Include="System.Core" />
     <Reference Include="System.Numerics" />
   </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\..\src\Treatz\Treatz.fsproj">
-      <Name>Treatz</Name>
-      <Project>{ab1649d1-c12a-40d1-aac3-262d3d2fe117}</Project>
-      <Private>True</Private>
-    </ProjectReference>
-  </ItemGroup>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.
   <Target Name="BeforeBuild">
@@ -88,5 +81,12 @@
       <Private>True</Private>
       <Paket>True</Paket>
     </Reference>
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\Treatz\Treatz.fsproj">
+      <Name>Treatz</Name>
+      <Project>{ab1649d1-c12a-40d1-aac3-262d3d2fe117}</Project>
+      <Private>True</Private>
+    </ProjectReference>
   </ItemGroup>
 </Project>
