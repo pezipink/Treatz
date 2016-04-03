@@ -105,15 +105,15 @@ let collisionDetection state =
 let prepareLevel state = 
     // create some dragons and treats
     let mountains = 
-        [for y = 30 to 80 do             
-            for x = 30 to 40 do
+        [for y = 10 to 35 do             
+            for x = 12 to 16 do
                 yield x,y
-                yield x+90,y
+                yield x+35,y
         ] @
-        [for y = 10 to 20 do             
-            for x = 50 to 110 do
+        [for y = 5 to 9 do             
+            for x = 20 to 45 do
                 yield x,y
-                yield x,y + 80]    
+                yield x,y + 32] 
         |> Set.ofList
     
     
@@ -153,7 +153,9 @@ let prepareLevel state =
                                 getIdentity (x + o) (y + r) )
             allNodes
             |> Seq.filter(fun node ->                                           
-                  identites |> List.contains(node.Identity))
+                  identites 
+                  |> List.contains(node.Identity))
+                  
             
             
         // Maybe here we can do a thing where instead of checking each grid
@@ -299,24 +301,82 @@ let render(context:RenderingContext) (state:TreatzState) =
     |> SDLSurface.fillRect (Some state.Player2.AsRect) {Red=0uy;Green=0uy;Blue=255uy;Alpha=255uy}
     |> ignore
 
-    for j in state.Mikishidas do
-        let c = match j.kind with Dragon _-> {Red=255uy;Green=0uy;Blue=0uy;Alpha=255uy}
-                                | Treat   -> {Red=0uy;Green=255uy;Blue=0uy;Alpha=255uy}
-                                | Mountainountain -> {Red=139uy;Green=69uy;Blue=19uy;Alpha=255uy}
-                                | _       -> {Red=255uy;Green=255uy;Blue=255uy;Alpha=255uy}
-        context.Surface
-        |> SDLSurface.fillRect (Some j.AsRect) c
-        |> ignore
+//    for j in state.Mikishidas do
+//        match j.kind with
+//        | Dragon _  | Treat -> 
+//            ()
+//
+//        | _ -> 
+//            let c = match j.kind with Dragon _-> {Red=255uy;Green=0uy;Blue=0uy;Alpha=255uy}
+//                                    | Treat   -> {Red=0uy;Green=255uy;Blue=0uy;Alpha=255uy}
+//                                    | Mountainountain -> {Red=139uy;Green=69uy;Blue=19uy;Alpha=255uy}
+//                                    | _       -> {Red=255uy;Green=255uy;Blue=255uy;Alpha=255uy}
+//            context.Surface
+//            |> SDLSurface.fillRect (Some j.AsRect) c
+//            |> ignore
     
-
     context.Texture
     |> SDLTexture.update None context.Surface
     |> ignore
-
     context.Renderer |> SDLRender.copy context.Texture None None |> ignore
     
+    // we can hardcode the grass and mountain rendering !
+//     let mountains = 
+//        [for y = 10 to 35 do             
+//            for x = 12 to 16 do
+//                yield x,y
+//                yield x+35,y
+//        ] @
+//        [for y = 5 to 9 do             
+//            for x = 20 to 45 do
+//                yield x,y
+//                yield x,y + 32] 
+//        |> Set.ofList
+//    
+    let t = state.Sprites.["tiles"]  
+    for y = 0 to mapHeight do
+        for x = 0 to mapWidth do
+            let x' = x*cellWidth*1<px>
+            let y' = y*cellHeight*1<px>
+            let dst = { X = x'; Y = y'; Width=16<px>; Height=16<px> }  : SDLGeometry.Rectangle    
+            
+            // top left mountain tiles
+            if( y= 10 && x = 12 ) || (y=10 && x = 12+35) || (y = 5 && x = 20) || (y=5+32 && x = 20)  then
+                let src = { X = 50<px>; Y = 0<px>; Width=16<px>; Height=16<px> } : SDLGeometry.Rectangle                
+                context.Renderer |> copy t (Some src) (Some dst) |> ignore
+            // top right mountain tiles
+            elif( y= 10 && x = 45 ) || (y=10 && x = 45+35) || (y = 5 && x = 45) || (y=5+32 && x = 45)  then
+                let src = { X = 84<px>; Y = 0<px>; Width=16<px>; Height=16<px> } : SDLGeometry.Rectangle                
+                context.Renderer |> copy t (Some src) (Some dst) |> ignore
+            // top mountain tiles
+            elif( y= 10 && x >= 12 && x <= 16 ) || ( y= 10 && x >= 12+35 && x <= 16+35 ) ||
+                ( y = 5 && x >= 20 && x <= 45 ) || ( y= 5+32  && x >= 20 && x <= 45 ) then
+                let src = { X = 67<px>; Y = 0<px>; Width=16<px>; Height=16<px> } : SDLGeometry.Rectangle                
+                context.Renderer |> copy t (Some src) (Some dst) |> ignore
+            
+            // all other mountain tiles 
+              
+            elif (y >= 10 && y <= 35 && x >=12 && x <=16) || (y >= 10 && y <= 35 && x >=12+35 && x <=16+35) || 
+               (y >= 5 && y <= 9 && x >= 20 && x <= 45) || (y >= 5+32 && y <= 9+32 && x >= 20 && x <= 45) then
+                let src = { X = 67<px>; Y = 17<px>; Width=16<px>; Height=16<px> } : SDLGeometry.Rectangle                
+                context.Renderer |> copy t (Some src) (Some dst) |> ignore
+            else // everything else is central grass
+                let src = { X = 17<px>; Y = 17<px>; Width=16<px>; Height=16<px> } : SDLGeometry.Rectangle                
+                context.Renderer |> copy t (Some src) (Some dst) |> ignore
+
+    for j in state.Mikishidas do
+        match j.kind with
+        | Dragon _ ->     
+            let d = state.Sprites.["drag"]  
+            context.Renderer  |> copy d None (Some j.AsRect) |> ignore
+        | Treat ->     
+            let d = state.Sprites.["treat"]  
+            context.Renderer  |> copy d None (Some j.AsRect) |> ignore
+        | _ -> ()
+    
+
     let t = state.Sprites.["turkey"]  
-    let dst = { X = 375<px>; Y = 275<px>; Width=50<px>; Height=50<px> } : SDLGeometry.Rectangle    
+    let dst = { X = 462<px>; Y = 350<px>; Width=50<px>; Height=50<px> } : SDLGeometry.Rectangle    
     context.Renderer  |> copyEx t None (Some dst) state.TurkeyAngle 0 |> ignore
     
     context.Renderer |> SDLRender.present 
@@ -327,24 +387,43 @@ let render(context:RenderingContext) (state:TreatzState) =
     else printfn "%A" frameTime
     context.LastFrameTick <- getTicks()    
 
+
 let main() = 
     use system = new SDL.System(SDL.Init.Everything)
     use mainWindow = SDLWindow.create "test" 100<px> 100<px> screenWidth screenHeight 0u
     use mainRenderer = SDLRender.create mainWindow -1 SDLRender.Flags.Accelerated
     use surface = SDLSurface.createRGB (screenWidth,screenHeight,32<bit/px>) (0x00FF0000u,0x0000FF00u,0x000000FFu,0x00000000u)
     
-    use bitmap = SDLSurface.loadBmp SDLPixel.RGB888Format @"..\..\..\..\images\turkey.bmp"
+    use turkeyBitmap = SDLSurface.loadBmp SDLPixel.RGB888Format @"..\..\..\..\images\turkey.bmp"
+    use dragBitmap = SDLSurface.loadBmp SDLPixel.RGB888Format @"..\..\..\..\images\drag.bmp"
+    use treatBitmap = SDLSurface.loadBmp SDLPixel.RGB888Format @"..\..\..\..\images\treat.bmp"
+    use tilesBitmap = SDLSurface.loadBmp SDLPixel.RGB888Format @"..\..\..\..\images\tiles.bmp"
+    
     SDLGameController.gameControllerOpen 0
-    bitmap
-    |> SDLSurface.setColorKey (Some {Red=255uy;Green=0uy;Blue=255uy;Alpha=0uy})
-    |> ignore    
+    SDLGameController.gameControllerOpen 1
 
+    let setKey bitmap colour =    
+        bitmap
+        |> SDLSurface.setColorKey (Some colour)
+        |> ignore    
+    
+    let magenta = {Red=255uy;Green=0uy;Blue=255uy;Alpha=0uy}
+    
+    setKey turkeyBitmap magenta
+    setKey dragBitmap magenta
+    setKey treatBitmap magenta
+    setKey tilesBitmap magenta
+        
     use mainTexture = mainRenderer |> SDLTexture.create SDLPixel.RGB888Format SDLTexture.Access.Streaming (screenWidth,screenHeight)
     mainRenderer |> SDLRender.setLogicalSize (screenWidth,screenHeight) |> ignore
 
-    let turkeyTex = SDLTexture.fromSurface mainRenderer bitmap.Pointer
+    let turkeyTex = SDLTexture.fromSurface mainRenderer turkeyBitmap.Pointer
+    let dragTex = SDLTexture.fromSurface mainRenderer dragBitmap.Pointer
+    let treatTex = SDLTexture.fromSurface mainRenderer treatBitmap.Pointer
+    let tilesTex = SDLTexture.fromSurface mainRenderer tilesBitmap.Pointer
+
+    let sprites = ["turkey", turkeyTex; "drag", dragTex; "treat", treatTex; "tiles", tilesTex ] |> Map.ofList
     
-    let sprites = ["turkey", turkeyTex] |> Map.ofList
 
     let context =  { Renderer = mainRenderer; Texture = mainTexture; Surface = surface; LastFrameTick = getTicks() }
     let state = 

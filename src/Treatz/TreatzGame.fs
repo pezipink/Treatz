@@ -26,7 +26,7 @@ type FastPoint(x: int, y: int) =
             if c <> 0 then c else
             compare lhs.Y rhs.Y
     
-    override p.GetHashCode() =
+    override __.GetHashCode() =
         x + 65536 * y
 
     member __.GridX = x / cellWidth
@@ -166,7 +166,7 @@ type TreatzState =
       Controllers : Set<ControllerButton> * Set<ControllerButton>
       Sprites : Map<string, SDLTexture.Texture>
       TurkeyAngle : float
-      Chaos : System.Random
+      Chaos : System.Random      
       }
     with member this.findMikishidas pred bounds =
             this.Mikishidas |> List.filter(fun m -> pred m && overlapq(m.AsQuadBounds, bounds))

@@ -4,18 +4,18 @@ open SDLUtility
 open SDLGeometry
 open QuadTree
 
-let screenWidth = 800<px>
-let screenHeight = 600<px>
+let screenWidth = 1024<px>
+let screenHeight = 768<px>
 
-let mapWidth = 160
-let mapHeight = 120
-let mapWidthf = 160.0
-let mapHeightf = 120.0
+let mapWidth = 64
+let mapHeight = 48
+let mapWidthf = 64.0
+let mapHeightf = 48.0
 
-let cellWidth = 5
-let cellHeight = 5
-let cellWidthf = 5.0
-let cellHeightf = 5.0
+let cellWidth = 16
+let cellHeight = 16
+let cellWidthf = 16.0
+let cellHeightf = 16.0
 
 let maxTreats = 250
 
