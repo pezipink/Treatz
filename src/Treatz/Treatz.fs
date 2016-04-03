@@ -56,7 +56,7 @@ let updatePositions state =
             Some(loc.GridX, loc.GridY+1)
         |> function
             | Some(x,y) -> 
-                if x <= 0 || y <= 0 || x >= mapWidth || y >= mapHeight ||  Set.contains (x,y) state.UnpassableLookup then juan 
+                if x < 0 || y < 0 || x >= mapWidth || y >= mapHeight ||  Set.contains (x,y) state.UnpassableLookup then juan 
                 else { juan with location = loc }
             | _ -> juan
     { 
@@ -255,14 +255,14 @@ let render(context:RenderingContext) (state:TreatzState) =
     context.Surface
     |> SDLSurface.fillRect None {Red=0uy;Green=0uy;Blue=0uy;Alpha=255uy}
     |> ignore
-    
-    context.Surface
-    |> SDLSurface.fillRect (Some state.Player1.AsRect) {Red=255uy;Green=0uy;Blue=255uy;Alpha=255uy}
-    |> ignore
-
-    context.Surface
-    |> SDLSurface.fillRect (Some state.Player2.AsRect) {Red=0uy;Green=0uy;Blue=255uy;Alpha=255uy}
-    |> ignore
+//    
+//    context.Surface
+//    |> SDLSurface.fillRect (Some state.Player1.AsRect) {Red=255uy;Green=0uy;Blue=255uy;Alpha=255uy}
+//    |> ignore
+//
+//    context.Surface
+//    |> SDLSurface.fillRect (Some state.Player2.AsRect) {Red=0uy;Green=0uy;Blue=255uy;Alpha=255uy}
+//    |> ignore
 
 //    for j in state.Mikishidas do
 //        match j.kind with
@@ -284,18 +284,6 @@ let render(context:RenderingContext) (state:TreatzState) =
     context.Renderer |> SDLRender.copy context.Texture None None |> ignore
     
     // we can hardcode the grass and mountain rendering !
-//     let mountains = 
-//        [for y = 10 to 35 do             
-//            for x = 12 to 16 do
-//                yield x,y
-//                yield x+35,y
-//        ] @
-//        [for y = 5 to 9 do             
-//            for x = 20 to 45 do
-//                yield x,y
-//                yield x,y + 32] 
-//        |> Set.ofList
-//    
     let t = state.Sprites.["tiles"]  
     for y = 0 to mapHeight do
         for x = 0 to mapWidth do
@@ -307,18 +295,37 @@ let render(context:RenderingContext) (state:TreatzState) =
             if( y= 10 && x = 12 ) || (y=10 && x = 12+35) || (y = 5 && x = 20) || (y=5+32 && x = 20)  then
                 let src = { X = 50<px>; Y = 0<px>; Width=16<px>; Height=16<px> } : SDLGeometry.Rectangle                
                 context.Renderer |> copy t (Some src) (Some dst) |> ignore
+            // bottom left mountain tiles
+            elif( y= 35 && x = 12 ) || (y=35&& x = 12+35) || (y = 9 && x = 20) || (y=9+32 && x = 20)  then
+                let src = { X = 50<px>; Y = 34<px>; Width=16<px>; Height=16<px> } : SDLGeometry.Rectangle                
+                context.Renderer |> copy t (Some src) (Some dst) |> ignore
             // top right mountain tiles
-            elif( y= 10 && x = 45 ) || (y=10 && x = 45+35) || (y = 5 && x = 45) || (y=5+32 && x = 45)  then
+            elif( y= 10 && x = 16 ) || (y=10 && x = 16+35) || (y = 5 && x = 45) || (y=5 && x = 45+32)  then
                 let src = { X = 84<px>; Y = 0<px>; Width=16<px>; Height=16<px> } : SDLGeometry.Rectangle                
+                context.Renderer |> copy t (Some src) (Some dst) |> ignore
+            // bottom right mountain tiles
+            elif( y= 35 && x = 16 ) || (y=35&& x = 16+35) || (y = 9 && x = 45) || (y=9+32 && x = 45)  then
+                let src = { X = 84<px>; Y = 34<px>; Width=16<px>; Height=16<px> } : SDLGeometry.Rectangle                
+                context.Renderer |> copy t (Some src) (Some dst) |> ignore
+            // left mountain tiles
+            elif (y >= 10 && y <= 35 && (x = 12 || x = 12+35)) || (x = 20 && ((y >= 5 && y <= 9) || y>=5+32 && y <= 9+32)) then
+                let src = { X = 50<px>; Y = 17<px>; Width=16<px>; Height=16<px> } : SDLGeometry.Rectangle                
+                context.Renderer |> copy t (Some src) (Some dst) |> ignore
+            // right mountain tiles
+            elif (y >= 10 && y <= 35 && (x = 16 || x = 16+35)) || (x = 45 && ((y >= 5 && y <= 9) || y>=5+32 && y <= 9+32)) then
+                let src = { X = 84<px>; Y = 17<px>; Width=16<px>; Height=16<px> } : SDLGeometry.Rectangle                
                 context.Renderer |> copy t (Some src) (Some dst) |> ignore
             // top mountain tiles
             elif( y= 10 && x >= 12 && x <= 16 ) || ( y= 10 && x >= 12+35 && x <= 16+35 ) ||
                 ( y = 5 && x >= 20 && x <= 45 ) || ( y= 5+32  && x >= 20 && x <= 45 ) then
                 let src = { X = 67<px>; Y = 0<px>; Width=16<px>; Height=16<px> } : SDLGeometry.Rectangle                
                 context.Renderer |> copy t (Some src) (Some dst) |> ignore
-            
-            // all other mountain tiles 
-              
+            // bottom mountain tiles
+            elif( y = 35 && x >= 12 && x <= 16 ) || ( y= 35 && x >= 12+35 && x <= 16+35 ) ||
+                ( y = 9 && x >= 20 && x <= 45 ) || ( y= 9+32  && x >= 20 && x <= 45 ) then
+                let src = { X = 67<px>; Y = 34<px>; Width=16<px>; Height=16<px> } : SDLGeometry.Rectangle                
+                context.Renderer |> copy t (Some src) (Some dst) |> ignore
+            // all mountain tiles
             elif (y >= 10 && y <= 35 && x >=12 && x <=16) || (y >= 10 && y <= 35 && x >=12+35 && x <=16+35) || 
                (y >= 5 && y <= 9 && x >= 20 && x <= 45) || (y >= 5+32 && y <= 9+32 && x >= 20 && x <= 45) then
                 let src = { X = 67<px>; Y = 17<px>; Width=16<px>; Height=16<px> } : SDLGeometry.Rectangle                
@@ -337,6 +344,20 @@ let render(context:RenderingContext) (state:TreatzState) =
             context.Renderer  |> copy d None (Some j.AsRect) |> ignore
         | _ -> ()
     
+    let determinePlayerFrame player =   
+        if player.velocity.Y = 0.0 && player.velocity.X > 0.0 then 2 // right
+        elif player.velocity.Y = 0.0 && player.velocity.X < 0.0 then 3 // left
+        elif player.velocity.X = 0.0 && player.velocity.Y < 0.0 then 1 // up
+        else 0 // down
+
+    let juanFrame = determinePlayerFrame state.Player1
+    let src = { X = juanFrame*16<px>; Y = 0<px>; Width=16<px>; Height=16<px> } : SDLGeometry.Rectangle                
+    context.Renderer |> copy state.Sprites.["juan"]   (Some src) (Some state.Player1.AsRect) |> ignore
+
+    let juanitaFrame = determinePlayerFrame state.Player2
+    let src = { X = juanitaFrame*16<px>; Y = 0<px>; Width=16<px>; Height=16<px> } : SDLGeometry.Rectangle                
+    context.Renderer |> copy state.Sprites.["juanita"]   (Some src) (Some state.Player2.AsRect) |> ignore
+
 
     let t = state.Sprites.["turkey"]  
     let dst = { X = 462<px>; Y = 350<px>; Width=50<px>; Height=50<px> } : SDLGeometry.Rectangle    
@@ -360,8 +381,10 @@ let main() =
     use turkeyBitmap = SDLSurface.loadBmp SDLPixel.RGB888Format @"..\..\..\..\images\turkey.bmp"
     use dragBitmap = SDLSurface.loadBmp SDLPixel.RGB888Format @"..\..\..\..\images\drag.bmp"
     use treatBitmap = SDLSurface.loadBmp SDLPixel.RGB888Format @"..\..\..\..\images\treat.bmp"
-    use tilesBitmap = SDLSurface.loadBmp SDLPixel.RGB888Format @"..\..\..\..\images\tiles.bmp"
-    
+    use tilesBitmap = SDLSurface.loadBmp SDLPixel.RGB888Format @"..\..\..\..\images\tiles2.bmp"
+    use juanitaBitmap = SDLSurface.loadBmp SDLPixel.RGB888Format @"..\..\..\..\images\juanita.bmp"
+    use juanBitmap = SDLSurface.loadBmp SDLPixel.RGB888Format @"..\..\..\..\images\juan.bmp"
+
     SDLGameController.gameControllerOpen 0
     SDLGameController.gameControllerOpen 1
 
@@ -376,6 +399,8 @@ let main() =
     setKey dragBitmap magenta
     setKey treatBitmap magenta
     setKey tilesBitmap magenta
+    setKey juanitaBitmap magenta
+    setKey juanBitmap magenta
         
     use mainTexture = mainRenderer |> SDLTexture.create SDLPixel.RGB888Format SDLTexture.Access.Streaming (screenWidth,screenHeight)
     mainRenderer |> SDLRender.setLogicalSize (screenWidth,screenHeight) |> ignore
@@ -384,8 +409,17 @@ let main() =
     let dragTex = SDLTexture.fromSurface mainRenderer dragBitmap.Pointer
     let treatTex = SDLTexture.fromSurface mainRenderer treatBitmap.Pointer
     let tilesTex = SDLTexture.fromSurface mainRenderer tilesBitmap.Pointer
+    let juanTex = SDLTexture.fromSurface mainRenderer juanBitmap.Pointer
+    let juanitaTex = SDLTexture.fromSurface mainRenderer juanitaBitmap.Pointer
 
-    let sprites = ["turkey", turkeyTex; "drag", dragTex; "treat", treatTex; "tiles", tilesTex ] |> Map.ofList
+    let sprites = 
+        ["turkey", turkeyTex; 
+         "drag", dragTex; 
+         "treat", treatTex; 
+         "tiles", tilesTex; 
+         "juan", juanTex;
+         "juanita", juanitaTex;
+        ] |> Map.ofList
     
 
     let context =  { Renderer = mainRenderer; Texture = mainTexture; Surface = surface; LastFrameTick = getTicks() }

@@ -19,10 +19,11 @@ let cellWidthf = 16.0
 let cellHeightf = 16.0
 
 let maxTreats = 250
+let maxPlayerFoam = 10
+let foamFrames = 60 * 5  // 5 seconds
 
 let screenQuadBounds =
     { x = 0; y = 0; width = int screenWidth; height = int screenHeight }  : QuadTree.QuadBounds
-
 
 let overlap(rectA, rectB) =
     let x1 = rectA.X
