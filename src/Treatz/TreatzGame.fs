@@ -40,6 +40,7 @@ type Vector2 = {
      
   member this.GridX = int(this.X / cellWidthf)
   member this.GridY = int(this.Y / cellHeightf)
+  member this.Grid = this.GridX, this.GridY
 
   static member (-) (pointa, pointb) = 
     {X = pointa.X - pointb.X ; Y= pointa.Y - pointb.Y}
@@ -100,6 +101,8 @@ type MikishidaKinds =
         | Player _ -> 3.0
         | Dragon _  -> 3.5
         | _ -> 0.9
+    
+        
 
 type Mikishida = 
     { kind : MikishidaKinds; location : Vector2; velocity : Vector2 }
@@ -134,7 +137,11 @@ type Mikishida =
 
     member this.ManhattanDistance(other:Mikishida) =
         abs(other.location.X - this.location.X) + abs(other.location.Y - this.location.Y)
-
+    
+    member this.AsPlayerData =
+        match this.kind with
+        | Player data -> data
+        | _ -> failwith "!"
 
 type TreatzState =
     { Player1 : Mikishida

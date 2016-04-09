@@ -130,6 +130,7 @@ let miscUpdates state =
         let angle = state.TurkeyAngle + (360.0 / 120.0)
         if angle > 360.0 then 0. else angle
     
+    // maintain max amount of treats and treat lookup
     let (treats, lookups) =
         let toPoint x = {X = double(fst x) * cellWidthf; Y=double(snd x) * cellHeightf}
         let rec aux treats lookups =
@@ -141,14 +142,31 @@ let miscUpdates state =
                 aux (t::treats) (Set.add p lookups)
         aux [] state.TreatsLookup
         
-    
+    let updateDragonFoam (foam:Map<int*int,int>) =
+        foam
+        |> Map.map(fun _ v -> v + 1)
+        |> Map.filter(fun _ v -> v < foamFrames)
         
-    { state with TurkeyAngle = angle; TreatsLookup = lookups; Mikishidas =  state.Mikishidas @ treats }
+    // using mutable state here to save record headaches, because why not
+    state.Player1.AsPlayerData.Foam <- updateDragonFoam state.Player1.AsPlayerData.Foam 
+    state.Player2.AsPlayerData.Foam <- updateDragonFoam state.Player2.AsPlayerData.Foam 
+    
+    let mikis = 
+        state.Mikishidas 
+        |> List.filter(fun m -> 
+            match m.kind with 
+            | AntiDragonFoam -> 
+                if Map.containsKey m.location.Grid state.Player1.AsPlayerData.Foam then true
+                elif Map.containsKey m.location.Grid state.Player2.AsPlayerData.Foam then true
+                else false 
+            | _ -> true )
+
+    { state with TurkeyAngle = angle; TreatsLookup = lookups; Mikishidas =  mikis @ treats }
 
 let tryDropFoam player =
     match player.kind with
     | Player data -> 
-        if data.Foam.Count < maxPlayerFoam && Map.containsKey(player.location.GridX,player.location.GridY) data.Foam = false then
+        if data.Foam.Count < maxPlayerFoam + data.DragonsCaught && Map.containsKey(player.location.GridX,player.location.GridY) data.Foam = false then
             let f = { kind = AntiDragonFoam; location = {X=float player.location.GridX*cellWidthf; Y=float player.location.GridY*cellHeightf} ; velocity = {X= 0.0; Y = 0.0} }
             Some(f, { player with kind = Player({data with Foam = Map.add (player.location.GridX,player.location.GridY) 0 data.Foam })})
         else None
@@ -183,7 +201,7 @@ let updateInputs state =
             (down1 ControllerButton.BUTTON_A), 
                 fun state -> 
                     match tryDropFoam state.Player1 with
-                    | Some(foam,player) -> {state with Mikishidas = foam :: state.Mikishidas; Player1 = player }
+                    | Some(foam,player) -> {state with Player1 = player; Mikishidas = foam :: state.Mikishidas }
                     | None -> state
             // todo: clean this up!
             (fun s-> up1 ControllerButton.BUTTON_DPAD_LEFT  s
@@ -198,7 +216,7 @@ let updateInputs state =
             (down2 ControllerButton.BUTTON_A), 
                 fun state -> 
                     match tryDropFoam state.Player2 with
-                    | Some(foam,player) -> {state with Mikishidas = foam :: state.Mikishidas; Player2 = player }
+                    | Some(foam,player) -> {state with Player2 = player; Mikishidas = foam :: state.Mikishidas  }
                     | None -> state
             (fun s-> up2 ControllerButton.BUTTON_DPAD_LEFT  s
                   && up2 ControllerButton.BUTTON_DPAD_RIGHT s ), fun state -> { state with Player2 = { state.Player2 with velocity = {X =0.0; Y = state.Player2.velocity.Y }} } 
@@ -351,7 +369,7 @@ let render(context:RenderingContext) (state:TreatzState) =
 
 
     let t = state.Sprites.["turkey"]  
-    let dst = { X = 462<px>; Y = 350<px>; Width=50<px>; Height=50<px> } : SDLGeometry.Rectangle    
+    let dst = { X = 504<px>; Y = 350<px>; Width=50<px>; Height=50<px> } : SDLGeometry.Rectangle    
     context.Renderer  |> copyEx t None (Some dst) state.TurkeyAngle 0 |> ignore
     
     context.Renderer |> SDLRender.present 
