@@ -22,43 +22,30 @@ type RenderingContext =
      mutable LastFrameTick : uint32 }
 
 let updatePositions state = 
-    let updateJuan juan = 
-        let loc = juan.location + juan.velocity
-        let (|Positive|Negative|Neither|) (x:double) =
-            if x = 0.0 then Neither 
-            elif x > 0.0 then Positive
-            else Negative
-        match juan.velocity.X,juan.velocity.Y with
-        | Neither, Neither -> None
-        | Positive, Positive -> 
-            // SE
-            Some(loc.GridX+1, loc.GridY+1)
-        | Positive, Negative -> 
-            // NE
-            Some(loc.GridX+1, loc.GridY)
-        | Positive, Neither -> 
-            // E
-            Some(loc.GridX+1, loc.GridY)
-        | Negative, Negative-> 
-            // NW
-            Some(loc.GridX, loc.GridY)
-        | Negative, Positive -> 
-            // SW
-            Some(loc.GridX, loc.GridY+1)
-        | Negative, Neither -> 
-            // W
-            Some(loc.GridX, loc.GridY)
-        | Neither, Negative -> 
-            // N
-            Some(loc.GridX, loc.GridY)
-        | Neither, Positive -> 
-            // S
-            Some(loc.GridX, loc.GridY+1)
-        |> function
-            | Some(x,y) -> 
-                if x < 0 || y < 0 || x >= mapWidth || y >= mapHeight ||  Set.contains (x,y) state.UnpassableLookup then juan 
-                else { juan with location = loc }
-            | _ -> juan
+    let updateJuan mikishida = 
+        // the locaiton is measured from the top left corner of the bounding box (or map cell)
+        // at any point a sprite could be in up to four cells at once (one for each corner)
+        // and check the target is valid, else snap to the nearest grid boundary
+        let tempLoc = (mikishida.location + mikishida.velocity)
+        let toCell (x,y) = (int(x/cellWidthf)),(int(y/cellHeightf))
+        
+        let newX = 
+            if mikishida.velocity.X > 0.0 && Set.contains (toCell (tempLoc.X + cellWidthf, mikishida.location.Y)) state.UnpassableLookup then
+                tempLoc.GridX * cellWidth |> double
+            elif mikishida.velocity.X < 0.0 && Set.contains (toCell (tempLoc.X,mikishida.location.Y) ) state.UnpassableLookup then
+                mikishida.location.GridX * cellWidth |> double
+            else
+                tempLoc.X
+        
+        let newY = 
+            if mikishida.velocity.Y > 0.0 && Set.contains (toCell (mikishida.location.X, tempLoc.Y + cellHeightf)) state.UnpassableLookup then
+                tempLoc.GridY * cellHeight |> double
+            elif mikishida.velocity.Y < 0.0 && Set.contains (toCell (mikishida.location.X,tempLoc.Y) ) state.UnpassableLookup then
+                mikishida.location.GridY * cellHeight |> double
+            else
+                tempLoc.Y     
+
+        { mikishida with location = {X = newX; Y = newY } }
     { 
       state with
         Player1 = updateJuan state.Player1
@@ -151,9 +138,19 @@ let miscUpdates state =
                 aux (t::treats) (Set.add p lookups)
         aux [] state.TreatsLookup
         
+    
         
     { state with TurkeyAngle = angle; TreatsLookup = lookups; Mikishidas =  state.Mikishidas @ treats }
 
+let tryDropFoam player =
+    match player.kind with
+    | Player data -> 
+        if data.Foam.Count < maxPlayerFoam && Map.containsKey(player.location.GridX,player.location.GridY) data.Foam = false then
+            let f = { kind = AntiDragonFoam; location = {X=float player.location.GridX*cellWidthf; Y=float player.location.GridY*cellHeightf} ; velocity = {X= 0.0; Y = 0.0} }
+            Some(f, { player with kind = Player({data with Foam = Map.add (player.location.GridX,player.location.GridY) 0 data.Foam })})
+        else None
+    | _ -> None
+    
 let updateInputs state =     
     let controller1 = fun s -> fst s.Controllers
     let controller2 = fun s -> snd s.Controllers
@@ -180,7 +177,11 @@ let updateInputs state =
             (down1 ControllerButton.BUTTON_DPAD_RIGHT), fun state -> { state with Player1 = { state.Player1 with velocity = {X = state.Player1.kind.defaultSpeed; Y = state.Player1.velocity.Y } } } 
             (down1 ControllerButton.BUTTON_DPAD_UP),    fun state -> { state with Player1 = { state.Player1 with velocity = {X = state.Player1.velocity.X; Y = -state.Player1.kind.defaultSpeed } } } 
             (down1 ControllerButton.BUTTON_DPAD_DOWN),  fun state -> { state with Player1 = { state.Player1 with velocity = {X = state.Player1.velocity.X; Y = state.Player1.kind.defaultSpeed } } } 
-        
+            (down1 ControllerButton.BUTTON_A), 
+                fun state -> 
+                    match tryDropFoam state.Player1 with
+                    | Some(foam,player) -> {state with Mikishidas = foam :: state.Mikishidas; Player1 = player }
+                    | None -> state
             // todo: clean this up!
             (fun s-> up1 ControllerButton.BUTTON_DPAD_LEFT  s
                   && up1 ControllerButton.BUTTON_DPAD_RIGHT s ), fun state -> { state with Player1 = { state.Player1 with velocity = {X =0.0; Y = state.Player1.velocity.Y }} } 
@@ -191,13 +192,17 @@ let updateInputs state =
             (down2 ControllerButton.BUTTON_DPAD_RIGHT), fun state -> { state with Player2 = { state.Player2 with velocity = {X = state.Player2.kind.defaultSpeed; Y = state.Player2.velocity.Y } } } 
             (down2 ControllerButton.BUTTON_DPAD_UP),    fun state -> { state with Player2 = { state.Player2 with velocity = {X = state.Player2.velocity.X; Y = -state.Player2.kind.defaultSpeed } } } 
             (down2 ControllerButton.BUTTON_DPAD_DOWN),  fun state -> { state with Player2 = { state.Player2 with velocity = {X = state.Player2.velocity.X; Y = state.Player2.kind.defaultSpeed } } } 
-            
+            (down2 ControllerButton.BUTTON_A), 
+                fun state -> 
+                    match tryDropFoam state.Player2 with
+                    | Some(foam,player) -> {state with Mikishidas = foam :: state.Mikishidas; Player2 = player }
+                    | None -> state
             (fun s-> up2 ControllerButton.BUTTON_DPAD_LEFT  s
                   && up2 ControllerButton.BUTTON_DPAD_RIGHT s ), fun state -> { state with Player2 = { state.Player2 with velocity = {X =0.0; Y = state.Player2.velocity.Y }} } 
             (fun s-> up2 ControllerButton.BUTTON_DPAD_UP  s
                   && up2 ControllerButton.BUTTON_DPAD_DOWN s ), fun state -> { state with Player2 = { state.Player2 with velocity = {X=state.Player2.velocity.X;Y=0.} } } 
 
-//            (down1 ControllerButton.BUTTON_A), fun state -> if state.Player1.
+
         ]
     (state,moves) ||> List.fold (fun acc (pred,f) -> if pred acc then f acc else acc)
 
@@ -255,28 +260,6 @@ let render(context:RenderingContext) (state:TreatzState) =
     context.Surface
     |> SDLSurface.fillRect None {Red=0uy;Green=0uy;Blue=0uy;Alpha=255uy}
     |> ignore
-//    
-//    context.Surface
-//    |> SDLSurface.fillRect (Some state.Player1.AsRect) {Red=255uy;Green=0uy;Blue=255uy;Alpha=255uy}
-//    |> ignore
-//
-//    context.Surface
-//    |> SDLSurface.fillRect (Some state.Player2.AsRect) {Red=0uy;Green=0uy;Blue=255uy;Alpha=255uy}
-//    |> ignore
-
-//    for j in state.Mikishidas do
-//        match j.kind with
-//        | Dragon _  | Treat -> 
-//            ()
-//
-//        | _ -> 
-//            let c = match j.kind with Dragon _-> {Red=255uy;Green=0uy;Blue=0uy;Alpha=255uy}
-//                                    | Treat   -> {Red=0uy;Green=255uy;Blue=0uy;Alpha=255uy}
-//                                    | Mountainountain -> {Red=139uy;Green=69uy;Blue=19uy;Alpha=255uy}
-//                                    | _       -> {Red=255uy;Green=255uy;Blue=255uy;Alpha=255uy}
-//            context.Surface
-//            |> SDLSurface.fillRect (Some j.AsRect) c
-//            |> ignore
     
     context.Texture
     |> SDLTexture.update None context.Surface
@@ -284,6 +267,7 @@ let render(context:RenderingContext) (state:TreatzState) =
     context.Renderer |> SDLRender.copy context.Texture None None |> ignore
     
     // we can hardcode the grass and mountain rendering !
+    // YES I KNOW THIS IS HORRIBLE.  CRY ME A RIVER
     let t = state.Sprites.["tiles"]  
     for y = 0 to mapHeight do
         for x = 0 to mapWidth do
@@ -342,6 +326,9 @@ let render(context:RenderingContext) (state:TreatzState) =
         | Treat ->     
             let d = state.Sprites.["treat"]  
             context.Renderer  |> copy d None (Some j.AsRect) |> ignore
+        | AntiDragonFoam ->
+            let d = state.Sprites.["foam"]  
+            context.Renderer  |> copy d None (Some j.AsRect) |> ignore        
         | _ -> ()
     
     let determinePlayerFrame player =   
@@ -384,6 +371,7 @@ let main() =
     use tilesBitmap = SDLSurface.loadBmp SDLPixel.RGB888Format @"..\..\..\..\images\tiles2.bmp"
     use juanitaBitmap = SDLSurface.loadBmp SDLPixel.RGB888Format @"..\..\..\..\images\juanita.bmp"
     use juanBitmap = SDLSurface.loadBmp SDLPixel.RGB888Format @"..\..\..\..\images\juan.bmp"
+    use foamBitmap = SDLSurface.loadBmp SDLPixel.RGB888Format @"..\..\..\..\images\foam.bmp"
 
     SDLGameController.gameControllerOpen 0
     SDLGameController.gameControllerOpen 1
@@ -401,6 +389,7 @@ let main() =
     setKey tilesBitmap magenta
     setKey juanitaBitmap magenta
     setKey juanBitmap magenta
+    setKey foamBitmap magenta
         
     use mainTexture = mainRenderer |> SDLTexture.create SDLPixel.RGB888Format SDLTexture.Access.Streaming (screenWidth,screenHeight)
     mainRenderer |> SDLRender.setLogicalSize (screenWidth,screenHeight) |> ignore
@@ -411,6 +400,7 @@ let main() =
     let tilesTex = SDLTexture.fromSurface mainRenderer tilesBitmap.Pointer
     let juanTex = SDLTexture.fromSurface mainRenderer juanBitmap.Pointer
     let juanitaTex = SDLTexture.fromSurface mainRenderer juanitaBitmap.Pointer
+    let foamTex = SDLTexture.fromSurface mainRenderer foamBitmap.Pointer
 
     let sprites = 
         ["turkey", turkeyTex; 
@@ -419,6 +409,7 @@ let main() =
          "tiles", tilesTex; 
          "juan", juanTex;
          "juanita", juanitaTex;
+         "foam", foamTex;
         ] |> Map.ofList
     
 

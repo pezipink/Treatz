@@ -75,8 +75,8 @@ type BehaviourState  = {
 type PlayerData = 
     {mutable DragonsCaught : int 
      mutable FoamDuration : int
-     mutable Foam : Set<int*int> }
-    with static member Blank = {DragonsCaught = 0; FoamDuration = 0; Foam = Set.empty}
+     mutable Foam : Map<int*int,int> }
+    with static member Blank = {DragonsCaught = 0; FoamDuration = 0; Foam = Map.empty}
 
 type DragonData =
     | Nothing    
@@ -97,7 +97,7 @@ type MikishidaKinds =
     with 
     member this.defaultSpeed =
         match this with
-        | Player _ -> 5.4
+        | Player _ -> 3.0
         | Dragon _  -> 3.5
         | _ -> 0.9
 
@@ -150,3 +150,4 @@ type TreatzState =
       }
     with member this.findMikishidas pred bounds =
             this.Mikishidas |> List.filter(fun m -> pred m && overlapq(m.AsQuadBounds, bounds))
+         

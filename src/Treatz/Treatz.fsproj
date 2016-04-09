@@ -36,37 +36,6 @@
     <DocumentationFile>.\bin\Release\Treatz.xml</DocumentationFile>
     <OtherFlags>--warnon:1182</OtherFlags>
   </PropertyGroup>
-  <ItemGroup>
-    <Reference Include="mscorlib" />
-    <Reference Include="FSharp.Core, Version=$(TargetFSharpCoreVersion), Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
-      <Private>True</Private>
-    </Reference>
-    <Reference Include="System" />
-    <Reference Include="System.Core" />
-    <Reference Include="System.Numerics" />
-  </ItemGroup>
-  <ItemGroup>
-    <Compile Include="QuadTree.fs" />
-    <None Include="App.config">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-    <None Include="Script.fsx" />
-    <None Include="paket.references" />
-    <None Include="paket.template" />
-    <Compile Include="CommonData.fs" />
-    <Compile Include="TreatzGame.fs" />
-    <Compile Include="Treatz_QT_Demo.fs" />
-    <Compile Include="Behaviours.fs" />
-    <Compile Include="Intelligence.fs" />
-    <Compile Include="Treatz.fs" />
-  </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\..\SDLFS\SDLFS.fsproj">
-      <Name>SDLFS</Name>
-      <Project>{7a206917-2eb2-44c5-94c7-c95c90e63c0e}</Project>
-      <Private>True</Private>
-    </ProjectReference>
-  </ItemGroup>
   <PropertyGroup>
     <MinimumVisualStudioVersion Condition="'$(MinimumVisualStudioVersion)' == ''">11</MinimumVisualStudioVersion>
   </PropertyGroup>
@@ -91,4 +60,38 @@
   </Target>
   -->
   <Import Project="..\..\.paket\paket.targets" />
+  <ItemGroup>
+    <Compile Include="QuadTree.fs" />
+    <None Include="App.config">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="Script.fsx" />
+    <None Include="paket.references" />
+    <None Include="paket.template" />
+    <Compile Include="CommonData.fs" />
+    <Compile Include="TreatzGame.fs" />
+    <Compile Include="Treatz_QT_Demo.fs" />
+    <Compile Include="Behaviours.fs" />
+    <Compile Include="Intelligence.fs" />
+    <Compile Include="Treatz.fs" />
+    <Content Include="packages.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <Reference Include="FSharp.Data.SqlProvider">
+      <HintPath>..\..\packages\SQLProvider.0.0.11-alpha\lib\FSharp.Data.SqlProvider.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="mscorlib" />
+    <Reference Include="FSharp.Core, Version=$(TargetFSharpCoreVersion), Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="System" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.Numerics" />
+    <ProjectReference Include="..\..\SDLFS\SDLFS.fsproj">
+      <Name>SDLFS</Name>
+      <Project>{7a206917-2eb2-44c5-94c7-c95c90e63c0e}</Project>
+      <Private>True</Private>
+    </ProjectReference>
+  </ItemGroup>
 </Project>
