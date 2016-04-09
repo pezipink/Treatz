@@ -102,10 +102,7 @@ let prepareLevel state =
             for x = 20 to 45 do
                 yield x,y
                 yield x,y + 32] 
-            
-  
         |> Set.ofList
-    
         
     let gen n f s =
         let rec aux acc i s =
@@ -117,7 +114,7 @@ let prepareLevel state =
 
     let toPoint x = {X = double(fst x) * cellWidthf; Y=double(snd x) * cellHeightf}
 
-    let dragons, blocked = gen 10  (fun p -> {kind = MikishidaKinds.Dragon Nothing; location = toPoint p; velocity = {X=0.0;Y=0.0}} ) mountains
+    let dragons, blocked = gen maxDragons (fun p -> {kind = MikishidaKinds.Dragon Nothing; location = toPoint p; velocity = {X=0.0;Y=0.0}} ) mountains
     let treatz, _  = gen maxTreats (fun p -> {kind = MikishidaKinds.Treat; location = toPoint p; velocity = {X=0.0;Y=0.0}} ) blocked
     let treatzSet = treatz |> List.map(fun t -> int t.location.X, int t.location.Y ) |> Set.ofList
     let mountains' = mountains |> Set.map(fun p -> {kind = MikishidaKinds.Mountainountain; location = toPoint p; velocity = {X=0.0;Y=0.0}}) |> Set.toList
