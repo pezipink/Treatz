@@ -131,45 +131,55 @@ let prepareLevel state =
     let treatz, _  = gen maxTreats (fun p -> {kind = MikishidaKinds.Treat; location = toPoint p; velocity = {X=0.0;Y=0.0}} ) blocked
     let treatzSet = treatz |> List.map(fun t -> int t.location.X, int t.location.Y ) |> Set.ofList
     let mountains' = mountains |> Set.map(fun p -> {kind = MikishidaKinds.Mountainountain; location = toPoint p; velocity = {X=0.0;Y=0.0}}) |> Set.toList
+
+    let getNeighbours allNodes node=            
+        let x = node.Identity.X
+        let y = node.Identity.Y
+        let identites = [(1.,0.); (-1., 0.); (0., -1.); (0., 1.)]
+                        |> List.map(fun (o,r) -> 
+                            {X= (x + o); Y= (y + r)} )
+        allNodes
+        |> Seq.filter(fun node ->                                           
+              identites 
+              |> List.contains(node.Identity))
     
     //setup graph for pathfinding
-    let graphForPathfinding() =
+    let graphForPathfinding obstacles =
         let getIdentity x y = {X= x; Y = y}
-
+        let getCost point obstacles =
+          match obstacles |>List.tryFind(fun x -> x.location = point) with
+          | Some _ -> Int32.MaxValue
+          | None -> 1
+         
         let createGraph() =
           let mutable allNodes : Node list = []
           for i = 0 to mapHeight-1 do 
             for j = 0 to mapWidth-1 do 
-              let newNode = {Node.Identity= (getIdentity (double i) (double j)) ;Node.Neighbours = Seq.empty} 
+              let id = getIdentity (double i) (double j)
+              let newNode = {
+                  Node.Identity= id ;
+                  Node.Neighbours = Seq.empty; 
+                  Cost = getCost id obstacles} 
               allNodes <- newNode :: allNodes
               
           List.toSeq allNodes
-    
-        let getNeighbours node allNodes =            
-            let x = node.Identity.X
-            let y = node.Identity.Y
-            let identites = [(1.,0.); (-1., 0.); (0., -1.); (0., 1.)]
-                            |> List.map(fun (o,r) -> 
-                                getIdentity (x + o) (y + r) )
-            allNodes
-            |> Seq.filter(fun node ->                                           
-                  identites 
-                  |> List.contains(node.Identity))
-                  
-            
-            
+        createGraph()    
         // Maybe here we can do a thing where instead of checking each grid
         //   you can have a list of non existing nodes and compare against that?
         // this is just a first pass                
-        let graph = createGraph()     
-        graph
-        |> Seq.iter(fun node ->                
-                          let nei = (getNeighbours node graph)
-                          printfn "neighbours %A" nei
-                          node.Neighbours <- nei)
-        graph
+//        let graph = createGraph()     
+//        graph
+//        |> Seq.iter(fun node ->                
+//                          let nei = (getNeighbours node graph)
+//                          printfn "neighbours %A" nei
+//                          node.Neighbours <- nei)
+//        graph
 
-    { state with Mikishidas = dragons @ treatz @ mountains'; UnpassableLookup = mountains; TreatsLookup = treatzSet }
+    { state with 
+          Mikishidas = dragons @ treatz @ mountains'; 
+          UnpassableLookup = mountains; 
+          TreatsLookup = treatzSet 
+          PathFindingData = Some(graphForPathfinding mountains')}
 
 let miscUpdates state = 
     // 60 fps, rotate once every 2 seconds - 120 steps =
@@ -301,38 +311,11 @@ let render(context:RenderingContext) (state:TreatzState) =
     |> SDLSurface.fillRect (Some state.Player2.AsRect) {Red=0uy;Green=0uy;Blue=255uy;Alpha=255uy}
     |> ignore
 
-//    for j in state.Mikishidas do
-//        match j.kind with
-//        | Dragon _  | Treat -> 
-//            ()
-//
-//        | _ -> 
-//            let c = match j.kind with Dragon _-> {Red=255uy;Green=0uy;Blue=0uy;Alpha=255uy}
-//                                    | Treat   -> {Red=0uy;Green=255uy;Blue=0uy;Alpha=255uy}
-//                                    | Mountainountain -> {Red=139uy;Green=69uy;Blue=19uy;Alpha=255uy}
-//                                    | _       -> {Red=255uy;Green=255uy;Blue=255uy;Alpha=255uy}
-//            context.Surface
-//            |> SDLSurface.fillRect (Some j.AsRect) c
-//            |> ignore
-    
     context.Texture
     |> SDLTexture.update None context.Surface
     |> ignore
     context.Renderer |> SDLRender.copy context.Texture None None |> ignore
-    
-    // we can hardcode the grass and mountain rendering !
-//     let mountains = 
-//        [for y = 10 to 35 do             
-//            for x = 12 to 16 do
-//                yield x,y
-//                yield x+35,y
-//        ] @
-//        [for y = 5 to 9 do             
-//            for x = 20 to 45 do
-//                yield x,y
-//                yield x,y + 32] 
-//        |> Set.ofList
-//    
+     
     let t = state.Sprites.["tiles"]  
     for y = 0 to mapHeight do
         for x = 0 to mapWidth do
@@ -436,7 +419,9 @@ let main() =
          Sprites = sprites
          Controllers = Set.empty, Set.empty
          TurkeyAngle = 0.0
-         Chaos = System.Random(System.DateTime.Now.Millisecond)} |> prepareLevel
+         Chaos = System.Random(System.DateTime.Now.Millisecond)
+         PathFindingData = None
+         } |> prepareLevel
 
     eventPump (render context) handleEvent update state
         

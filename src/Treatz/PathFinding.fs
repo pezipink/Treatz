@@ -4,8 +4,6 @@
   open System.Linq
   open TreatzGame
 
-
-  
   let createInitialFrontier state : HashSet<Node> =
     let q = HashSet<Node>()
     q.Add(state) |> ignore

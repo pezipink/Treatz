@@ -67,6 +67,15 @@
               
           | Dragon(PathFind( node)) -> 
               printfn "In pathfinding %A" node
+              let originNode = match state.PathFindingData with
+                         | Some nodes -> 
+                                      nodes 
+                                      |> Seq.tryFind(fun n -> node.Identity = n.Identity )
+                         | None -> None  
+              let path = match originNode with
+                          | Some origin -> PathFinding.search origin node
+                          | None -> [||]                
+
               mikishida      
           | _ -> mikishida
       { state with Mikishidas = List.map update state.Mikishidas }

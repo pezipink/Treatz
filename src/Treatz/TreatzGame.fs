@@ -78,6 +78,7 @@ type BehaviourState  = {
 type Node = 
   {        
     Identity: Vector2
+    mutable Cost : int 
     mutable Neighbours : Node seq       
   }
   override x.Equals(yobj) =
@@ -167,6 +168,7 @@ type TreatzState =
       Sprites : Map<string, SDLTexture.Texture>
       TurkeyAngle : float
       Chaos : System.Random      
+      PathFindingData : Node seq option
       }
     with member this.findMikishidas pred bounds =
             this.Mikishidas |> List.filter(fun m -> pred m && overlapq(m.AsQuadBounds, bounds))
