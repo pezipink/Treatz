@@ -26,7 +26,8 @@ let updatePositions state =
         // the locaiton is measured from the top left corner of the bounding box (or map cell)
         // at any point a sprite could be in up to four cells at once (one for each corner)
         // and check the target is valid, else snap to the nearest grid boundary
-        let tempLoc = (mikishida.location + mikishida.velocity)
+      
+        let tempLoc = (mikishida.location + mikishida.velocity) 
         let toCell (x,y) = (int(x/cellWidthf)),(int(y/cellHeightf))
         
         let newX = 
@@ -101,9 +102,11 @@ let prepareLevel state =
             for x = 20 to 45 do
                 yield x,y
                 yield x,y + 32] 
+            
+  
         |> Set.ofList
     
- 
+        
     let gen n f s =
         let rec aux acc i s =
             if i = n then acc, s else
@@ -318,7 +321,8 @@ let render(context:RenderingContext) (state:TreatzState) =
                 let src = { X = 17<px>; Y = 17<px>; Width=16<px>; Height=16<px> } : SDLGeometry.Rectangle                
                 context.Renderer |> copy t (Some src) (Some dst) |> ignore
 
-    for j in state.Mikishidas do
+
+    for j in state.Mikishidas |> List.sortBy(fun x -> match x.kind with Dragon _ -> 1 | Treat -> 2 | AntiDragonFoam -> 3 | _ -> 4) do
         match j.kind with
         | Dragon _ ->     
             let d = state.Sprites.["drag"]  
