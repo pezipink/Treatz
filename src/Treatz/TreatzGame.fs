@@ -40,6 +40,7 @@ type Vector2 = {
      
   member this.GridX = int(this.X / cellWidthf)
   member this.GridY = int(this.Y / cellHeightf)
+  member this.Grid = this.GridX, this.GridY
 
   static member (-) (pointa, pointb) = 
     {X = pointa.X - pointb.X ; Y= pointa.Y - pointb.Y}
@@ -96,8 +97,8 @@ type Node =
 type PlayerData = 
     {mutable DragonsCaught : int 
      mutable FoamDuration : int
-     mutable Foam : Set<int*int> }
-    with static member Blank = {DragonsCaught = 0; FoamDuration = 0; Foam = Set.empty}
+     mutable Foam : Map<int*int,int> }
+    with static member Blank = {DragonsCaught = 0; FoamDuration = 0; Foam = Map.empty}
 
 type DragonData =
     | Nothing    
@@ -119,9 +120,11 @@ type MikishidaKinds =
     with 
     member this.defaultSpeed =
         match this with
-        | Player _ -> 0.4
-        | Dragon _  -> 0.9
+        | Player _ -> 3.0
+        | Dragon _  -> 3.5
         | _ -> 0.9
+
+        
 
 type Mikishida = 
     { kind : MikishidaKinds; location : Vector2; velocity : Vector2 }
@@ -157,6 +160,11 @@ type Mikishida =
     member this.ManhattanDistance(other:Mikishida) =
         abs(other.location.X - this.location.X) + abs(other.location.Y - this.location.Y)
 
+    member this.AsPlayerData =
+        match this.kind with
+        | Player data -> data
+        | _ -> failwith "!"
+
 type TreatzState =
     { Player1 : Mikishida
       Player2 : Mikishida
@@ -172,3 +180,4 @@ type TreatzState =
       }
     with member this.findMikishidas pred bounds =
             this.Mikishidas |> List.filter(fun m -> pred m && overlapq(m.AsQuadBounds, bounds))
+         
