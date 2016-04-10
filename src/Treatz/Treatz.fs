@@ -91,7 +91,7 @@ let collisionDetection state =
                 Set.add juan mikis, juans
             | None -> 
                 // yum yum treats, reset drag to no behaviour
-                Set.union (Set.ofList collisions) mikis, {juan with kind = if collisions.Length > 0 then Dragon(Nothing) else juan.kind } :: juans
+                Set.union (Set.ofList collisions) mikis, {juan with kind = if collisions.Length > 0 then Dragon(Wander(Intelligence.wanderDefault)) else juan.kind } :: juans
         | _ -> mikis, juan :: juans
     
     let (treats,juans) = List.fold(fun acc juan -> update acc juan) (Set.empty,[]) state.Mikishidas
@@ -132,16 +132,7 @@ let prepareLevel state =
     let treatzSet = treatz |> List.map(fun t -> int t.location.X, int t.location.Y ) |> Set.ofList
     let mountains' = mountains |> Set.map(fun p -> {kind = MikishidaKinds.Mountainountain; location = toPoint p; velocity = {X=0.0;Y=0.0}}) |> Set.toList
 
-    let getNeighbours allNodes node=            
-        let x = node.Identity.X
-        let y = node.Identity.Y
-        let identites = [(1.,0.); (-1., 0.); (0., -1.); (0., 1.)]
-                        |> List.map(fun (o,r) -> 
-                            {X= (x + o); Y= (y + r)} )
-        allNodes
-        |> Seq.filter(fun node ->                                           
-              identites 
-              |> List.contains(node.Identity))
+
     
     //setup graph for pathfinding
     let graphForPathfinding obstacles =
@@ -153,8 +144,8 @@ let prepareLevel state =
          
         let createGraph() =
           let mutable allNodes : Node list = []
-          for i = 0 to mapHeight-1 do 
-            for j = 0 to mapWidth-1 do 
+          for i = 0 to mapHeight - 1 do 
+            for j = 0 to mapWidth - 1 do 
               let id = getIdentity (double i) (double j)
               let newNode = {
                   Node.Identity= id ;

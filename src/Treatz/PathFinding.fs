@@ -4,6 +4,17 @@
   open System.Linq
   open TreatzGame
 
+  let getNeighbours allNodes node=            
+    let x = node.Identity.X
+    let y = node.Identity.Y
+    let identites = [(1.,0.); (-1., 0.); (0., -1.); (0., 1.)]
+                    |> List.map(fun (o,r) -> 
+                        {X= (x + o); Y= (y + r)} )
+    allNodes
+    |> Seq.filter(fun node ->                                           
+          identites 
+          |> List.contains(node.Identity))
+
   let createInitialFrontier state : HashSet<Node> =
     let q = HashSet<Node>()
     q.Add(state) |> ignore
@@ -13,17 +24,16 @@
     node.Neighbours 
 
     // not the most efficient way to calc distance but ...
-  let calcDistance (node:Node) goalNode =
-    
+  let calcDistance (node:Node) goalNode =    
     let x = (node.Identity.X - goalNode.Identity.X) ** 2.0
     let y = ( node.Identity.Y - goalNode.Identity.Y) ** 2.0
     sqrt( x + y )
 
   let search startNode goal: Node array =
     let frontier = createInitialFrontier startNode 
-    let explored = new HashSet<Node>()
+    let explored = new HashSet<Node>() //mutable
     if (frontier.Count = 0) then 
-        printfn "if count %A" frontier.Count
+        printfn "frontier count %A" frontier.Count
         [||]
     else  
       while frontier.Count > 0 do      

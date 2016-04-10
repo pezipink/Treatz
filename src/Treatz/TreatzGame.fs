@@ -101,10 +101,10 @@ type PlayerData =
 
 type DragonData =
     | Nothing    
-    | Seek of Vector2 list
+    | FollowPath of Vector2 array
     | Wander of BehaviourState
-    | PathFind of Node
-    | Temporary of treat : Vector2 // no really, this is going
+    | PathFind of Vector2
+//    | Temporary of treat : Vector2 // no really, this is going
 
 
 type MikishidaKinds =
