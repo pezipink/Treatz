@@ -118,7 +118,7 @@
               
               match destinationNode, origin with
               | Some destination, Some origin ->
-                  let gridPath = [| yield! PathFinding.search origin destination; yield destination |]
+                  let gridPath = [| yield! PathFinding.search origin destination [state.Player1; state.Player2 ]; yield destination |]
                   {mikishida with kind = Dragon(FollowPath(gridPath |> Array.map(fun x -> x.Identity), treatLocation))}
               |  _ -> printfn "this should never happen, wtf"
                       {mikishida with kind = Dragon(Wander wanderDefault)}

@@ -28,7 +28,16 @@
     let y = double( node.Identity.Y - goalNode.Identity.Y) 
     sqrt( x * x + y * y) |> int
 
-  let search startNode goal: Node array =
+  let calculatePlayerBasedCost baseNode (players: Mikishida list) =
+    let calc baseV p =  
+      let x = double (baseV.X - p.X)
+      let y = double( baseV.Y - p.Y) 
+      sqrt( x * x + y * y) |> int
+    baseNode.Cost + (players 
+                      |> List.map(fun x -> calc baseNode.Identity {NodeVector.X = x.location.GridX; Y= x.location.GridY}) 
+                      |> List.sum )
+  
+  let search startNode goal (playersNodes: Mikishida list): Node array =
     let frontier = createInitialFrontier startNode 
     let explored = new HashSet<Node>() //mutable
     if (frontier.Count = 0) then 
@@ -37,7 +46,7 @@
       while frontier.Count > 0 do      
         let currentNode = 
             frontier.ToArray() 
-            |> Seq.minBy(fun x -> 1 + calcDistance x goal + x.Cost)
+            |> Seq.minBy(fun x -> 1 + calcDistance x goal + (calculatePlayerBasedCost x playersNodes))
         frontier.Remove(currentNode)  |> ignore
         if (currentNode.Identity <> goal.Identity) then
           explored.Add(currentNode) |> ignore 
