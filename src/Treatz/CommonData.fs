@@ -7,7 +7,6 @@ open QuadTree
 let screenWidth = 1024<px>
 let screenHeight = 768<px>
 
-
 let mapWidth = 64
 let mapHeight = 48
 let mapWidthf = 64.0
@@ -18,7 +17,7 @@ let cellHeight = 16
 let cellWidthf = 16.0
 let cellHeightf = 16.0
 
-let maxTreats = 250
+let maxTreats = 10
 let maxPlayerFoam = 20
 let foamFrames = 60 * 3  // 5 seconds
 let maxDragons = 20

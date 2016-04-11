@@ -26,7 +26,7 @@ type FastPoint(x: int, y: int) =
             if c <> 0 then c else
             compare lhs.Y rhs.Y
     
-    override p.GetHashCode() =
+    override __.GetHashCode() =
         x + 65536 * y
 
     member __.GridX = x / cellWidth
@@ -61,7 +61,9 @@ type Vector2 = {
     let x =  if point.X > max.X then max.X else point.X
     let y =  if point.Y > max.Y then max.Y else point.Y
     {X=x; Y=y}
-    
+  override this.ToString() =
+     this.X.ToString() + " " + this.Y.ToString()
+
 
 
 type BehaviourState  = {
@@ -72,6 +74,33 @@ type BehaviourState  = {
   WanderingAngle: double
   SteeringDirection : Vector2
   }
+type NodeVector = 
+  {X: int; Y : int}
+  
+  static member (+) (pointa , pointb) = 
+    {X = pointa.X + pointb.X ; Y= pointa.Y + pointb.Y}
+  static member (-) (pointa , pointb) = 
+    {X = pointa.X - pointb.X ; Y= pointa.Y - pointb.Y}
+
+[<CustomComparison; CustomEquality>]
+type Node = 
+  {        
+    ///Grid coordinates
+    Identity: NodeVector
+    mutable Cost : int 
+    mutable Neighbours : Node seq       
+  }
+  override this.Equals(yobj) =
+      match yobj with
+      | :? Node as y -> (this.Identity= y.Identity)
+      | _ -> false
+
+  override x.GetHashCode() = hash x.Identity
+  interface System.IComparable with
+    member x.CompareTo yobj =
+        match yobj with
+        | :? Node as y -> compare x.Identity y.Identity
+        | _ -> invalidArg "yobj" "canno"
 
 type PlayerData = 
     {mutable DragonsCaught : int 
@@ -80,10 +109,9 @@ type PlayerData =
     with static member Blank = {DragonsCaught = 0; FoamDuration = 0; Foam = Map.empty}
 
 type DragonData =
-    | Nothing    
-    | Seek of Vector2 list
+    | FollowPath of NodeVector array
     | Wander of BehaviourState
-    | Temporary of treat : Vector2 // no really, this is going
+    | PathFind of Vector2
 
 
 type MikishidaKinds =
@@ -98,10 +126,10 @@ type MikishidaKinds =
     with 
     member this.defaultSpeed =
         match this with
-        | Player _ -> 3.0
-        | Dragon _  -> 3.5
+        | Player _ -> 50.0
+        | Dragon _  -> 70.
         | _ -> 0.9
-    
+
         
 
 type Mikishida = 
@@ -137,7 +165,7 @@ type Mikishida =
 
     member this.ManhattanDistance(other:Mikishida) =
         abs(other.location.X - this.location.X) + abs(other.location.Y - this.location.Y)
-    
+
     member this.AsPlayerData =
         match this.kind with
         | Player data -> data
@@ -153,7 +181,10 @@ type TreatzState =
       Controllers : Set<ControllerButton> * Set<ControllerButton>
       Sprites : Map<string, SDLTexture.Texture>
       TurkeyAngle : float
-      Chaos : System.Random
+      Chaos : System.Random      
+      PathFindingData : Node seq option
+      LastFrameTime: uint32
+      DeltaTicks: uint32
       }
     with member this.findMikishidas pred bounds =
             this.Mikishidas |> List.filter(fun m -> pred m && overlapq(m.AsQuadBounds, bounds))
