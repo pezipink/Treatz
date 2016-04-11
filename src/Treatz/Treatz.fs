@@ -413,9 +413,9 @@ let render(context:RenderingContext) (state:TreatzState) =
     context.Renderer |> copy state.Sprites.["juanita"]   (Some src) (Some state.Player2.AsRect) |> ignore
 
 
-    let t = state.Sprites.["turkey"]  
+    let turkeyTexture = state.Sprites.["turkey"]  
     let dst = { X = 504<px>; Y = 350<px>; Width=50<px>; Height=50<px> } : SDLGeometry.Rectangle    
-    context.Renderer  |> copyEx t None (Some dst) state.TurkeyAngle 0 |> ignore
+    context.Renderer  |> copyEx turkeyTexture None (Some dst) state.TurkeyAngle 0 |> ignore
     
     context.Renderer |> SDLRender.present 
 

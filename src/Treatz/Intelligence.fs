@@ -35,12 +35,12 @@
           match mikishida.kind with                      
 
           | Dragon(Wander behaviourState)  ->      
-//              printfn "wander %A" behaviourState
+
               let newBehaviourState = wander state.Chaos mikishida behaviourState 
-              let v =    mikishida.kind.defaultSpeed * newBehaviourState.SteeringDirection.normalize       
+              let velocity = mikishida.kind.defaultSpeed * newBehaviourState.SteeringDirection.normalize       
               match findClosestTreat mikishida with
-              | Some treat -> {mikishida with kind = Dragon(PathFind treat  ); }
-              | _ -> {mikishida with kind = Dragon(Wander newBehaviourState); velocity = v}
+              | Some treat -> {mikishida with kind = Dragon(PathFind treat); }
+              | _ -> {mikishida with kind = Dragon(Wander newBehaviourState); velocity = velocity}
 
           | Dragon(FollowPath(pathTo, dest))  ->   
               // if treat has gone, do something else              
@@ -104,12 +104,19 @@
               
           | Dragon(PathFind( treatLocation)) ->              
               
-              let getNode loc =
-                Map.tryFind loc state.PathFindingData
-
-              let destination = getNode (treatLocation.GridX,treatLocation.GridY) 
+              let rec getNode loc =
+                let r = Map.tryFind loc state.PathFindingData                    
+                match r with
+                | Some node-> Some(node)
+                | None  -> 
+                      let x, y = loc
+                      let x', y' = state.Chaos.Next(-1,2), state.Chaos.Next(-1,2)
+                      getNode (x+x', y+y') 
+                
+              let destinationNode = getNode (treatLocation.GridX,treatLocation.GridY) 
               let origin = getNode(mikishida.location.GridX,mikishida.location.GridY) 
-              match destination, origin with
+              
+              match destinationNode, origin with
               | Some destination, Some origin ->
                   let gridPath = [| yield! PathFinding.search origin destination; yield destination |]
                   {mikishida with kind = Dragon(FollowPath(gridPath |> Array.map(fun x -> x.Identity), treatLocation))}
