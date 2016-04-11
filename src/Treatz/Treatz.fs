@@ -482,8 +482,8 @@ let main() =
     
     let context =  { Renderer = mainRenderer; Texture = mainTexture; Surface = surface; LastFrameTick = getTicks() }
     let state = 
-        {Player1 = {kind = Player(PlayerData.Blank); location = {X=10.; Y=10.}; velocity = {X=0.0; Y=0.0}}
-         Player2 = {kind = Player(PlayerData.Blank); location = {X=20.; Y=20.}; velocity = {X=0.0; Y=0.0}}
+        {Player1 = {kind = Player(PlayerData.Blank); location = {X=494.; Y=330.}; velocity = {X=0.0; Y=0.0}}
+         Player2 = {kind = Player(PlayerData.Blank); location = {X=564.; Y=330.}; velocity = {X=0.0; Y=0.0}}
          Mikishidas = []
          UnpassableLookup = Set.empty
          TreatsLookup = Set.empty
