@@ -41,48 +41,55 @@
                         let yd = treat.location.Y - mikishida.location.Y
                         let xd = if xd > 0.0 then mikishida.kind.defaultSpeed else -mikishida.kind.defaultSpeed
                         let yd = if yd > 0.0 then mikishida.kind.defaultSpeed else -mikishida.kind.defaultSpeed
-                        {mikishida with kind = Dragon(Wander(wanderDefault )); velocity = {X=xd;Y=yd}}
+                        {mikishida with kind = Dragon(PathFind treat.location); velocity = {X=xd;Y=yd}}
                     | _ -> System.Diagnostics.Debugger.Break(); mikishida
           | Dragon(Wander steering)  ->      
               printfn "wander %A" steering
               let w = wander state.Chaos mikishida steering 
               let v = (getTicks() |> toSeconds |> double) * ( mikishida.kind.defaultSpeed * w.SteeringDirection.normalize )                      
-              {mikishida with kind = Dragon(Nothing );velocity = v}
+              {mikishida with kind = Dragon(Nothing);velocity = v}
 
           | Dragon(FollowPath pathTo)  ->              
               printfn "Follow Path %A" pathTo
                          
               if pathTo.Length > 0 then
-                {mikishida with location = Array.head pathTo ; kind = Dragon(FollowPath (pathTo |> Array.tail)) }
+                let d = {Vector2.X = double (Array.head pathTo).X ; Y = double (Array.head pathTo).Y}
+                {mikishida with location = d ; kind = Dragon(FollowPath (pathTo |> Array.tail)) }
               else
                 {mikishida with kind = Dragon(Wander wanderDefault)}              
           | Dragon(PathFind( treatLocation)) ->               
               printfn "In pathfinding %A" treatLocation
-              
+              let findOrigin (location: Vector2) nodes =
+                nodes 
+                    |> Seq.tryFind(fun n -> 
+                              let x = location.GridX
+                              let y = location.GridY 
+                              {X= x; Y= y} = n.Identity) 
+
               let path = state.PathFindingData 
                           |> Option.map(
                               fun nodes ->
                                 let destination = nodes 
                                                   |> Seq.tryFind(fun n -> 
-                                                      {X = double treatLocation.GridX; Y = double treatLocation.GridY} = n.Identity) 
-                                let origin = nodes 
-                                              |> Seq.tryFind(fun n -> {X = double mikishida.location.GridX; Y = double mikishida.location.GridY} = n.Identity) 
-                                              |> Option.map(fun x -> x.Neighbours <- PathFinding.getNeighbours nodes x
-                                                                     x)
-                                match origin, destination with
-                                | Some o, Some d -> PathFinding.search o d
+                                                      {NodeVector.X = treatLocation.GridX; 
+                                                      Y = treatLocation.GridY} = n.Identity) 
+                                let origin = 
+                                    let mikiLoc = findOrigin mikishida.location nodes                                    
+                                    match mikiLoc with
+                                    | Some l -> l
+                                    | None -> Seq.head nodes
+
+//                                origin.Neighbours <- PathFinding.getNeighbours nodes origin                              
+                                match destination with
+                                | Some d -> PathFinding.search origin d
                                 | _ -> [||])
-              let pathVector : Vector2 [] = 
+              let gridPath  = 
                 match path with
                 | Some p -> p |> Array.map(fun x-> x.Identity )
                 | _ -> [||]
-              printfn "The path is %A"  pathVector
-              {mikishida with kind = Dragon(FollowPath(pathVector ))}
-              
-                    
+              printfn "The path is %A"  gridPath
+              {mikishida with kind = Dragon(FollowPath(gridPath ))}
           
           | _ -> mikishida
       printfn "ticks? %A"  (getTicks().ToString())
       { state with Mikishidas = List.map update state.Mikishidas }
-      
-

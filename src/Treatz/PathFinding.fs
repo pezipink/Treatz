@@ -5,15 +5,15 @@
   open TreatzGame
 
   let getNeighbours allNodes node=            
-    let x = node.Identity.X
-    let y = node.Identity.Y
-    let identites = [(1.,0.); (-1., 0.); (0., -1.); (0., 1.)]
-                    |> List.map(fun (o,r) -> 
-                        {X= (x + o); Y= (y + r)} )
-    allNodes
-    |> Seq.filter(fun node ->                                           
-          identites 
-          |> List.contains(node.Identity))
+      let x = node.Identity.X
+      let y = node.Identity.Y
+      let identites = [(1,0); (-1, 0); (0, -1); (0, 1)]
+                      |> List.map(fun (o,r) -> 
+                          {X= (x + o); Y= (y + r)} )
+      allNodes
+      |> Seq.filter(fun node ->                                           
+            identites 
+            |> List.contains(node.Identity))
 
   let createInitialFrontier state : HashSet<Node> =
     let q = HashSet<Node>()
@@ -23,11 +23,11 @@
   let expandNode (node:Node) = 
     node.Neighbours 
 
-    // not the most efficient way to calc distance but ...
+  // not the most efficient way to calc distance but ...
   let calcDistance (node:Node) goalNode =    
-    let x = (node.Identity.X - goalNode.Identity.X) ** 2.0
-    let y = ( node.Identity.Y - goalNode.Identity.Y) ** 2.0
-    sqrt( x + y )
+    let x = double (node.Identity.X - goalNode.Identity.X)
+    let y = double( node.Identity.Y - goalNode.Identity.Y) 
+    sqrt( x * x + y * y) |> int
 
   let search startNode goal: Node array =
     let frontier = createInitialFrontier startNode 
@@ -39,7 +39,7 @@
       while frontier.Count > 0 do      
         let currentNode = 
             frontier.ToArray() 
-            |> Seq.minBy(fun x -> 1.0 + calcDistance x goal)
+            |> Seq.minBy(fun x -> 1 + calcDistance x goal)
         frontier.Remove(currentNode)  |> printfn "Removed from frontier %A "    
         if (currentNode.Identity = goal.Identity) then
           printfn "explored and goal match %A" currentNode.Identity

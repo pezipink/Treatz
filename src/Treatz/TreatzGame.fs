@@ -74,17 +74,25 @@ type BehaviourState  = {
   WanderingAngle: double
   SteeringDirection : Vector2
   }
+type NodeVector = 
+  {X: int; Y : int}
+  
+  static member (+) (pointa , pointb) = 
+    {X = pointa.X + pointb.X ; Y= pointa.Y + pointb.Y}
+  static member (-) (pointa , pointb) = 
+    {X = pointa.X - pointb.X ; Y= pointa.Y - pointb.Y}
 
 [<CustomComparison; CustomEquality>]
 type Node = 
   {        
-    Identity: Vector2
+    ///Grid coordinates
+    Identity: NodeVector
     mutable Cost : int 
     mutable Neighbours : Node seq       
   }
-  override x.Equals(yobj) =
+  override this.Equals(yobj) =
       match yobj with
-      | :? Node as y -> (x.Identity= y.Identity)
+      | :? Node as y -> (this.Identity= y.Identity)
       | _ -> false
 
   override x.GetHashCode() = hash x.Identity
@@ -102,7 +110,7 @@ type PlayerData =
 
 type DragonData =
     | Nothing    
-    | FollowPath of Vector2 array
+    | FollowPath of NodeVector array
     | Wander of BehaviourState
     | PathFind of Vector2
 //    | Temporary of treat : Vector2 // no really, this is going

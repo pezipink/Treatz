@@ -112,7 +112,7 @@ let prepareLevel state =
             else aux (f p::acc) (i+1) (Set.add p s)
         aux [] 0 s 
 
-    let toPoint x = {X = double(fst x) * cellWidthf; Y=double(snd x) * cellHeightf}
+    let toPoint x = {Vector2.X = double(fst x) * cellWidthf; Y=double(snd x) * cellHeightf}
 
     let dragons, blocked = gen maxDragons (fun p -> {kind = MikishidaKinds.Dragon Nothing; location = toPoint p; velocity = {X=0.0;Y=0.0}} ) mountains
     let treatz, _  = gen maxTreats (fun p -> {kind = MikishidaKinds.Treat; location = toPoint p; velocity = {X=0.0;Y=0.0}} ) blocked
@@ -125,7 +125,7 @@ let prepareLevel state =
     let graphForPathfinding obstacles =
         let getIdentity x y = {X= x; Y = y}
         let getCost point obstacles =
-          match obstacles |>List.tryFind(fun x -> x.location = point) with
+          match obstacles |>List.tryFind(fun x -> {NodeVector.X = x.location.GridX; Y= x.location.GridY }= point) with
           | Some _ -> Int32.MaxValue
           | None -> 1
          
@@ -133,7 +133,7 @@ let prepareLevel state =
           let mutable allNodes : Node list = []
           for i = 0 to mapHeight - 1 do 
             for j = 0 to mapWidth - 1 do 
-              let id = getIdentity (double i) (double j)
+              let id = getIdentity i j
               let newNode = {
                   Node.Identity= id ;
                   Node.Neighbours = Seq.empty; 
@@ -141,17 +141,15 @@ let prepareLevel state =
               allNodes <- newNode :: allNodes
               
           List.toSeq allNodes
-        createGraph()    
+
         // Maybe here we can do a thing where instead of checking each grid
         //   you can have a list of non existing nodes and compare against that?
         // this is just a first pass                
-//        let graph = createGraph()     
-//        graph
-//        |> Seq.iter(fun node ->                
-//                          let nei = (getNeighbours node graph)
-//                          printfn "neighbours %A" nei
-//                          node.Neighbours <- nei)
-//        graph
+        let graph = createGraph()     
+        graph
+        |> Seq.iter(fun node ->                
+                          node.Neighbours <-(PathFinding.getNeighbours graph node))
+        graph
 
     { state with 
           Mikishidas = dragons @ treatz @ mountains'; 
@@ -167,7 +165,7 @@ let miscUpdates state =
     
     // maintain max amount of treats and treat lookup
     let (treats, lookups) =
-        let toPoint x = {X = double(fst x) * cellWidthf; Y=double(snd x) * cellHeightf}
+        let toPoint x = {Vector2.X = double(fst x) * cellWidthf; Y=double(snd x) * cellHeightf}
         let rec aux treats lookups =
             if Set.count lookups = maxTreats then (treats,lookups) else
             let p = randomGridLocation state.Chaos

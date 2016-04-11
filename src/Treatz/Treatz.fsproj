@@ -50,7 +50,6 @@
     <None Include="App.config">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <None Include="Script.fsx" />
     <None Include="paket.references" />
     <None Include="paket.template" />
     <Compile Include="CommonData.fs" />
