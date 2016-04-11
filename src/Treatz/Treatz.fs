@@ -205,8 +205,8 @@ let miscUpdates state =
                 elif Map.containsKey m.location.Grid state.Player2.AsPlayerData.Foam then true
                 else false 
             | _ -> true )   
-    let delta =   getTicks() - state.LastFrameTime
-    { state with TurkeyAngle = angle; TreatsLookup = lookups; Mikishidas =  mikis @ treats; LastFrameTime = getTicks(); DeltaTicks = delta}
+    
+    { state with TurkeyAngle = angle; TreatsLookup = lookups; Mikishidas =  mikis @ treats; LastFrameTime = getTicks()}
 
 let tryDropFoam player =
     match player.kind with
@@ -493,8 +493,7 @@ let main() =
          TurkeyAngle = 0.0
          Chaos = System.Random(System.DateTime.Now.Millisecond)
          PathFindingData = Map.empty
-         LastFrameTime = getTicks()
-         DeltaTicks = uint32 0
+         LastFrameTime = getTicks()         
          } |> prepareLevel
 
     eventPump (render context) handleEvent update state

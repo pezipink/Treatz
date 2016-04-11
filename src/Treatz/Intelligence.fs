@@ -91,10 +91,10 @@
                                 else accelX false
 //                            else 0.0
                         let yd = 
-//                            if abs(yd) > mikishida.kind.defaultSpeed / 2.0 then 
+
                                 if yd > 0.0 then accelY true
                                 else accelY false
-//                            else 0.0
+
                         if pathTo.Length > 1 then
                             { mikishida with velocity = {X = xd; Y = yd} ; (*kind = Dragon(PathFind {X=fst destinationCentre; Y=snd destinationCentre})*)}
                         else
@@ -102,8 +102,7 @@
                 
                 else {mikishida with kind = Dragon(Wander wanderDefault); }              
               
-          | Dragon(PathFind( treatLocation)) ->               
-//              printfn "In pathfinding %A" treatLocation
+          | Dragon(PathFind( treatLocation)) ->              
               
               let getNode loc =
                 Map.tryFind loc state.PathFindingData
@@ -118,5 +117,5 @@
                       {mikishida with kind = Dragon(Wander wanderDefault)}
           
           | _ -> mikishida
-//      printfn "ticks? %A"  (getTicks().ToString())
+
       { state with Mikishidas = List.map update state.Mikishidas }

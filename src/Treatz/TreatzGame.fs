@@ -6,7 +6,6 @@ open SDLGeometry
 open SDLKeyboard
 open SDLGameController
 
-
 [<Struct>]
 [<CustomEquality>]
 [<CustomComparison>]
@@ -64,8 +63,6 @@ type Vector2 = {
   override this.ToString() =
      this.X.ToString() + " " + this.Y.ToString()
 
-
-
 type BehaviourState  = {
   CircleRadius : double
   CircleDistance : double
@@ -74,6 +71,7 @@ type BehaviourState  = {
   WanderingAngle: double
   SteeringDirection : Vector2
   }
+
 type NodeVector = 
   {X: int; Y : int}
   
@@ -113,7 +111,6 @@ type DragonData =
     | Wander of BehaviourState
     | PathFind of Vector2
 
-
 type MikishidaKinds =
     | Player of PlayerData
     | Dragon of DragonData
@@ -130,17 +127,13 @@ type MikishidaKinds =
         | Dragon _  -> 5.
         | _ -> 0.9
 
-        
-
 type Mikishida = 
     { kind : MikishidaKinds; location : Vector2; velocity : Vector2 }
     with 
     member this.Size =
         match this.kind with
-        // presently everything must be at most the size of a cell
+        // Everything must be at most the size of a cell
         | _ -> cellWidth * 1<px>,cellHeight * 1<px>
-//        | Treat -> 5<px>, 5<px>
-//        | _ -> 5<px>, 5<px>
 
     member this.AsRect = 
         let w, h = this.Size
@@ -183,8 +176,7 @@ type TreatzState =
       TurkeyAngle : float
       Chaos : System.Random      
       PathFindingData : Map<int*int,Node>
-      LastFrameTime: uint32
-      DeltaTicks: uint32
+      LastFrameTime: uint32      
       }
     with 
         member this.findMikishidas pred bounds =
