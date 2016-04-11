@@ -109,7 +109,7 @@ type PlayerData =
     with static member Blank = {DragonsCaught = 0; FoamDuration = 0; Foam = Map.empty}
 
 type DragonData =
-    | FollowPath of NodeVector array
+    | FollowPath of NodeVector array * Vector2
     | Wander of BehaviourState
     | PathFind of Vector2
 
@@ -126,8 +126,8 @@ type MikishidaKinds =
     with 
     member this.defaultSpeed =
         match this with
-        | Player _ -> 50.0
-        | Dragon _  -> 70.
+        | Player _ -> 2.0
+        | Dragon _  -> 5.
         | _ -> 0.9
 
         
@@ -182,10 +182,17 @@ type TreatzState =
       Sprites : Map<string, SDLTexture.Texture>
       TurkeyAngle : float
       Chaos : System.Random      
-      PathFindingData : Node seq option
+      PathFindingData : Map<int*int,Node>
       LastFrameTime: uint32
       DeltaTicks: uint32
       }
-    with member this.findMikishidas pred bounds =
+    with 
+        member this.findMikishidas pred bounds =
             this.Mikishidas |> List.filter(fun m -> pred m && overlapq(m.AsQuadBounds, bounds))
-         
+        member this.IsCellOutofbounds (x,y) = 
+            (x < 0.0 || x > mapWidthf * cellWidthf - cellWidthf ||   y < 0.0 || y > mapHeightf * cellHeightf - cellHeightf) 
+        member this.IsCellUnpassable (x,y) = 
+            let toCell (x,y) = (int(x/cellWidthf)),(int(y/cellHeightf))
+            Set.contains (toCell (x, y)) this.UnpassableLookup
+        
+            

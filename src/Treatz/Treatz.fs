@@ -23,32 +23,40 @@ type RenderingContext =
      Surface:SDLSurface.Surface;
      mutable LastFrameTick : uint32 }
 
-let updatePositions state = 
+let updatePositions (state:TreatzState) = 
     let updateMikishidas mikishida = 
         // the locaiton is measured from the top left corner of the bounding box (or map cell)
         // at any point a sprite could be in up to four cells at once (one for each corner)
         // and check the target is valid, else snap to the nearest grid boundary
       
-        let tempLoc = mikishida.location + (state.DeltaTicks |> toSeconds ) *  mikishida.velocity  
-        let toCell (x,y) = (int(x/cellWidthf)),(int(y/cellHeightf))
+        let tempLoc = mikishida.location + (*(state.DeltaTicks |> toSeconds ) * *)  mikishida.velocity
+        match mikishida.kind with 
+        | Dragon _ -> 
+            
+            if Map.containsKey tempLoc.Grid state.Player1.AsPlayerData.Foam then Some { mikishida with kind = Dragon(Wander(Intelligence.wanderDefault)) }
+            elif Map.containsKey tempLoc.Grid state.Player2.AsPlayerData.Foam then Some { mikishida with kind = Dragon(Wander(Intelligence.wanderDefault)) }
+            else None
+        | _ -> None
+        |> function
+           | None ->
+                let newX = 
+                    if mikishida.velocity.X > 0.0 && (state.IsCellUnpassable(tempLoc.X + cellWidthf, mikishida.location.Y) || state.IsCellOutofbounds(tempLoc.X + cellWidthf, mikishida.location.Y)) then
+                        tempLoc.GridX * cellWidth |> double
+                    elif mikishida.velocity.X < 0.0 && (state.IsCellUnpassable(tempLoc.X,mikishida.location.Y)  ||state.IsCellOutofbounds(tempLoc.X,mikishida.location.Y) ) then
+                        mikishida.location.GridX * cellWidth |> double
+                    else
+                        tempLoc.X
         
-        let newX = 
-            if mikishida.velocity.X > 0.0 && Set.contains (toCell (tempLoc.X + cellWidthf, mikishida.location.Y)) state.UnpassableLookup then
-                tempLoc.GridX * cellWidth |> double
-            elif mikishida.velocity.X < 0.0 && Set.contains (toCell (tempLoc.X,mikishida.location.Y) ) state.UnpassableLookup then
-                mikishida.location.GridX * cellWidth |> double
-            else
-                tempLoc.X
-        
-        let newY = 
-            if mikishida.velocity.Y > 0.0 && Set.contains (toCell (mikishida.location.X, tempLoc.Y + cellHeightf)) state.UnpassableLookup then
-                tempLoc.GridY * cellHeight |> double
-            elif mikishida.velocity.Y < 0.0 && Set.contains (toCell (mikishida.location.X,tempLoc.Y) ) state.UnpassableLookup then
-                mikishida.location.GridY * cellHeight |> double
-            else
-                tempLoc.Y     
+                let newY = 
+                    if mikishida.velocity.Y > 0.0 && (state.IsCellUnpassable(mikishida.location.X, tempLoc.Y + cellHeightf) || state.IsCellOutofbounds(mikishida.location.X, tempLoc.Y + cellHeightf)) then
+                        tempLoc.GridY * cellHeight |> double
+                    elif mikishida.velocity.Y < 0.0 && (state.IsCellUnpassable(mikishida.location.X,tempLoc.Y)  || state.IsCellOutofbounds(mikishida.location.X,tempLoc.Y)) then
+                        mikishida.location.GridY * cellHeight |> double
+                    else
+                        tempLoc.Y     
 
-        { mikishida with location = {X = newX; Y = newY } }
+                { mikishida with location = {X = newX; Y = newY } }
+            | Some state -> state
     { 
       state with
         Player1 = updateMikishidas state.Player1
@@ -87,8 +95,9 @@ let collisionDetection state =
     let (treats,juans) = List.fold(fun acc juan -> update acc juan) (Set.empty,[]) state.Mikishidas
     
     let mikis = List.filter (fun t -> Set.contains t treats |> not) juans  
-    let lookup = Set.difference state.TreatsLookup (treats|>Set.map(fun t->(int t.location.X, int t.location.Y)))  
-
+    let lookup = Set.difference state.TreatsLookup (treats|>Set.map(fun t->(t.location.GridX, t.location.GridY)))  
+//    maxTreats <- maxTreats - treats.Count
+//    if maxTreats < 0 then maxTreats <- 0
     {state with Mikishidas = mikis; TreatsLookup = lookup}
 
 
@@ -118,7 +127,7 @@ let prepareLevel state =
 
     let dragons, blocked = gen maxDragons (fun p -> {kind = MikishidaKinds.Dragon( Wander Intelligence.wanderDefault) ; location = toPoint p; velocity = {X=0.0;Y=0.0}} ) mountains
     let treatz, _  = gen maxTreats (fun p -> {kind = MikishidaKinds.Treat; location = toPoint p; velocity = {X=0.0;Y=0.0}} ) blocked
-    let treatzSet = treatz |> List.map(fun t -> int t.location.X, int t.location.Y ) |> Set.ofList
+    let treatzSet = treatz |> List.map(fun t -> int t.location.GridX, int t.location.GridY ) |> Set.ofList
     let mountains' = mountains |> Set.map(fun p -> {kind = MikishidaKinds.Mountainountain; location = toPoint p; velocity = {X=0.0;Y=0.0}}) |> Set.toList
 
 
@@ -128,36 +137,37 @@ let prepareLevel state =
         let getIdentity x y = {X= x; Y = y}
         let getCost point obstacles =
           match obstacles |>List.tryFind(fun x -> {NodeVector.X = x.location.GridX; Y= x.location.GridY }= point) with
-          | Some _ -> Int32.MaxValue
+          | Some _ -> Int32.MaxValue 
           | None -> 1
          
         let createGraph() =
-          let mutable allNodes : Node list = []
-          for i = 0 to mapHeight - 1 do 
-            for j = 0 to mapWidth - 1 do 
-              let id = getIdentity i j
-              let newNode = {
-                  Node.Identity= id ;
-                  Node.Neighbours = Seq.empty; 
-                  Cost = getCost id obstacles} 
-              allNodes <- newNode :: allNodes
+          let allNodes = ResizeArray<(int*int)*Node>()
+          for y = 0 to mapHeight - 1 do 
+            for x = 0 to mapWidth - 1 do 
+              let id = getIdentity x y
+              let cost = getCost id obstacles
+              if cost < Int32.MaxValue then
+                  let newNode = {
+                      Node.Identity= id ;
+                      Node.Neighbours = Seq.empty; 
+                      Cost = getCost id obstacles} 
+                  allNodes.Add((x,y),newNode)
               
-          List.toSeq allNodes
+          Map.ofSeq allNodes
 
         // Maybe here we can do a thing where instead of checking each grid
         //   you can have a list of non existing nodes and compare against that?
         // this is just a first pass                
         let graph = createGraph()     
         graph
-        |> Seq.iter(fun node ->                
-                          node.Neighbours <-(PathFinding.getNeighbours graph node))
+        |> Map.iter(fun _ node -> node.Neighbours <-(PathFinding.getNeighbours graph node))
         graph
 
     { state with 
           Mikishidas = dragons @ treatz @ mountains'; 
           UnpassableLookup = mountains; 
           TreatsLookup = treatzSet 
-          PathFindingData = Some(graphForPathfinding mountains')}
+          PathFindingData = graphForPathfinding mountains'}
 
 let miscUpdates state = 
     // 60 fps, rotate once every 2 seconds - 120 steps =
@@ -171,12 +181,12 @@ let miscUpdates state =
         let rec aux treats lookups =
             if Set.count lookups = maxTreats then (treats,lookups) else
             let p = randomGridLocation state.Chaos
-            if Set.contains p lookups || Set.contains p state.UnpassableLookup then aux treats lookups
+            if Set.contains p lookups || Set.contains p state.UnpassableLookup || state.IsCellOutofbounds(float(fst p), float(snd p)) then aux treats lookups
             else
                 let t = {kind = MikishidaKinds.Treat; location = toPoint p; velocity = {X=0.0;Y=0.0}}
                 aux (t::treats) (Set.add p lookups)
         aux [] state.TreatsLookup
-        
+    
     let updateDragonFoam (foam:Map<int*int,int>) =
         foam
         |> Map.map(fun _ v -> v + 1)
@@ -482,7 +492,7 @@ let main() =
          Controllers = Set.empty, Set.empty
          TurkeyAngle = 0.0
          Chaos = System.Random(System.DateTime.Now.Millisecond)
-         PathFindingData = None
+         PathFindingData = Map.empty
          LastFrameTime = getTicks()
          DeltaTicks = uint32 0
          } |> prepareLevel

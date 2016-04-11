@@ -10,10 +10,9 @@
       let identites = [(1,0); (-1, 0); (0, -1); (0, 1)]
                       |> List.map(fun (o,r) -> 
                           {X= (x + o); Y= (y + r)} )
-      allNodes
-      |> Seq.filter(fun node ->                                           
-            identites 
-            |> List.contains(node.Identity))
+      [|for i in identites do
+        if Map.containsKey (i.X, i.Y) allNodes then
+            yield allNodes.[(i.X, i.Y)] |]
 
   let createInitialFrontier state : HashSet<Node> =
     let q = HashSet<Node>()
@@ -39,7 +38,7 @@
       while frontier.Count > 0 do      
         let currentNode = 
             frontier.ToArray() 
-            |> Seq.minBy(fun x -> 1 + calcDistance x goal)
+            |> Seq.minBy(fun x -> 1 + calcDistance x goal + x.Cost)
         frontier.Remove(currentNode)  |> ignore
         if (currentNode.Identity <> goal.Identity) then
           explored.Add(currentNode) |> ignore //printfn "Added to explored %A "    
