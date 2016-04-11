@@ -112,7 +112,6 @@ type DragonData =
     | FollowPath of NodeVector array
     | Wander of BehaviourState
     | PathFind of Vector2
-//    | Temporary of treat : Vector2 // no really, this is going
 
 
 type MikishidaKinds =

@@ -6,7 +6,7 @@
   open System
 
   let wanderDefault = { 
-                      BehaviourState.RateOfChangeOfDirection = 0.5; 
+                      BehaviourState.RateOfChangeOfDirection = 0.1; 
                       BehaviourState.CircleDistance = 1.00 ;  
                       BehaviourState.CircleRadius = 2.50 ; 
                       BehaviourState.WanderingAngle = 0.10; 
@@ -38,14 +38,14 @@
       let update mikishida =                    
           match mikishida.kind with                      
 
-          | Dragon(Wander steering)  ->      
-              printfn "wander %A" steering
-              let w = wander state.Chaos mikishida steering 
-              let v =    mikishida.kind.defaultSpeed * w.SteeringDirection.normalize       
+          | Dragon(Wander behaviourState)  ->      
+              printfn "wander %A" behaviourState
+              let newBehaviourState = wander state.Chaos mikishida behaviourState 
+              let v =    mikishida.kind.defaultSpeed * newBehaviourState.SteeringDirection.normalize       
               
               match findClosestTreat mikishida with
               | Some treat -> {mikishida with kind = Dragon(PathFind treat  );}
-              | _ -> {mikishida with kind = Dragon(Wander w); velocity = v}
+              | _ -> {mikishida with kind = Dragon(Wander newBehaviourState); velocity = v}
 
           | Dragon(FollowPath pathTo)  ->                           
               if pathTo.Length > 0 then
