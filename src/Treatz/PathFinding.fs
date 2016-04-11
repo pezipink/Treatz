@@ -33,23 +33,25 @@
     let frontier = createInitialFrontier startNode 
     let explored = new HashSet<Node>() //mutable
     if (frontier.Count = 0) then 
-        printfn "frontier count %A" frontier.Count
+//        printfn "frontier count %A" frontier.Count
         [||]
     else  
       while frontier.Count > 0 do      
         let currentNode = 
             frontier.ToArray() 
             |> Seq.minBy(fun x -> 1 + calcDistance x goal)
-        frontier.Remove(currentNode)  |> printfn "Removed from frontier %A "    
-        if (currentNode.Identity = goal.Identity) then
-          printfn "explored and goal match %A" currentNode.Identity
-        else
-          explored.Add(currentNode) |> printfn "Added to explored %A "    
+        frontier.Remove(currentNode)  |> ignore
+        if (currentNode.Identity <> goal.Identity) then
+          explored.Add(currentNode) |> ignore //printfn "Added to explored %A "    
         
           (expandNode currentNode)
           |> Seq.iter(fun n -> 
-                if not( explored.Contains(n)) then frontier.Add(n) |> printfn "Added to frontier %A" )
-          printfn "final %A" currentNode.Identity
+                if not( explored.Contains(n)) then frontier.Add(n) |> ignore )
+          //printfn "final %A" currentNode.Identity
+        else
+          frontier.Clear()  //yuck
+          //explored.ToArray()
+          
 
       explored.ToArray()
 

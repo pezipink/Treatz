@@ -109,7 +109,6 @@ type PlayerData =
     with static member Blank = {DragonsCaught = 0; FoamDuration = 0; Foam = Map.empty}
 
 type DragonData =
-    | Nothing    
     | FollowPath of NodeVector array
     | Wander of BehaviourState
     | PathFind of Vector2
@@ -128,8 +127,8 @@ type MikishidaKinds =
     with 
     member this.defaultSpeed =
         match this with
-        | Player _ -> 3.0
-        | Dragon _  -> 3.5
+        | Player _ -> 50.0
+        | Dragon _  -> 70.
         | _ -> 0.9
 
         
@@ -185,6 +184,8 @@ type TreatzState =
       TurkeyAngle : float
       Chaos : System.Random      
       PathFindingData : Node seq option
+      LastFrameTime: uint32
+      DeltaTicks: uint32
       }
     with member this.findMikishidas pred bounds =
             this.Mikishidas |> List.filter(fun m -> pred m && overlapq(m.AsQuadBounds, bounds))

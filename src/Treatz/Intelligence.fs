@@ -18,12 +18,8 @@
 //          state.Mikishidas
 //          |> List.filter(fun k -> match k.kind with Treat -> true | _ -> false)
 //          |> QuadTree.create (fun j -> j.AsQuadBounds) 5 5 screenQuadBounds
-      let toSeconds (ticks: uint32) = ticks / uint32 1000 
-
-      let update mikishida =                    
-          match mikishida.kind with                      
-          | Dragon(Nothing)  -> 
-            // if our dragon is doing nothing, see if we can find a nearby treat within 50 px
+      
+      let findClosestTreat (mikishida:Mikishida) =
             let clamp x = if x < 0 then 0 else x
             let r = mikishida.AsQuadBounds
             let bounds = {r with x = clamp r.x - 50; y = clamp r.y - 50; width = 100; height = 100; }
@@ -31,27 +27,27 @@
             state.findMikishidas(fun m -> match m.kind with Treat -> true | _ -> false) bounds
             |> function
                 | [] ->                 
-                    Console.WriteLine("No treats found, wander")      
-                    {mikishida with kind = Dragon(Wander wanderDefault)  }
+                    Console.WriteLine("No treats found, wander")     
+                    None
                 | treats -> // find the cloest treat and head towards it
                     let treat = List.minBy(mikishida.ManhattanDistance) treats
                     match treat.kind with 
-                    | Treat -> 
-                        let xd = treat.location.X - mikishida.location.X
-                        let yd = treat.location.Y - mikishida.location.Y
-                        let xd = if xd > 0.0 then mikishida.kind.defaultSpeed else -mikishida.kind.defaultSpeed
-                        let yd = if yd > 0.0 then mikishida.kind.defaultSpeed else -mikishida.kind.defaultSpeed
-                        {mikishida with kind = Dragon(PathFind treat.location); velocity = {X=xd;Y=yd}}
-                    | _ -> System.Diagnostics.Debugger.Break(); mikishida
+                    | Treat -> Some(treat.location)
+                    | _ -> None
+                        
+      let update mikishida =                    
+          match mikishida.kind with                      
+
           | Dragon(Wander steering)  ->      
               printfn "wander %A" steering
               let w = wander state.Chaos mikishida steering 
-              let v = (getTicks() |> toSeconds |> double) * ( mikishida.kind.defaultSpeed * w.SteeringDirection.normalize )                      
-              {mikishida with kind = Dragon(Nothing);velocity = v}
+              let v =    mikishida.kind.defaultSpeed * w.SteeringDirection.normalize       
+              
+              match findClosestTreat mikishida with
+              | Some treat -> {mikishida with kind = Dragon(PathFind treat  );}
+              | _ -> {mikishida with kind = Dragon(Wander w); velocity = v}
 
-          | Dragon(FollowPath pathTo)  ->              
-              printfn "Follow Path %A" pathTo
-                         
+          | Dragon(FollowPath pathTo)  ->                           
               if pathTo.Length > 0 then
                 let d = {Vector2.X = double (Array.head pathTo).X ; Y = double (Array.head pathTo).Y}
                 {mikishida with location = d ; kind = Dragon(FollowPath (pathTo |> Array.tail)) }

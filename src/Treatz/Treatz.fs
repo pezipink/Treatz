@@ -15,6 +15,8 @@ let fps = 60.0;
 let delay_time = 1000.0 / fps;
 let delay_timei = uint32 delay_time
 
+let toSeconds (ticks: uint32) = double ticks / 1000. 
+
 type RenderingContext =
     {Renderer:SDLRender.Renderer;
      Texture:SDLTexture.Texture;
@@ -22,12 +24,12 @@ type RenderingContext =
      mutable LastFrameTick : uint32 }
 
 let updatePositions state = 
-    let updateJuan mikishida = 
+    let updateMikishidas mikishida = 
         // the locaiton is measured from the top left corner of the bounding box (or map cell)
         // at any point a sprite could be in up to four cells at once (one for each corner)
         // and check the target is valid, else snap to the nearest grid boundary
       
-        let tempLoc = (mikishida.location + mikishida.velocity) 
+        let tempLoc = mikishida.location + (state.DeltaTicks |> toSeconds ) *  mikishida.velocity  
         let toCell (x,y) = (int(x/cellWidthf)),(int(y/cellHeightf))
         
         let newX = 
@@ -49,9 +51,9 @@ let updatePositions state =
         { mikishida with location = {X = newX; Y = newY } }
     { 
       state with
-        Player1 = updateJuan state.Player1
-        Player2 = updateJuan state.Player2
-        Mikishidas = List.map updateJuan state.Mikishidas        
+        Player1 = updateMikishidas state.Player1
+        Player2 = updateMikishidas state.Player2
+        Mikishidas = List.map updateMikishidas state.Mikishidas        
     }
 
 
@@ -114,7 +116,7 @@ let prepareLevel state =
 
     let toPoint x = {Vector2.X = double(fst x) * cellWidthf; Y=double(snd x) * cellHeightf}
 
-    let dragons, blocked = gen maxDragons (fun p -> {kind = MikishidaKinds.Dragon Nothing; location = toPoint p; velocity = {X=0.0;Y=0.0}} ) mountains
+    let dragons, blocked = gen maxDragons (fun p -> {kind = MikishidaKinds.Dragon( Wander Intelligence.wanderDefault) ; location = toPoint p; velocity = {X=0.0;Y=0.0}} ) mountains
     let treatz, _  = gen maxTreats (fun p -> {kind = MikishidaKinds.Treat; location = toPoint p; velocity = {X=0.0;Y=0.0}} ) blocked
     let treatzSet = treatz |> List.map(fun t -> int t.location.X, int t.location.Y ) |> Set.ofList
     let mountains' = mountains |> Set.map(fun p -> {kind = MikishidaKinds.Mountainountain; location = toPoint p; velocity = {X=0.0;Y=0.0}}) |> Set.toList
@@ -192,9 +194,9 @@ let miscUpdates state =
                 if Map.containsKey m.location.Grid state.Player1.AsPlayerData.Foam then true
                 elif Map.containsKey m.location.Grid state.Player2.AsPlayerData.Foam then true
                 else false 
-            | _ -> true )
-
-    { state with TurkeyAngle = angle; TreatsLookup = lookups; Mikishidas =  mikis @ treats }
+            | _ -> true )   
+    let delta =   getTicks() - state.LastFrameTime
+    { state with TurkeyAngle = angle; TreatsLookup = lookups; Mikishidas =  mikis @ treats; LastFrameTime = getTicks(); DeltaTicks = delta}
 
 let tryDropFoam player =
     match player.kind with
@@ -467,7 +469,7 @@ let main() =
          "foam", foamTex;
         ] |> Map.ofList
     
-
+    
     let context =  { Renderer = mainRenderer; Texture = mainTexture; Surface = surface; LastFrameTick = getTicks() }
     let state = 
         {Player1 = {kind = Player(PlayerData.Blank); location = {X=10.; Y=10.}; velocity = {X=0.0; Y=0.0}}
@@ -481,6 +483,8 @@ let main() =
          TurkeyAngle = 0.0
          Chaos = System.Random(System.DateTime.Now.Millisecond)
          PathFindingData = None
+         LastFrameTime = getTicks()
+         DeltaTicks = uint32 0
          } |> prepareLevel
 
     eventPump (render context) handleEvent update state
