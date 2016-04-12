@@ -5,13 +5,13 @@
 - transition : default
 
 ***
-![me](images/dragon.png)
+![dragons](images/dragon.jpg)
 
 
 ' thanks for coming to this talk
 
 ***
-- data-background : images/egg.jpg
+- data-background : images/blending.jpg
 - data-background-size : 1500px
 
 ## DRAGON TREATS: 
@@ -20,9 +20,27 @@
 ### F# Exchange - April 2016
 
 ***
-
-
 ## Dragons
+
+![](https://dragonicecreamtreats.files.wordpress.com/2014/08/dragon-master-e1407382525282.jpg)
+***
+## Treats
+
+
+***
+## What is in a game
+
+***
+
+## Why SDL
+
+***
+### Artificial stupidity
+
+## Path 
+
+***
+##
 
 ***
 
