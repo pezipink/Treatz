@@ -33,9 +33,9 @@
       let x = double (baseV.X - p.X)
       let y = double( baseV.Y - p.Y) 
       sqrt( x * x + y * y) |> int
-    baseNode.Cost + (players 
+    baseNode.Cost - (players 
                       |> List.map(fun x -> calc baseNode.Identity {NodeVector.X = x.location.GridX; Y= x.location.GridY}) 
-                      |> List.sum )
+                      |> List.sum ) /2
   
   let search startNode goal (playersNodes: Mikishida list): Node array =
     let frontier = createInitialFrontier startNode 

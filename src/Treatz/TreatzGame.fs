@@ -134,7 +134,7 @@ type Mikishida =
         match this.kind with
         // Everything must be at most the size of a cell
         | _ -> cellWidth * 1<px>,cellHeight * 1<px>
-
+  
     member this.AsRect = 
         let w, h = this.Size
         { 
