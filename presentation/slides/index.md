@@ -22,7 +22,8 @@
 ***
 ## Dragons
 
-![](https://dragonicecreamtreats.files.wordpress.com/2014/08/dragon-master-e1407382525282.jpg)
+![m](https://dragonicecreamtreats.files.wordpress.com/2014/08/dragon-master-e1407382525282.jpg)
+
 ***
 ## Treats
 
@@ -35,12 +36,27 @@
 ## Why SDL
 
 ***
-### Artificial stupidity
+## Artificial stupidity
 
-## Path 
+## Path finding 
+
+
 
 ***
-##
+## Steering Behaviours : Seek
+
+---
+
+## Wander
+
+***
+
+## Quad Trees
+
+
+***
+
+## some sort of conclusion?
 
 ***
 
