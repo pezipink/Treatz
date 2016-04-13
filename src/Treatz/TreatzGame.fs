@@ -100,6 +100,13 @@ type Node =
         | :? Node as y -> compare x.Identity y.Identity
         | _ -> invalidArg "yobj" "canno"
 
+type NodePath = {   
+   GridNode: Node
+   Parent : NodePath option
+   Child : NodePath option
+   mutable PathCost: double
+  }
+
 type PlayerData = 
     {mutable DragonsCaught : int 
      mutable FoamDuration : int
@@ -123,8 +130,8 @@ type MikishidaKinds =
     with 
     member this.defaultSpeed =
         match this with
-        | Player _ -> 2.0
-        | Dragon _  -> 5.
+        | Player _ -> 1.0
+        | Dragon _  -> 2.5
         | _ -> 0.9
 
 type Mikishida = 
@@ -177,6 +184,7 @@ type TreatzState =
       Chaos : System.Random      
       PathFindingData : Map<int*int,Node>
       LastFrameTime: uint32      
+      mutable DebugLines: SDLGeometry.Point array
       }
     with 
         member this.findMikishidas pred bounds =

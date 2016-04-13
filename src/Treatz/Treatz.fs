@@ -383,7 +383,11 @@ let render(context:RenderingContext) (state:TreatzState) =
             else // everything else is central grass
                 let src = { X = 17<px>; Y = 17<px>; Width=16<px>; Height=16<px> } : SDLGeometry.Rectangle                
                 context.Renderer |> copy t (Some src) (Some dst) |> ignore
-
+            
+    if state.DebugLines <> Array.empty then
+      context.Renderer |> SDLRender.setDrawColor (255uy, 255uy, 255uy, 255uy) |> ignore
+      context.Renderer |> SDLRender.drawLines(state.DebugLines) |> ignore
+              
 
     for j in state.Mikishidas |> List.sortBy(fun x -> match x.kind with Dragon _ -> 1 | Treat -> 2 | AntiDragonFoam -> 3 | _ -> 4) do
         match j.kind with
@@ -422,7 +426,7 @@ let render(context:RenderingContext) (state:TreatzState) =
     // delay to lock at 60fps (we could do extra work here)
     let frameTime = getTicks() - context.LastFrameTick
     if frameTime < delay_timei then delay(delay_timei - frameTime)
-    else printfn "%A" frameTime
+    else printfn "Frametime %A" frameTime
     context.LastFrameTick <- getTicks()    
 
 
@@ -493,7 +497,8 @@ let main() =
          TurkeyAngle = 0.0
          Chaos = System.Random(System.DateTime.Now.Millisecond)
          PathFindingData = Map.empty
-         LastFrameTime = getTicks()         
+         LastFrameTime = getTicks()
+         DebugLines = Array.empty
          } |> prepareLevel
 
     eventPump (render context) handleEvent update state
