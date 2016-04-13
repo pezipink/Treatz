@@ -277,45 +277,51 @@ let updateInputs state =
     let down2 = buttonPressed controller2
     let up1 x y = down1 x y |> not
     let up2 x y = down2 x y |> not
-    
-    // yuuuuck!
-    let moves = 
-        [
-            // WOULDN'T MUTABLE STATE BE MUCH EASIER HMM??? WHAT ARE WE GAINING FROM THIS ???
-            // TODO: Clamp bounds
-            // TODO: Check new space is occupiable (this is NOT collision detection!)
-            (down1 ControllerButton.BUTTON_DPAD_LEFT),  fun state -> { state with Player1 = { state.Player1 with velocity = {X = -state.Player1.kind.defaultSpeed; Y = state.Player1.velocity.Y } } } 
-            (down1 ControllerButton.BUTTON_DPAD_RIGHT), fun state -> { state with Player1 = { state.Player1 with velocity = {X = state.Player1.kind.defaultSpeed; Y = state.Player1.velocity.Y } } } 
-            (down1 ControllerButton.BUTTON_DPAD_UP),    fun state -> { state with Player1 = { state.Player1 with velocity = {X = state.Player1.velocity.X; Y = -state.Player1.kind.defaultSpeed } } } 
-            (down1 ControllerButton.BUTTON_DPAD_DOWN),  fun state -> { state with Player1 = { state.Player1 with velocity = {X = state.Player1.velocity.X; Y = state.Player1.kind.defaultSpeed } } } 
-            (down1 ControllerButton.BUTTON_A), 
-                fun state -> 
-                    match tryDropFoam state.Player1 with
-                    | Some(foam,player) -> {state with Player1 = player; Mikishidas = foam :: state.Mikishidas }
-                    | None -> state
-            // todo: clean this up!
-            (fun s-> up1 ControllerButton.BUTTON_DPAD_LEFT  s
-                  && up1 ControllerButton.BUTTON_DPAD_RIGHT s ), fun state -> { state with Player1 = { state.Player1 with velocity = {X =0.0; Y = state.Player1.velocity.Y }} } 
-            (fun s-> up1 ControllerButton.BUTTON_DPAD_UP  s
-                  && up1 ControllerButton.BUTTON_DPAD_DOWN s ), fun state -> { state with Player1 = { state.Player1 with velocity = {X=state.Player1.velocity.X;Y=0.} } } 
+    match state.GameState with
+    | TitleScreen -> 
+        if state.PressedKeys.Count > 0 || (fst state.Controllers).Count > 0 || (snd state.Controllers).Count > 0 then 
+            { state with GameState = Playing }
+        else 
+            state
+    | Playing -> 
+        // yuuuuck!
+        let moves = 
+            [
+                // WOULDN'T MUTABLE STATE BE MUCH EASIER HMM??? WHAT ARE WE GAINING FROM THIS ???
+                // TODO: Clamp bounds
+                // TODO: Check new space is occupiable (this is NOT collision detection!)
+                (down1 ControllerButton.BUTTON_DPAD_LEFT),  fun state -> { state with Player1 = { state.Player1 with velocity = {X = -state.Player1.kind.defaultSpeed; Y = state.Player1.velocity.Y } } } 
+                (down1 ControllerButton.BUTTON_DPAD_RIGHT), fun state -> { state with Player1 = { state.Player1 with velocity = {X = state.Player1.kind.defaultSpeed; Y = state.Player1.velocity.Y } } } 
+                (down1 ControllerButton.BUTTON_DPAD_UP),    fun state -> { state with Player1 = { state.Player1 with velocity = {X = state.Player1.velocity.X; Y = -state.Player1.kind.defaultSpeed } } } 
+                (down1 ControllerButton.BUTTON_DPAD_DOWN),  fun state -> { state with Player1 = { state.Player1 with velocity = {X = state.Player1.velocity.X; Y = state.Player1.kind.defaultSpeed } } } 
+                (down1 ControllerButton.BUTTON_A), 
+                    fun state -> 
+                        match tryDropFoam state.Player1 with
+                        | Some(foam,player) -> {state with Player1 = player; Mikishidas = foam :: state.Mikishidas }
+                        | None -> state
+                // todo: clean this up!
+                (fun s-> up1 ControllerButton.BUTTON_DPAD_LEFT  s
+                      && up1 ControllerButton.BUTTON_DPAD_RIGHT s ), fun state -> { state with Player1 = { state.Player1 with velocity = {X =0.0; Y = state.Player1.velocity.Y }} } 
+                (fun s-> up1 ControllerButton.BUTTON_DPAD_UP  s
+                      && up1 ControllerButton.BUTTON_DPAD_DOWN s ), fun state -> { state with Player1 = { state.Player1 with velocity = {X=state.Player1.velocity.X;Y=0.} } } 
 
-            (down2 ControllerButton.BUTTON_DPAD_LEFT),  fun state -> { state with Player2 = { state.Player2 with velocity = {X = -state.Player2.kind.defaultSpeed; Y = state.Player2.velocity.Y } } } 
-            (down2 ControllerButton.BUTTON_DPAD_RIGHT), fun state -> { state with Player2 = { state.Player2 with velocity = {X = state.Player2.kind.defaultSpeed; Y = state.Player2.velocity.Y } } } 
-            (down2 ControllerButton.BUTTON_DPAD_UP),    fun state -> { state with Player2 = { state.Player2 with velocity = {X = state.Player2.velocity.X; Y = -state.Player2.kind.defaultSpeed } } } 
-            (down2 ControllerButton.BUTTON_DPAD_DOWN),  fun state -> { state with Player2 = { state.Player2 with velocity = {X = state.Player2.velocity.X; Y = state.Player2.kind.defaultSpeed } } } 
-            (down2 ControllerButton.BUTTON_A), 
-                fun state -> 
-                    match tryDropFoam state.Player2 with
-                    | Some(foam,player) -> {state with Player2 = player; Mikishidas = foam :: state.Mikishidas  }
-                    | None -> state
-            (fun s-> up2 ControllerButton.BUTTON_DPAD_LEFT  s
-                  && up2 ControllerButton.BUTTON_DPAD_RIGHT s ), fun state -> { state with Player2 = { state.Player2 with velocity = {X =0.0; Y = state.Player2.velocity.Y }} } 
-            (fun s-> up2 ControllerButton.BUTTON_DPAD_UP  s
-                  && up2 ControllerButton.BUTTON_DPAD_DOWN s ), fun state -> { state with Player2 = { state.Player2 with velocity = {X=state.Player2.velocity.X;Y=0.} } } 
+                (down2 ControllerButton.BUTTON_DPAD_LEFT),  fun state -> { state with Player2 = { state.Player2 with velocity = {X = -state.Player2.kind.defaultSpeed; Y = state.Player2.velocity.Y } } } 
+                (down2 ControllerButton.BUTTON_DPAD_RIGHT), fun state -> { state with Player2 = { state.Player2 with velocity = {X = state.Player2.kind.defaultSpeed; Y = state.Player2.velocity.Y } } } 
+                (down2 ControllerButton.BUTTON_DPAD_UP),    fun state -> { state with Player2 = { state.Player2 with velocity = {X = state.Player2.velocity.X; Y = -state.Player2.kind.defaultSpeed } } } 
+                (down2 ControllerButton.BUTTON_DPAD_DOWN),  fun state -> { state with Player2 = { state.Player2 with velocity = {X = state.Player2.velocity.X; Y = state.Player2.kind.defaultSpeed } } } 
+                (down2 ControllerButton.BUTTON_A), 
+                    fun state -> 
+                        match tryDropFoam state.Player2 with
+                        | Some(foam,player) -> {state with Player2 = player; Mikishidas = foam :: state.Mikishidas  }
+                        | None -> state
+                (fun s-> up2 ControllerButton.BUTTON_DPAD_LEFT  s
+                      && up2 ControllerButton.BUTTON_DPAD_RIGHT s ), fun state -> { state with Player2 = { state.Player2 with velocity = {X =0.0; Y = state.Player2.velocity.Y }} } 
+                (fun s-> up2 ControllerButton.BUTTON_DPAD_UP  s
+                      && up2 ControllerButton.BUTTON_DPAD_DOWN s ), fun state -> { state with Player2 = { state.Player2 with velocity = {X=state.Player2.velocity.X;Y=0.} } } 
 
 
-        ]
-    (state,moves) ||> List.fold (fun acc (pred,f) -> if pred acc then f acc else acc)
+            ]
+        (state,moves) ||> List.fold (fun acc (pred,f) -> if pred acc then f acc else acc)
 
 let update (state:TreatzState) : TreatzState =
     state
@@ -377,140 +383,152 @@ let render(context:RenderingContext) (state:TreatzState) =
     |> ignore
     context.Renderer |> SDLRender.copy context.Texture None None |> ignore
      
-    // we can hardcode the grass and mountain rendering !
-    // YES I KNOW THIS IS HORRIBLE.  CRY ME A RIVER
-    let t = state.Sprites.["tiles"]  
-    for y = 0 to mapHeight do
-        for x = 0 to mapWidth do
-            let x' = x*cellWidth*1<px>
-            let y' = y*cellHeight*1<px>
-            let dst = { X = x'; Y = y'; Width=16<px>; Height=16<px> }  : SDLGeometry.Rectangle    
+    match state.GameState with
+    | TitleScreen -> 
+        let src = { X = 0<px>; Y = 100<px>; Width=1000<px>; Height=300<px> } : SDLGeometry.Rectangle                
+        context.Renderer |> copy state.Sprites.["title"]   None (Some src) |> ignore
+
+        if System.DateTime.Now.Second % 2 = 0 then
+            let src = { X = 0<px>; Y = 400<px>; Width=1000<px>; Height=100<px> } : SDLGeometry.Rectangle                
+            context.Renderer |> copy state.Sprites.["anykey"]   None (Some src) |> ignore
+
+    | Playing ->
+        // we can hardcode the grass and mountain rendering !
+        // YES I KNOW THIS IS HORRIBLE.  CRY ME A RIVER
+        let t = state.Sprites.["tiles"]  
+        for y = 0 to mapHeight do
+            for x = 0 to mapWidth do
+                let x' = x*cellWidth*1<px>
+                let y' = y*cellHeight*1<px>
+                let dst = { X = x'; Y = y'; Width=16<px>; Height=16<px> }  : SDLGeometry.Rectangle    
             
-            // top left mountain tiles
-            if( y= 10 && x = 12 ) || (y=10 && x = 12+35) || (y = 5 && x = 20) || (y=5+32 && x = 20)  then
-                let src = { X = 50<px>; Y = 0<px>; Width=16<px>; Height=16<px> } : SDLGeometry.Rectangle                
-                context.Renderer |> copy t (Some src) (Some dst) |> ignore
-            // bottom left mountain tiles
-            elif( y= 35 && x = 12 ) || (y=35&& x = 12+35) || (y = 9 && x = 20) || (y=9+32 && x = 20)  then
-                let src = { X = 50<px>; Y = 34<px>; Width=16<px>; Height=16<px> } : SDLGeometry.Rectangle                
-                context.Renderer |> copy t (Some src) (Some dst) |> ignore
-            // top right mountain tiles
-            elif( y= 10 && x = 16 ) || (y=10 && x = 16+35) || (y = 5 && x = 45) || (y=5 && x = 45+32)  then
-                let src = { X = 84<px>; Y = 0<px>; Width=16<px>; Height=16<px> } : SDLGeometry.Rectangle                
-                context.Renderer |> copy t (Some src) (Some dst) |> ignore
-            // bottom right mountain tiles
-            elif( y= 35 && x = 16 ) || (y=35&& x = 16+35) || (y = 9 && x = 45) || (y=9+32 && x = 45)  then
-                let src = { X = 84<px>; Y = 34<px>; Width=16<px>; Height=16<px> } : SDLGeometry.Rectangle                
-                context.Renderer |> copy t (Some src) (Some dst) |> ignore
-            // left mountain tiles
-            elif (y >= 10 && y <= 35 && (x = 12 || x = 12+35)) || (x = 20 && ((y >= 5 && y <= 9) || y>=5+32 && y <= 9+32)) then
-                let src = { X = 50<px>; Y = 17<px>; Width=16<px>; Height=16<px> } : SDLGeometry.Rectangle                
-                context.Renderer |> copy t (Some src) (Some dst) |> ignore
-            // right mountain tiles
-            elif (y >= 10 && y <= 35 && (x = 16 || x = 16+35)) || (x = 45 && ((y >= 5 && y <= 9) || y>=5+32 && y <= 9+32)) then
-                let src = { X = 84<px>; Y = 17<px>; Width=16<px>; Height=16<px> } : SDLGeometry.Rectangle                
-                context.Renderer |> copy t (Some src) (Some dst) |> ignore
-            // top mountain tiles
-            elif( y= 10 && x >= 12 && x <= 16 ) || ( y= 10 && x >= 12+35 && x <= 16+35 ) ||
-                ( y = 5 && x >= 20 && x <= 45 ) || ( y= 5+32  && x >= 20 && x <= 45 ) then
-                let src = { X = 67<px>; Y = 0<px>; Width=16<px>; Height=16<px> } : SDLGeometry.Rectangle                
-                context.Renderer |> copy t (Some src) (Some dst) |> ignore
-            // bottom mountain tiles
-            elif( y = 35 && x >= 12 && x <= 16 ) || ( y= 35 && x >= 12+35 && x <= 16+35 ) ||
-                ( y = 9 && x >= 20 && x <= 45 ) || ( y= 9+32  && x >= 20 && x <= 45 ) then
-                let src = { X = 67<px>; Y = 34<px>; Width=16<px>; Height=16<px> } : SDLGeometry.Rectangle                
-                context.Renderer |> copy t (Some src) (Some dst) |> ignore
-            // all mountain tiles
-            elif (y >= 10 && y <= 35 && x >=12 && x <=16) || (y >= 10 && y <= 35 && x >=12+35 && x <=16+35) || 
-               (y >= 5 && y <= 9 && x >= 20 && x <= 45) || (y >= 5+32 && y <= 9+32 && x >= 20 && x <= 45) then
-                let src = { X = 67<px>; Y = 17<px>; Width=16<px>; Height=16<px> } : SDLGeometry.Rectangle                
-                context.Renderer |> copy t (Some src) (Some dst) |> ignore
-            else // everything else is central grass
-                let src = { X = 17<px>; Y = 17<px>; Width=16<px>; Height=16<px> } : SDLGeometry.Rectangle                
-                context.Renderer |> copy t (Some src) (Some dst) |> ignore
+                // top left mountain tiles
+                if( y= 10 && x = 12 ) || (y=10 && x = 12+35) || (y = 5 && x = 20) || (y=5+32 && x = 20)  then
+                    let src = { X = 50<px>; Y = 0<px>; Width=16<px>; Height=16<px> } : SDLGeometry.Rectangle                
+                    context.Renderer |> copy t (Some src) (Some dst) |> ignore
+                // bottom left mountain tiles
+                elif( y= 35 && x = 12 ) || (y=35&& x = 12+35) || (y = 9 && x = 20) || (y=9+32 && x = 20)  then
+                    let src = { X = 50<px>; Y = 34<px>; Width=16<px>; Height=16<px> } : SDLGeometry.Rectangle                
+                    context.Renderer |> copy t (Some src) (Some dst) |> ignore
+                // top right mountain tiles
+                elif( y= 10 && x = 16 ) || (y=10 && x = 16+35) || (y = 5 && x = 45) || (y=5 && x = 45+32)  then
+                    let src = { X = 84<px>; Y = 0<px>; Width=16<px>; Height=16<px> } : SDLGeometry.Rectangle                
+                    context.Renderer |> copy t (Some src) (Some dst) |> ignore
+                // bottom right mountain tiles
+                elif( y= 35 && x = 16 ) || (y=35&& x = 16+35) || (y = 9 && x = 45) || (y=9+32 && x = 45)  then
+                    let src = { X = 84<px>; Y = 34<px>; Width=16<px>; Height=16<px> } : SDLGeometry.Rectangle                
+                    context.Renderer |> copy t (Some src) (Some dst) |> ignore
+                // left mountain tiles
+                elif (y >= 10 && y <= 35 && (x = 12 || x = 12+35)) || (x = 20 && ((y >= 5 && y <= 9) || y>=5+32 && y <= 9+32)) then
+                    let src = { X = 50<px>; Y = 17<px>; Width=16<px>; Height=16<px> } : SDLGeometry.Rectangle                
+                    context.Renderer |> copy t (Some src) (Some dst) |> ignore
+                // right mountain tiles
+                elif (y >= 10 && y <= 35 && (x = 16 || x = 16+35)) || (x = 45 && ((y >= 5 && y <= 9) || y>=5+32 && y <= 9+32)) then
+                    let src = { X = 84<px>; Y = 17<px>; Width=16<px>; Height=16<px> } : SDLGeometry.Rectangle                
+                    context.Renderer |> copy t (Some src) (Some dst) |> ignore
+                // top mountain tiles
+                elif( y= 10 && x >= 12 && x <= 16 ) || ( y= 10 && x >= 12+35 && x <= 16+35 ) ||
+                    ( y = 5 && x >= 20 && x <= 45 ) || ( y= 5+32  && x >= 20 && x <= 45 ) then
+                    let src = { X = 67<px>; Y = 0<px>; Width=16<px>; Height=16<px> } : SDLGeometry.Rectangle                
+                    context.Renderer |> copy t (Some src) (Some dst) |> ignore
+                // bottom mountain tiles
+                elif( y = 35 && x >= 12 && x <= 16 ) || ( y= 35 && x >= 12+35 && x <= 16+35 ) ||
+                    ( y = 9 && x >= 20 && x <= 45 ) || ( y= 9+32  && x >= 20 && x <= 45 ) then
+                    let src = { X = 67<px>; Y = 34<px>; Width=16<px>; Height=16<px> } : SDLGeometry.Rectangle                
+                    context.Renderer |> copy t (Some src) (Some dst) |> ignore
+                // all mountain tiles
+                elif (y >= 10 && y <= 35 && x >=12 && x <=16) || (y >= 10 && y <= 35 && x >=12+35 && x <=16+35) || 
+                   (y >= 5 && y <= 9 && x >= 20 && x <= 45) || (y >= 5+32 && y <= 9+32 && x >= 20 && x <= 45) then
+                    let src = { X = 67<px>; Y = 17<px>; Width=16<px>; Height=16<px> } : SDLGeometry.Rectangle                
+                    context.Renderer |> copy t (Some src) (Some dst) |> ignore
+                else // everything else is central grass
+                    let src = { X = 17<px>; Y = 17<px>; Width=16<px>; Height=16<px> } : SDLGeometry.Rectangle                
+                    context.Renderer |> copy t (Some src) (Some dst) |> ignore
             
-    if state.DebugLines <> Array.empty then
-      context.Renderer |> SDLRender.setDrawColor (255uy, 255uy, 255uy, 255uy) |> ignore
-      context.Renderer |> SDLRender.drawLines(state.DebugLines) |> ignore
+        if state.DebugLines <> Array.empty then
+          context.Renderer |> SDLRender.setDrawColor (255uy, 255uy, 255uy, 255uy) |> ignore
+          context.Renderer |> SDLRender.drawLines(state.DebugLines) |> ignore
               
 
-    for j in state.Mikishidas |> List.sortBy(fun x -> match x.kind with Dragon _ -> 1 | Treat -> 2 | AntiDragonFoam _ -> 3 | _ -> 4) do
-        match j.kind with
-        | Dragon _ ->     
-            let d = state.Sprites.["drag"]  
-            context.Renderer  |> copy d None (Some j.AsRect) |> ignore
-        | CaughtDragon data ->     
-            let d = state.Sprites.["drag"]  
-            SDLTexture.setAlpha data.alpha d |> ignore
-            context.Renderer  |> copyEx d None (Some j.AsRect) data.currentAngle 0 |> ignore
-            SDLTexture.setAlpha 255 d |> ignore
-        | TreatEaten data ->     
-            let d = state.Sprites.["treat"]  
-            SDLTexture.setAlpha data.alpha d |> ignore
-            context.Renderer  |> copyEx d None (Some j.AsRect) data.currentAngle 0 |> ignore
-            SDLTexture.setAlpha 255 d |> ignore
-        | Treat ->     
-            let d = state.Sprites.["treat"]  
-            context.Renderer  |> copy d None (Some j.AsRect) |> ignore
-        | AntiDragonFoam tickPlaced ->
-            let d = state.Sprites.["foam"]  
-            // work out transparacey from 100 to 255 depending on how long the foam has been in play
-            let maxTicks = float(foamFrames * 1000)
-            let pct = (float((getTicks() - tickPlaced)) / maxTicks) * 100.0
-            let amount = 255 - int((pct * 155.0) + 100.0) + 100
-            SDLTexture.setAlpha amount d |> ignore
-            context.Renderer  |> copy d None (Some j.AsRect) |> ignore        
-        | _ -> () 
+        for j in state.Mikishidas |> List.sortBy(fun x -> match x.kind with Dragon _ -> 1 | Treat -> 2 | AntiDragonFoam _ -> 3 | _ -> 4) do
+            match j.kind with
+            | Dragon _ ->     
+                let d = state.Sprites.["drag"]  
+                context.Renderer  |> copy d None (Some j.AsRect) |> ignore
+            | CaughtDragon data ->     
+                let d = state.Sprites.["drag"]  
+                SDLTexture.setAlpha data.alpha d |> ignore
+                context.Renderer  |> copyEx d None (Some j.AsRect) data.currentAngle 0 |> ignore
+                SDLTexture.setAlpha 255 d |> ignore
+            | TreatEaten data ->     
+                let d = state.Sprites.["treat"]  
+                SDLTexture.setAlpha data.alpha d |> ignore
+                context.Renderer  |> copyEx d None (Some j.AsRect) data.currentAngle 0 |> ignore
+                SDLTexture.setAlpha 255 d |> ignore
+            | Treat ->     
+                let d = state.Sprites.["treat"]  
+                context.Renderer  |> copy d None (Some j.AsRect) |> ignore
+            | AntiDragonFoam tickPlaced ->
+                let d = state.Sprites.["foam"]  
+                // work out transparacey from 100 to 255 depending on how long the foam has been in play
+                let maxTicks = float(foamFrames * 1000)
+                let pct = (float((getTicks() - tickPlaced)) / maxTicks) * 100.0
+                let amount = 255 - int((pct * 155.0) + 100.0) + 100
+                SDLTexture.setAlpha amount d |> ignore
+                context.Renderer  |> copy d None (Some j.AsRect) |> ignore        
+            | _ -> () 
     
-    let determinePlayerFrame player =   
-        if player.velocity.Y = 0.0 && player.velocity.X > 0.0 then 2 // right
-        elif player.velocity.Y = 0.0 && player.velocity.X < 0.0 then 3 // left
-        elif player.velocity.X = 0.0 && player.velocity.Y < 0.0 then 1 // up
-        else 0 // down
+        let determinePlayerFrame player =   
+            if player.velocity.Y = 0.0 && player.velocity.X > 0.0 then 2 // right
+            elif player.velocity.Y = 0.0 && player.velocity.X < 0.0 then 3 // left
+            elif player.velocity.X = 0.0 && player.velocity.Y < 0.0 then 1 // up
+            else 0 // down
 
-    let juanFrame = determinePlayerFrame state.Player1
-    let src = { X = juanFrame*16<px>; Y = 0<px>; Width=16<px>; Height=16<px> } : SDLGeometry.Rectangle                
-    context.Renderer |> copy state.Sprites.["juan"]   (Some src) (Some state.Player1.AsRect) |> ignore
+        let juanFrame = determinePlayerFrame state.Player1
+        let src = { X = juanFrame*16<px>; Y = 0<px>; Width=16<px>; Height=16<px> } : SDLGeometry.Rectangle                
+        context.Renderer |> copy state.Sprites.["juan"]   (Some src) (Some state.Player1.AsRect) |> ignore
 
-    let juanitaFrame = determinePlayerFrame state.Player2
-    let src = { X = juanitaFrame*16<px>; Y = 0<px>; Width=16<px>; Height=16<px> } : SDLGeometry.Rectangle                
-    context.Renderer |> copy state.Sprites.["juanita"]   (Some src) (Some state.Player2.AsRect) |> ignore
+        let juanitaFrame = determinePlayerFrame state.Player2
+        let src = { X = juanitaFrame*16<px>; Y = 0<px>; Width=16<px>; Height=16<px> } : SDLGeometry.Rectangle                
+        context.Renderer |> copy state.Sprites.["juanita"]   (Some src) (Some state.Player2.AsRect) |> ignore
 
 
-    let turkeyTexture = state.Sprites.["turkey"]  
-    let dst = { X = 504<px>; Y = 350<px>; Width=50<px>; Height=50<px> } : SDLGeometry.Rectangle    
-    context.Renderer  |> copyEx turkeyTexture None (Some dst) state.TurkeyAngle 0 |> ignore
+        let turkeyTexture = state.Sprites.["turkey"]  
+        let dst = { X = 504<px>; Y = 350<px>; Width=50<px>; Height=50<px> } : SDLGeometry.Rectangle    
+        context.Renderer  |> copyEx turkeyTexture None (Some dst) state.TurkeyAngle 0 |> ignore
     
-    // show the scores by bliting double sized, transparent dragons over each other in the bottom left and right corners
+        // show the scores by bliting double sized, transparent dragons over each other in the bottom left and right corners
     
-    let d = state.Sprites.["drag"]  
-    SDLTexture.setAlpha 80 d |> ignore
-    for x = 1 to state.Player1.AsPlayerData.DragonsCaught do
+        let d = state.Sprites.["drag"]  
+        SDLTexture.setAlpha 80 d |> ignore
+        for x = 1 to state.Player1.AsPlayerData.DragonsCaught do
         
-        let r = 
-         { 
-          X = (1 + (x * 10)) * 1<px>
-          Y = screenHeight - 32<px>
-          Width = 32<px>
-          Height = 32<px> 
-         } : SDLGeometry.Rectangle
-        context.Renderer  |> copyEx d None (Some r) 0.0 1 |> ignore
+            let r = 
+             { 
+              X = (1 + (x * 10)) * 1<px>
+              Y = screenHeight - 32<px>
+              Width = 32<px>
+              Height = 32<px> 
+             } : SDLGeometry.Rectangle
+            context.Renderer  |> copyEx d None (Some r) 0.0 1 |> ignore
 
-    for x = 1 to state.Player2.AsPlayerData.DragonsCaught do
-        let r = 
-         { 
-          X = ((screenWidth - 32<px>) - (x * 10<px>)) 
-          Y = screenHeight - 32<px>
-          Width = 32<px>
-          Height = 32<px> 
-         } : SDLGeometry.Rectangle
-        context.Renderer  |> copy d None (Some r) |> ignore
+        for x = 1 to state.Player2.AsPlayerData.DragonsCaught do
+            let r = 
+             { 
+              X = ((screenWidth - 32<px>) - (x * 10<px>)) 
+              Y = screenHeight - 32<px>
+              Width = 32<px>
+              Height = 32<px> 
+             } : SDLGeometry.Rectangle
+            context.Renderer  |> copy d None (Some r) |> ignore
 
     
-    SDLTexture.setAlpha 255 d |> ignore
+        SDLTexture.setAlpha 255 d |> ignore
 
+
+
+    // present and fps lock
     context.Renderer |> SDLRender.present 
-
     
     // delay to lock at 60fps (we could do extra work here)
     let frameTime = getTicks() - context.LastFrameTick
@@ -533,6 +551,8 @@ let main() =
     use juanitaBitmap = SDLSurface.loadBmp SDLPixel.RGB888Format @"..\..\..\..\images\juanita.bmp"
     use juanBitmap = SDLSurface.loadBmp SDLPixel.RGB888Format @"..\..\..\..\images\juan.bmp"
     use foamBitmap = SDLSurface.loadBmp SDLPixel.RGB888Format @"..\..\..\..\images\foam.bmp"
+    use anykeyBitmap = SDLSurface.loadBmp SDLPixel.RGB888Format @"..\..\..\..\images\anykey.bmp"
+    use titleBitmap = SDLSurface.loadBmp SDLPixel.RGB888Format @"..\..\..\..\images\title.bmp"
     
     SDLGameController.gameControllerOpen 0
     SDLGameController.gameControllerOpen 1
@@ -562,6 +582,8 @@ let main() =
     let juanTex = SDLTexture.fromSurface mainRenderer juanBitmap.Pointer
     let juanitaTex = SDLTexture.fromSurface mainRenderer juanitaBitmap.Pointer
     let foamTex = SDLTexture.fromSurface mainRenderer foamBitmap.Pointer
+    let titleTex = SDLTexture.fromSurface mainRenderer titleBitmap.Pointer
+    let anykeyTex = SDLTexture.fromSurface mainRenderer anykeyBitmap.Pointer
 
     let sprites = 
         ["turkey", turkeyTex; 
@@ -571,12 +593,15 @@ let main() =
          "juan", juanTex;
          "juanita", juanitaTex;
          "foam", foamTex;
+         "title", titleTex;
+         "anykey", anykeyTex
         ] |> Map.ofList
     
     
     let context =  { Renderer = mainRenderer; Texture = mainTexture; Surface = surface; LastFrameTick = getTicks() }
     let state = 
-        {Player1 = {kind = Player(PlayerData.Blank); location = {X=494.; Y=330.}; velocity = {X=0.0; Y=0.0}}
+        {GameState = TitleScreen
+         Player1 = {kind = Player(PlayerData.Blank); location = {X=494.; Y=330.}; velocity = {X=0.0; Y=0.0}}
          Player2 = {kind = Player(PlayerData.Blank); location = {X=564.; Y=330.}; velocity = {X=0.0; Y=0.0}}
          Mikishidas = []
          UnpassableLookup = Set.empty

@@ -141,7 +141,7 @@ type MikishidaKinds =
     with 
     member this.defaultSpeed =
         match this with
-        | Player _ -> 1.0
+        | Player _ -> 8.0
         | Dragon _  -> 2.5
         | _ -> 0.9
 
@@ -182,8 +182,13 @@ type Mikishida =
         | Player data -> data
         | _ -> failwith "!"
 
+type GameState =
+    | TitleScreen
+    | Playing
+
 type TreatzState =
-    { Player1 : Mikishida
+    { GameState : GameState
+      Player1 : Mikishida
       Player2 : Mikishida
       Mikishidas : Mikishida list
       UnpassableLookup : Set<int*int> 
