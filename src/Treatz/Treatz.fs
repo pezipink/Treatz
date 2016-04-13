@@ -23,6 +23,8 @@ type RenderingContext =
      Surface:SDLSurface.Surface;
      mutable LastFrameTick : uint32 }
 
+
+
 let updatePositions (state:TreatzState) = 
     let updateMikishidas mikishida = 
         // the locaiton is measured from the top left corner of the bounding box (or map cell)
@@ -201,6 +203,23 @@ let prepareLevel state =
           TreatsLookup = treatzSet 
           PathFindingData = graphForPathfinding mountains'}
 
+let defaultState(sprites) = 
+        {GameState = TitleScreen
+         Player1 = {kind = Player(PlayerData.Blank); location = {X=494.; Y=330.}; velocity = {X=0.0; Y=0.0}}
+         Player2 = {kind = Player(PlayerData.Blank); location = {X=564.; Y=330.}; velocity = {X=0.0; Y=0.0}}
+         Mikishidas = []
+         UnpassableLookup = Set.empty
+         TreatsLookup = Set.empty
+         PressedKeys = Set.empty
+         Sprites = sprites
+         Controllers = Set.empty, Set.empty
+         TurkeyAngle = 0.0
+         Chaos = System.Random(System.DateTime.Now.Millisecond)
+         PathFindingData = Map.empty
+         LastFrameTime = getTicks()
+         DebugLines = Array.empty
+         } |> prepareLevel
+
 let miscUpdates state = 
     // 60 fps, rotate once every 2 seconds - 120 steps =
     let angle = 
@@ -260,6 +279,17 @@ let miscUpdates state =
     
     { state with TurkeyAngle = angle; TreatsLookup = lookups; Mikishidas =  mikis @ treats; LastFrameTime = getTicks()}
 
+let testGameOver state = 
+    match state.GameState with
+    | Playing ->
+        if state.Mikishidas |> List.filter(fun m -> match m.kind with Dragon _  -> true | _ -> false ) |> List.length = 0 then
+            if state.Player1.AsPlayerData.DragonsCaught > state.Player2.AsPlayerData.DragonsCaught then
+                { defaultState(state.Sprites) with GameState = Player1Wins}
+            else
+                { defaultState(state.Sprites) with GameState = Player2Wins}
+        else state
+    | _ -> state
+
 let tryDropFoam player =
     match player.kind with
     | Player data -> 
@@ -281,6 +311,12 @@ let updateInputs state =
     | TitleScreen -> 
         if state.PressedKeys.Count > 0 || (fst state.Controllers).Count > 0 || (snd state.Controllers).Count > 0 then 
             { state with GameState = Playing }
+        else 
+            state
+    | Player1Wins 
+    | Player2Wins -> 
+        if state.PressedKeys.Contains(ScanCode.Return) then 
+            { state with GameState = TitleScreen; PressedKeys = Set.empty }
         else 
             state
     | Playing -> 
@@ -330,6 +366,7 @@ let update (state:TreatzState) : TreatzState =
     |> updatePositions
     |> collisionDetection
     |> intelligence
+    |> testGameOver
     
 
 let rec eventPump (renderHandler:'TState->unit) (eventHandler:SDLEvent.Event->'TState->'TState option) (update:'TState->'TState) (state:'TState) : unit =
@@ -385,12 +422,20 @@ let render(context:RenderingContext) (state:TreatzState) =
      
     match state.GameState with
     | TitleScreen -> 
-        let src = { X = 0<px>; Y = 100<px>; Width=1000<px>; Height=300<px> } : SDLGeometry.Rectangle                
+        let src = { X = 0<px>; Y = 100<px>; Width=1000<px>; Height=100<px> } : SDLGeometry.Rectangle                
+        context.Renderer |> copy state.Sprites.["dt"]   None (Some src) |> ignore
+
+        let src = { X = 0<px>; Y = 200<px>; Width=1000<px>; Height=300<px> } : SDLGeometry.Rectangle                
         context.Renderer |> copy state.Sprites.["title"]   None (Some src) |> ignore
 
         if System.DateTime.Now.Second % 2 = 0 then
-            let src = { X = 0<px>; Y = 400<px>; Width=1000<px>; Height=100<px> } : SDLGeometry.Rectangle                
+            let src = { X = 0<px>; Y = 500<px>; Width=1000<px>; Height=100<px> } : SDLGeometry.Rectangle                
             context.Renderer |> copy state.Sprites.["anykey"]   None (Some src) |> ignore
+    | Player1Wins -> 
+        context.Renderer |> copy state.Sprites.["win1"]   None None |> ignore
+    | Player2Wins -> 
+        let src = { X = 0<px>; Y = 0<px>; Width=1024<px>; Height=768<px> } : SDLGeometry.Rectangle                
+        context.Renderer |> copy state.Sprites.["win2"]   None None |> ignore
 
     | Playing ->
         // we can hardcode the grass and mountain rendering !
@@ -553,6 +598,9 @@ let main() =
     use foamBitmap = SDLSurface.loadBmp SDLPixel.RGB888Format @"..\..\..\..\images\foam.bmp"
     use anykeyBitmap = SDLSurface.loadBmp SDLPixel.RGB888Format @"..\..\..\..\images\anykey.bmp"
     use titleBitmap = SDLSurface.loadBmp SDLPixel.RGB888Format @"..\..\..\..\images\title.bmp"
+    use dtBitmap = SDLSurface.loadBmp SDLPixel.RGB888Format @"..\..\..\..\images\DRAGONTREATZ.bmp"
+    use win1Bitmap = SDLSurface.loadBmp SDLPixel.RGB888Format @"..\..\..\..\images\1win.bmp"
+    use win2Bitmap = SDLSurface.loadBmp SDLPixel.RGB888Format @"..\..\..\..\images\2win.bmp"
     
     SDLGameController.gameControllerOpen 0
     SDLGameController.gameControllerOpen 1
@@ -584,7 +632,9 @@ let main() =
     let foamTex = SDLTexture.fromSurface mainRenderer foamBitmap.Pointer
     let titleTex = SDLTexture.fromSurface mainRenderer titleBitmap.Pointer
     let anykeyTex = SDLTexture.fromSurface mainRenderer anykeyBitmap.Pointer
-
+    let dtTex = SDLTexture.fromSurface mainRenderer dtBitmap.Pointer
+    let win1Tex = SDLTexture.fromSurface mainRenderer win1Bitmap.Pointer
+    let win2Tex = SDLTexture.fromSurface mainRenderer win2Bitmap.Pointer
     let sprites = 
         ["turkey", turkeyTex; 
          "drag", dragTex; 
@@ -595,26 +645,14 @@ let main() =
          "foam", foamTex;
          "title", titleTex;
          "anykey", anykeyTex
+         "dt", dtTex
+         "win1", win1Tex
+         "win2", win2Tex
         ] |> Map.ofList
     
     
     let context =  { Renderer = mainRenderer; Texture = mainTexture; Surface = surface; LastFrameTick = getTicks() }
-    let state = 
-        {GameState = TitleScreen
-         Player1 = {kind = Player(PlayerData.Blank); location = {X=494.; Y=330.}; velocity = {X=0.0; Y=0.0}}
-         Player2 = {kind = Player(PlayerData.Blank); location = {X=564.; Y=330.}; velocity = {X=0.0; Y=0.0}}
-         Mikishidas = []
-         UnpassableLookup = Set.empty
-         TreatsLookup = Set.empty
-         PressedKeys = Set.empty
-         Sprites = sprites
-         Controllers = Set.empty, Set.empty
-         TurkeyAngle = 0.0
-         Chaos = System.Random(System.DateTime.Now.Millisecond)
-         PathFindingData = Map.empty
-         LastFrameTime = getTicks()
-         DebugLines = Array.empty
-         } |> prepareLevel
+    let state = defaultState(sprites)
 
     eventPump (render context) handleEvent update state
         

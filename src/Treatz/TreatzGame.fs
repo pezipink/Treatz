@@ -185,6 +185,8 @@ type Mikishida =
 type GameState =
     | TitleScreen
     | Playing
+    | Player1Wins
+    | Player2Wins
 
 type TreatzState =
     { GameState : GameState
