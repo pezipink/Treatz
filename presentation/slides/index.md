@@ -31,16 +31,22 @@
 ***
 ## What is in a game
 
+
+' how does the game work 
+
+
 ***
 
 ## Why SDL
 
-***
-## Artificial stupidity
+' mention ernest
+' what is sdl high level
+' game loop
+' cross platform
+' conflict between the two paradigm
 
-## Path finding 
-
-
+' mention some of the stuff 
+' inmutable vs imperative
 
 ***
 ## Steering Behaviours : Seek
@@ -52,6 +58,21 @@
 ***
 
 ## Quad Trees
+
+
+
+***
+## Artificial stupidity
+
+## Path finding 
+
+' steering behaviour easy because functional and  
+' path finding not so 
+' shared mutable states
+' use sorted set 
+' use manhatan distance
+' can we use some fewer types 
+
 
 
 ***
