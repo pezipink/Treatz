@@ -213,9 +213,9 @@ let miscUpdates state =
 let tryDropFoam player =
     match player.kind with
     | Player data -> 
-        if data.Foam.Count < maxPlayerFoam + data.DragonsCaught && Map.containsKey(player.location.GridX,player.location.GridY) data.Foam = false then
-            let f = { kind = AntiDragonFoam (getTicks()); location = {X=float player.location.GridX*cellWidthf; Y=float player.location.GridY*cellHeightf} ; velocity = {X= 0.0; Y = 0.0} }
-            Some(f, { player with kind = Player({data with Foam = Map.add (player.location.GridX,player.location.GridY) 0 data.Foam })})
+        if data.Foam.Count < maxPlayerFoam + data.DragonsCaught && Map.containsKey(player.location.CentreGridX,player.location.CentreGridY) data.Foam = false then
+            let f = { kind = AntiDragonFoam (getTicks()); location = {X=float player.location.CentreGridX*cellWidthf; Y=float player.location.CentreGridY*cellHeightf} ; velocity = {X= 0.0; Y = 0.0} }
+            Some(f, { player with kind = Player({data with Foam = Map.add (player.location.CentreGridX,player.location.CentreGridY) 0 data.Foam })})
         else None
     | _ -> None
     

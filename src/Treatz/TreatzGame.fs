@@ -30,6 +30,8 @@ type FastPoint(x: int, y: int) =
 
     member __.GridX = x / cellWidth
     member __.GridY = y / cellHeight
+    member __.CentreGridX = (x + cellWidth / 2) / cellWidth
+    member __.CentreGridY = (y + cellHeight /2) / cellHeight
     
 type Vector2 = {
    X: double 
@@ -39,6 +41,8 @@ type Vector2 = {
      
   member this.GridX = int(this.X / cellWidthf)
   member this.GridY = int(this.Y / cellHeightf)
+  member this.CentreGridX = int <| (this.X + cellWidthf / 2.0) / cellWidthf
+  member this.CentreGridY = int <| (this.Y + cellHeightf /2.0) / cellHeightf
   member this.Grid = this.GridX, this.GridY
 
   static member (-) (pointa, pointb) = 
