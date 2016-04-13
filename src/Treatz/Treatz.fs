@@ -218,7 +218,7 @@ let defaultState(sprites) =
          Chaos = System.Random(System.DateTime.Now.Millisecond)
          PathFindingData = Map.empty
          LastFrameTime = getTicks()
-         DebugLines = Array.empty
+         
          } |> prepareLevel
 
 let miscUpdates state = 
@@ -496,10 +496,6 @@ let render(context:RenderingContext) (state:TreatzState) =
                     let src = { X = 17<px>; Y = 17<px>; Width=16<px>; Height=16<px> } : SDLGeometry.Rectangle                
                     context.Renderer |> copy t (Some src) (Some dst) |> ignore
             
-        if state.DebugLines <> Array.empty then
-          context.Renderer |> SDLRender.setDrawColor (255uy, 255uy, 255uy, 255uy) |> ignore
-          context.Renderer |> SDLRender.drawLines(state.DebugLines) |> ignore
-              
 
         for j in state.Mikishidas |> List.sortBy(fun x -> match x.kind with Dragon _ -> 1 | Treat -> 2 | AntiDragonFoam _ -> 3 | _ -> 4) do
             match j.kind with

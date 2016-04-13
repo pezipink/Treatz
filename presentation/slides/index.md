@@ -20,27 +20,36 @@
 ### F# Exchange - April 2016
 
 ***
-## Dragons
+## Dragons Treats
 
 ![m](https://dragonicecreamtreats.files.wordpress.com/2014/08/dragon-master-e1407382525282.jpg)
+
+' how Dragon treats came to be
+
 
 ***
 ## Treats
 
-
+' gameplay 
 ***
 ## What is in a game
+
+
+' how does the game work from a technical point of view
+
 
 ***
 
 ## Why SDL
 
-***
-## Artificial stupidity
+' mention ernest
+' what is sdl high level
+' game loop
+' cross platform
+' conflict between the two paradigm
 
-## Path finding 
-
-
+' mention some of the stuff 
+' inmutable vs imperative
 
 ***
 ## Steering Behaviours : Seek
@@ -52,6 +61,21 @@
 ***
 
 ## Quad Trees
+
+
+
+***
+## Artificial stupidity
+
+## Path finding 
+
+' steering behaviour easy because functional and  
+' path finding not so 
+' shared mutable states
+' use sorted set 
+' use manhatan distance
+' can we use some fewer types 
+
 
 
 ***

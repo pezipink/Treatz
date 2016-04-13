@@ -175,7 +175,7 @@ type TreatzState =
       Chaos : System.Random      
       PathFindingData : Map<int*int,Node>
       LastFrameTime: uint32      
-      mutable DebugLines: SDLGeometry.Point array
+      
       }
     with 
         member this.findMikishidas pred bounds =

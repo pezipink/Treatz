@@ -17,7 +17,7 @@
       let findClosestTreat (mikishida:Mikishida) =
             let clamp x = if x < 0 then 0 else x
             let r = mikishida.AsQuadBounds
-            let bounds = {r with x = clamp r.x - 950; y = clamp r.y - 950; width = 9100; height = 9100; }
+            let bounds = {r with x = clamp r.x - 50; y = clamp r.y - 50; width = 100; height = 100; }
 //            let bounds = {r with x = clamp r.x - 150; y = clamp r.y - 150; width = 300; height = 300; }
             
             state.findMikishidas(fun m -> match m.kind with Treat -> true | _ -> false) bounds
@@ -92,16 +92,14 @@
               
               match destinationNode, origin with
               | Some destination, Some origin ->
-                  let gridPath = [| yield! PathFinding.search origin destination [state.Player1; state.Player2 ]; yield destination |]
+                  let gridPath = [| yield! PathFinding.search origin destination [state.Player1; state.Player2 ]; yield destination |]                 
                   
-                  printfn "Path  %A \n destination %A" (gridPath |> Array.map(fun x -> x.Identity.X.ToString() + " " + x.Identity.Y.ToString())) (Array.last gridPath).Identity
-                  printfn "Find the path from %A to %A" origin.Identity destination.Identity
 
                   let points = gridPath |> Array.map(fun x -> 
                                         { SDLGeometry.Point.X = (x.Identity.X * cellWidth + cellWidth / 2 ) * 1<px>
                                           SDLGeometry.Point.Y =  (x.Identity.Y * cellHeight + cellHeight/ 2) * 1<px> })
                   
-                  state.DebugLines <- points
+                  
                   
 
                   {mikishida with kind = Dragon(FollowPath(gridPath |> Array.map(fun x -> x.Identity), treatLocation))}
