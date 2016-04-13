@@ -6,7 +6,6 @@ open SDLGeometry
 open SDLKeyboard
 open SDLGameController
 
-
 [<Struct>]
 [<CustomEquality>]
 [<CustomComparison>]
@@ -64,8 +63,6 @@ type Vector2 = {
   override this.ToString() =
      this.X.ToString() + " " + this.Y.ToString()
 
-
-
 type BehaviourState  = {
   CircleRadius : double
   CircleDistance : double
@@ -74,6 +71,7 @@ type BehaviourState  = {
   WanderingAngle: double
   SteeringDirection : Vector2
   }
+
 type NodeVector = 
   {X: int; Y : int}
   
@@ -102,6 +100,13 @@ type Node =
         | :? Node as y -> compare x.Identity y.Identity
         | _ -> invalidArg "yobj" "canno"
 
+type NodePath = {   
+   GridNode: Node
+   Parent : NodePath option
+   Child : NodePath option
+   mutable PathCost: double
+  }
+
 type PlayerData = 
     {mutable DragonsCaught : int 
      mutable FoamDuration : int
@@ -112,7 +117,6 @@ type DragonData =
     | FollowPath of NodeVector array * Vector2
     | Wander of BehaviourState
     | PathFind of Vector2
-
 
 type MikishidaKinds =
     | Player of PlayerData
@@ -126,22 +130,18 @@ type MikishidaKinds =
     with 
     member this.defaultSpeed =
         match this with
-        | Player _ -> 2.0
-        | Dragon _  -> 5.
+        | Player _ -> 1.0
+        | Dragon _  -> 2.5
         | _ -> 0.9
-
-        
 
 type Mikishida = 
     { kind : MikishidaKinds; location : Vector2; velocity : Vector2 }
     with 
     member this.Size =
         match this.kind with
-        // presently everything must be at most the size of a cell
+        // Everything must be at most the size of a cell
         | _ -> cellWidth * 1<px>,cellHeight * 1<px>
-//        | Treat -> 5<px>, 5<px>
-//        | _ -> 5<px>, 5<px>
-
+  
     member this.AsRect = 
         let w, h = this.Size
         { 
@@ -183,8 +183,8 @@ type TreatzState =
       TurkeyAngle : float
       Chaos : System.Random      
       PathFindingData : Map<int*int,Node>
-      LastFrameTime: uint32
-      DeltaTicks: uint32
+      LastFrameTime: uint32      
+      mutable DebugLines: SDLGeometry.Point array
       }
     with 
         member this.findMikishidas pred bounds =
