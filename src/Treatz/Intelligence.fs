@@ -57,9 +57,16 @@
                         (double mikishida.location.Y + (cellHeightf / 2.0))
                 
                     let destinationCell = int (fst destinationCentre / cellWidthf), int (snd destinationCentre / cellHeightf)
-                    let dragonCell = int (fst dragonCentre / cellWidthf), int (snd dragonCentre / cellHeightf)
+                    // top left
+                    let dragonCell1 = int (mikishida.location.X / cellWidthf), int (mikishida.location.Y / cellHeightf) 
+                    // top right
+                    let dragonCell2 = int ((mikishida.location.X + cellWidthf) / cellWidthf), int (mikishida.location.Y / cellHeightf)
+                    // bottom left
+                    let dragonCell3 = int ((mikishida.location.X) / cellWidthf), int ((mikishida.location.Y + cellHeightf) / cellHeightf)
+                    // bottom right
+                    let dragonCell4 = int ((mikishida.location.X + cellWidthf) / cellWidthf), int ((mikishida.location.Y + cellHeightf) / cellHeightf)
 
-                    if destinationCell = dragonCell then 
+                    if destinationCell = dragonCell1 ||  destinationCell = dragonCell2 || destinationCell = dragonCell3 || destinationCell = dragonCell4 then 
                       {mikishida with kind = Dragon(FollowPath (pathTo |> Array.tail,dest)) }
                     else                        
                         let target = {Vector2.X = fst destinationCentre - fst dragonCentre ; Y = snd destinationCentre - snd dragonCentre}.normalize

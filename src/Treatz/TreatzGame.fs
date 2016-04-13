@@ -208,7 +208,7 @@ type TreatzState =
         member this.findMikishidas pred bounds =
             this.Mikishidas |> List.filter(fun m -> pred m && overlapq(m.AsQuadBounds, bounds))
         member this.IsCellOutofbounds (x,y) = 
-            (x < 0.0 || x > mapWidthf * cellWidthf - cellWidthf ||   y < 0.0 || y > mapHeightf * cellHeightf - cellHeightf) 
+            (x < 0.0 || x > mapWidthf * cellWidthf - cellWidthf ||   y < 0.0 || y > mapHeightf * cellHeightf ) 
         member this.IsCellUnpassable (x,y) = 
             let toCell (x,y) = (int(x/cellWidthf)),(int(y/cellHeightf))
             Set.contains (toCell (x, y)) this.UnpassableLookup
