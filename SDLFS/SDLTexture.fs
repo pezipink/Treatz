@@ -58,6 +58,9 @@ let fromSurface (renderer:SDLUtility.Pointer) surface =
     let ptr = SDLTextureNative.SDL_CreateTextureFromSurface(renderer.Pointer,surface)
     new SDLUtility.Pointer(ptr, SDLTextureNative.SDL_DestroyTexture)
 
+let setAlpha alpha (texture:Texture) =
+    SDLTextureNative.SDL_SetTextureAlphaMod(texture.Pointer, uint8 alpha)
+
 let update (dstrect:SDLGeometry.Rectangle option) (src:SDLSurface.Surface) (texture:Texture) : bool =
     dstrect
     |> SDLGeometry.withSDLRectPointer (fun rectptr->

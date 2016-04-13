@@ -30,6 +30,8 @@ let updatePositions (state:TreatzState) =
         // and check the target is valid, else snap to the nearest grid boundary
       
         let tempLoc = mikishida.location + (*(state.DeltaTicks |> toSeconds ) * *)  mikishida.velocity
+        
+        //yuck, whatever for now
         match mikishida.kind with 
         | Dragon _ -> 
             
@@ -200,7 +202,7 @@ let miscUpdates state =
         state.Mikishidas 
         |> List.filter(fun m -> 
             match m.kind with 
-            | AntiDragonFoam -> 
+            | AntiDragonFoam ticks -> 
                 if Map.containsKey m.location.Grid state.Player1.AsPlayerData.Foam then true
                 elif Map.containsKey m.location.Grid state.Player2.AsPlayerData.Foam then true
                 else false 
@@ -212,7 +214,7 @@ let tryDropFoam player =
     match player.kind with
     | Player data -> 
         if data.Foam.Count < maxPlayerFoam + data.DragonsCaught && Map.containsKey(player.location.GridX,player.location.GridY) data.Foam = false then
-            let f = { kind = AntiDragonFoam; location = {X=float player.location.GridX*cellWidthf; Y=float player.location.GridY*cellHeightf} ; velocity = {X= 0.0; Y = 0.0} }
+            let f = { kind = AntiDragonFoam (getTicks()); location = {X=float player.location.GridX*cellWidthf; Y=float player.location.GridY*cellHeightf} ; velocity = {X= 0.0; Y = 0.0} }
             Some(f, { player with kind = Player({data with Foam = Map.add (player.location.GridX,player.location.GridY) 0 data.Foam })})
         else None
     | _ -> None
@@ -385,7 +387,7 @@ let render(context:RenderingContext) (state:TreatzState) =
                 context.Renderer |> copy t (Some src) (Some dst) |> ignore
 
 
-    for j in state.Mikishidas |> List.sortBy(fun x -> match x.kind with Dragon _ -> 1 | Treat -> 2 | AntiDragonFoam -> 3 | _ -> 4) do
+    for j in state.Mikishidas |> List.sortBy(fun x -> match x.kind with Dragon _ -> 1 | Treat -> 2 | AntiDragonFoam _ -> 3 | _ -> 4) do
         match j.kind with
         | Dragon _ ->     
             let d = state.Sprites.["drag"]  
@@ -393,10 +395,15 @@ let render(context:RenderingContext) (state:TreatzState) =
         | Treat ->     
             let d = state.Sprites.["treat"]  
             context.Renderer  |> copy d None (Some j.AsRect) |> ignore
-        | AntiDragonFoam ->
+        | AntiDragonFoam tickPlaced ->
             let d = state.Sprites.["foam"]  
+            // work out transparacey from 100 to 255 depending on how long the foam has been in play
+            let maxTicks = float(foamFrames * 1000)
+            let pct = (float((getTicks() - tickPlaced)) / maxTicks) * 100.0
+            let amount = 255 - int((pct * 155.0) + 100.0) + 100
+            SDLTexture.setAlpha amount d |> ignore
             context.Renderer  |> copy d None (Some j.AsRect) |> ignore        
-        | _ -> ()
+        | _ -> () 
     
     let determinePlayerFrame player =   
         if player.velocity.Y = 0.0 && player.velocity.X > 0.0 then 2 // right

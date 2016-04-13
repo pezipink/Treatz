@@ -119,7 +119,7 @@ type MikishidaKinds =
     | Dragon of DragonData
     | Treat
     | Mountainountain
-    | AntiDragonFoam 
+    | AntiDragonFoam of System.UInt32
     | Squirrel
     | Cat
     | Otter
