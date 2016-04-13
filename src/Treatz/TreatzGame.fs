@@ -6,33 +6,6 @@ open SDLGeometry
 open SDLKeyboard
 open SDLGameController
 
-[<Struct>]
-[<CustomEquality>]
-[<CustomComparison>]
-// used in the quadtrees and pathfinding algorithms 
-type FastPoint(x: int, y: int) =
-    member __.X = x
-    member __.Y = y
-    
-    override lhs.Equals rhs =
-        let rhs = (rhs :?> FastPoint)
-        lhs.X = lhs.X && lhs.Y = rhs.X
-    
-    interface System.IComparable with
-        member lhs.CompareTo rhs =
-            let rhs = (rhs :?> FastPoint)
-            let c = compare lhs.X rhs.X
-            if c <> 0 then c else
-            compare lhs.Y rhs.Y
-    
-    override __.GetHashCode() =
-        x + 65536 * y
-
-    member __.GridX = x / cellWidth
-    member __.GridY = y / cellHeight
-    member __.CentreGridX = (x + cellWidth / 2) / cellWidth
-    member __.CentreGridY = (y + cellHeight /2) / cellHeight
-    
 type Vector2 = {
    X: double 
    Y: double  
@@ -141,7 +114,7 @@ type MikishidaKinds =
     with 
     member this.defaultSpeed =
         match this with
-        | Player _ -> 8.0
+        | Player _ -> 1.5
         | Dragon _  -> 2.5
         | _ -> 0.9
 
