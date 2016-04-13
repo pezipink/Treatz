@@ -94,11 +94,15 @@
               | Some destination, Some origin ->
                   let gridPath = [| yield! PathFinding.search origin destination [state.Player1; state.Player2 ]; yield destination |]
                   
+                  printfn "Path  %A \n destination %A" (gridPath |> Array.map(fun x -> x.Identity.X.ToString() + " " + x.Identity.Y.ToString())) (Array.last gridPath).Identity
+                  printfn "Find the path from %A to %A" origin.Identity destination.Identity
+
                   let points = gridPath |> Array.map(fun x -> 
                                         { SDLGeometry.Point.X = (x.Identity.X * cellWidth + cellWidth / 2 ) * 1<px>
                                           SDLGeometry.Point.Y =  (x.Identity.Y * cellHeight + cellHeight/ 2) * 1<px> })
                   
                   state.DebugLines <- points
+                  
 
                   {mikishida with kind = Dragon(FollowPath(gridPath |> Array.map(fun x -> x.Identity), treatLocation))}
               |  _ -> printfn "this should never happen, wtf"

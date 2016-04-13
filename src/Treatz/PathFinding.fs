@@ -19,9 +19,6 @@
     q.Add(state) |> ignore
     q
 
-  let expandNode (node:Node) = 
-    node.Neighbours 
-
   // not the most efficient way to calc distance but ...
   let calcDistance (node:Node) goalNode =    
     let x = double (node.Identity.X - goalNode.Identity.X)
@@ -29,36 +26,48 @@
     sqrt( x * x + y * y) |> int
 
   let calculatePlayerBasedCost baseNode (players: Mikishida list) =
-    let calc baseV p =  
-      let x = double (baseV.X - p.X)
-      let y = double( baseV.Y - p.Y) 
-      sqrt( x * x + y * y) |> int
-    baseNode.Cost - (players 
-                      |> List.map(fun x -> calc baseNode.Identity {NodeVector.X = x.location.GridX; Y= x.location.GridY}) 
-                      |> List.sum ) /2
+    baseNode.Cost
+
+
+  let convertToArray (pathNode :NodePath) =
+    let rec someFn n (array: Node array) =
+      match n.Parent with
+      | None -> array
+      | Some parent -> someFn parent (Array.append [|n.GridNode|] array)    
+    someFn pathNode Array.empty 
+    
   
   let search startNode goal (playersNodes: Mikishida list): Node array =
     let frontier = createInitialFrontier startNode 
     let explored = new HashSet<Node>() //mutable
+
+    
+    let mutable currentPathNode = {Parent = None; Child= None; PathCost= 0.; GridNode = startNode} 
+    
+    
     if (frontier.Count = 0) then 
         [||]
     else  
       while frontier.Count > 0 do      
         let currentNode = 
             frontier.ToArray() 
-            |> Seq.minBy(fun x -> 1 + calcDistance x goal + (calculatePlayerBasedCost x playersNodes))
+            |> Seq.minBy(fun x -> calcDistance x goal + x.Cost + int currentPathNode.PathCost )
+        currentPathNode <- {currentPathNode with 
+                              Parent = Some(currentPathNode) 
+                              PathCost = double currentNode.Cost + currentPathNode.PathCost 
+                              GridNode= currentNode }
         frontier.Remove(currentNode)  |> ignore
         if (currentNode.Identity <> goal.Identity) then
           explored.Add(currentNode) |> ignore 
-        
-          (expandNode currentNode)
+          
+          (currentNode.Neighbours)
           |> Seq.iter(fun n -> 
-                if not( explored.Contains(n)) then frontier.Add(n) |> ignore )
-          
+                if not(explored.Contains(n)) then 
+                  frontier.Add(n) |> ignore                  
+                   
+                  )          
         else
-          frontier.Clear()  //yuck
-          //explored.ToArray()
-          
+          frontier.Clear()  //yuck          
+      convertToArray currentPathNode
 
-      explored.ToArray()
 
