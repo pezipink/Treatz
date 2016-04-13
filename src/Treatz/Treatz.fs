@@ -127,7 +127,7 @@ let prepareLevel state =
 
     let toPoint x = {Vector2.X = double(fst x) * cellWidthf; Y=double(snd x) * cellHeightf}
 
-    let dragons, blocked = gen maxDragons (fun p -> {kind = MikishidaKinds.Dragon( Wander Intelligence.wanderDefault) ; location = toPoint p; velocity = {X=0.0;Y=0.0}} ) mountains
+    let dragons, blocked = gen maxDragons (fun p -> {kind = MikishidaKinds.Dragon( Wander {Intelligence.wanderDefault with RateOfChangeOfDirection = (state.Chaos.NextDouble()/0.5)}) ; location = toPoint p; velocity = {X=0.0;Y=0.0}} ) mountains
     let treatz, _  = gen maxTreats (fun p -> {kind = MikishidaKinds.Treat; location = toPoint p; velocity = {X=0.0;Y=0.0}} ) blocked
     let treatzSet = treatz |> List.map(fun t -> int t.location.GridX, int t.location.GridY ) |> Set.ofList
     let mountains' = mountains |> Set.map(fun p -> {kind = MikishidaKinds.Mountainountain; location = toPoint p; velocity = {X=0.0;Y=0.0}}) |> Set.toList
@@ -207,8 +207,8 @@ let miscUpdates state =
                 elif Map.containsKey m.location.Grid state.Player2.AsPlayerData.Foam then true
                 else false 
             | _ -> true )   
-    let delta =   getTicks() - state.LastFrameTime
-    { state with TurkeyAngle = angle; TreatsLookup = lookups; Mikishidas =  mikis @ treats; LastFrameTime = getTicks(); DeltaTicks = delta}
+    
+    { state with TurkeyAngle = angle; TreatsLookup = lookups; Mikishidas =  mikis @ treats; LastFrameTime = getTicks()}
 
 let tryDropFoam player =
     match player.kind with
@@ -385,7 +385,11 @@ let render(context:RenderingContext) (state:TreatzState) =
             else // everything else is central grass
                 let src = { X = 17<px>; Y = 17<px>; Width=16<px>; Height=16<px> } : SDLGeometry.Rectangle                
                 context.Renderer |> copy t (Some src) (Some dst) |> ignore
-
+            
+    if state.DebugLines <> Array.empty then
+      context.Renderer |> SDLRender.setDrawColor (255uy, 255uy, 255uy, 255uy) |> ignore
+      context.Renderer |> SDLRender.drawLines(state.DebugLines) |> ignore
+              
 
     for j in state.Mikishidas |> List.sortBy(fun x -> match x.kind with Dragon _ -> 1 | Treat -> 2 | AntiDragonFoam _ -> 3 | _ -> 4) do
         match j.kind with
@@ -420,16 +424,16 @@ let render(context:RenderingContext) (state:TreatzState) =
     context.Renderer |> copy state.Sprites.["juanita"]   (Some src) (Some state.Player2.AsRect) |> ignore
 
 
-    let t = state.Sprites.["turkey"]  
+    let turkeyTexture = state.Sprites.["turkey"]  
     let dst = { X = 504<px>; Y = 350<px>; Width=50<px>; Height=50<px> } : SDLGeometry.Rectangle    
-    context.Renderer  |> copyEx t None (Some dst) state.TurkeyAngle 0 |> ignore
+    context.Renderer  |> copyEx turkeyTexture None (Some dst) state.TurkeyAngle 0 |> ignore
     
     context.Renderer |> SDLRender.present 
 
     // delay to lock at 60fps (we could do extra work here)
     let frameTime = getTicks() - context.LastFrameTick
     if frameTime < delay_timei then delay(delay_timei - frameTime)
-    else printfn "%A" frameTime
+    else printfn "Frametime %A" frameTime
     context.LastFrameTick <- getTicks()    
 
 
@@ -489,8 +493,8 @@ let main() =
     
     let context =  { Renderer = mainRenderer; Texture = mainTexture; Surface = surface; LastFrameTick = getTicks() }
     let state = 
-        {Player1 = {kind = Player(PlayerData.Blank); location = {X=10.; Y=10.}; velocity = {X=0.0; Y=0.0}}
-         Player2 = {kind = Player(PlayerData.Blank); location = {X=20.; Y=20.}; velocity = {X=0.0; Y=0.0}}
+        {Player1 = {kind = Player(PlayerData.Blank); location = {X=494.; Y=330.}; velocity = {X=0.0; Y=0.0}}
+         Player2 = {kind = Player(PlayerData.Blank); location = {X=564.; Y=330.}; velocity = {X=0.0; Y=0.0}}
          Mikishidas = []
          UnpassableLookup = Set.empty
          TreatsLookup = Set.empty
@@ -501,7 +505,7 @@ let main() =
          Chaos = System.Random(System.DateTime.Now.Millisecond)
          PathFindingData = Map.empty
          LastFrameTime = getTicks()
-         DeltaTicks = uint32 0
+         DebugLines = Array.empty
          } |> prepareLevel
 
     eventPump (render context) handleEvent update state

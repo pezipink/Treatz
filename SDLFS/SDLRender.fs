@@ -130,3 +130,8 @@ let copyEx (texture:SDLTexture.Texture) (srcrect:Rectangle option) (dstrect:Rect
 
 let drawRect (srcrect:Rectangle) (renderer:Renderer) =
     SDLGeometry.withSDLRectPointer(fun src ->SDLRenderNative.SDL_RenderDrawRect(renderer.Pointer,src)) (Some srcrect)
+
+let drawLines (points:SDLGeometry.Point []) (renderer:Renderer) =
+    let native = System.Runtime.InteropServices.Marshal.UnsafeAddrOfPinnedArrayElement(points,0)
+    let sss = new IntPtr(native.ToPointer())
+    SDLRenderNative.SDL_RenderDrawLines(renderer.Pointer, sss, points.Length-1) 

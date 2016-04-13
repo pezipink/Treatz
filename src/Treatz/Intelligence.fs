@@ -17,7 +17,7 @@
       let findClosestTreat (mikishida:Mikishida) =
             let clamp x = if x < 0 then 0 else x
             let r = mikishida.AsQuadBounds
-            let bounds = {r with x = clamp r.x - 50; y = clamp r.y - 50; width = 100; height = 100; }
+            let bounds = {r with x = clamp r.x - 950; y = clamp r.y - 950; width = 9100; height = 9100; }
 //            let bounds = {r with x = clamp r.x - 150; y = clamp r.y - 150; width = 300; height = 300; }
             
             state.findMikishidas(fun m -> match m.kind with Treat -> true | _ -> false) bounds
@@ -35,12 +35,12 @@
           match mikishida.kind with                      
 
           | Dragon(Wander behaviourState)  ->      
-//              printfn "wander %A" behaviourState
+
               let newBehaviourState = wander state.Chaos mikishida behaviourState 
-              let v =    mikishida.kind.defaultSpeed * newBehaviourState.SteeringDirection.normalize       
+              let velocity = mikishida.kind.defaultSpeed * newBehaviourState.SteeringDirection.normalize       
               match findClosestTreat mikishida with
-              | Some treat -> {mikishida with kind = Dragon(PathFind treat  ); }
-              | _ -> {mikishida with kind = Dragon(Wander newBehaviourState); velocity = v}
+              | Some treat -> {mikishida with kind = Dragon(PathFind treat); }
+              | _ -> {mikishida with kind = Dragon(Wander newBehaviourState); velocity = velocity}
 
           | Dragon(FollowPath(pathTo, dest))  ->   
               // if treat has gone, do something else              
@@ -59,64 +59,44 @@
                     let destinationCell = int (fst destinationCentre / cellWidthf), int (snd destinationCentre / cellHeightf)
                     let dragonCell = int (fst dragonCentre / cellWidthf), int (snd dragonCentre / cellHeightf)
 
-                    if destinationCell = dragonCell then {mikishida with kind = Dragon(FollowPath (pathTo |> Array.tail,dest)) }
-                    else 
-                        let accelX p = 
-                            if p then
-                                let x = mikishida.velocity.X + state.Chaos.NextDouble() * 3.0
-//                                let x = mikishida.velocity.X + mikishida.kind.defaultSpeed
-                                if x > mikishida.kind.defaultSpeed then mikishida.kind.defaultSpeed
-                                else x
-                            else
-                                let x = mikishida.velocity.X + -(state.Chaos.NextDouble() * 3.0)
-//                                let x = mikishida.velocity.X + -(state.Chaos.NextDouble() * mikishida.kind.defaultSpeed)
-                                if x < -mikishida.kind.defaultSpeed then -mikishida.kind.defaultSpeed
-                                else x
-                        let accelY p = 
-                            if p then
-                                let y = mikishida.velocity.Y + state.Chaos.NextDouble() * 3.0
-//                                let y = mikishida.velocity.Y + state.Chaos.NextDouble() * mikishida.kind.defaultSpeed
-                                if y > mikishida.kind.defaultSpeed then mikishida.kind.defaultSpeed
-                                else y
-                            else
-                                let y = mikishida.velocity.Y + -(state.Chaos.NextDouble() * 3.0)
-//                                let y = mikishida.velocity.Y + -(state.Chaos.NextDouble() * mikishida.kind.defaultSpeed)
-                                if y < -mikishida.kind.defaultSpeed then -mikishida.kind.defaultSpeed
-                                else y
-                        let xd = fst destinationCentre - fst dragonCentre 
-                        let yd = snd destinationCentre - snd dragonCentre
-                        let xd = 
-//                            if abs(xd) > mikishida.kind.defaultSpeed / 2.0 then 
-                                if xd > 0.0 then accelX true
-                                else accelX false
-//                            else 0.0
-                        let yd = 
-//                            if abs(yd) > mikishida.kind.defaultSpeed / 2.0 then 
-                                if yd > 0.0 then accelY true
-                                else accelY false
-//                            else 0.0
-                        if pathTo.Length > 1 then
-                            { mikishida with velocity = {X = xd; Y = yd} ; (*kind = Dragon(PathFind {X=fst destinationCentre; Y=snd destinationCentre})*)}
-                        else
-                            { mikishida with velocity = {X = xd; Y = yd} ;}
+                    if destinationCell = dragonCell then 
+                      {mikishida with kind = Dragon(FollowPath (pathTo |> Array.tail,dest)) }
+                    else                        
+                        let target = {Vector2.X = fst destinationCentre - fst dragonCentre ; Y = snd destinationCentre - snd dragonCentre}.normalize
+                        let velocity = mikishida.kind.defaultSpeed * target
+                        { mikishida with velocity = velocity}
+                        
                 
                 else {mikishida with kind = Dragon(Wander wanderDefault); }              
               
-          | Dragon(PathFind( treatLocation)) ->               
-//              printfn "In pathfinding %A" treatLocation
+          | Dragon(PathFind( treatLocation)) ->              
               
-              let getNode loc =
-                Map.tryFind loc state.PathFindingData
-
-              let destination = getNode (treatLocation.GridX,treatLocation.GridY) 
+              let rec getNode loc =
+                let r = Map.tryFind loc state.PathFindingData                    
+                match r with
+                | Some node-> Some(node)
+                | None  -> 
+                      let x, y = loc
+                      let x', y' = state.Chaos.Next(-1,2), state.Chaos.Next(-1,2)
+                      getNode (x+x', y+y') 
+                
+              let destinationNode = getNode (treatLocation.GridX,treatLocation.GridY) 
               let origin = getNode(mikishida.location.GridX,mikishida.location.GridY) 
-              match destination, origin with
+              
+              match destinationNode, origin with
               | Some destination, Some origin ->
-                  let gridPath = [| yield! PathFinding.search origin destination; yield destination |]
+                  let gridPath = [| yield! PathFinding.search origin destination [state.Player1; state.Player2 ]; yield destination |]
+                  
+                  let points = gridPath |> Array.map(fun x -> 
+                                        { SDLGeometry.Point.X = (x.Identity.X * cellWidth + cellWidth / 2 ) * 1<px>
+                                          SDLGeometry.Point.Y =  (x.Identity.Y * cellHeight + cellHeight/ 2) * 1<px> })
+                  
+                  state.DebugLines <- points
+
                   {mikishida with kind = Dragon(FollowPath(gridPath |> Array.map(fun x -> x.Identity), treatLocation))}
               |  _ -> printfn "this should never happen, wtf"
                       {mikishida with kind = Dragon(Wander wanderDefault)}
           
           | _ -> mikishida
-//      printfn "ticks? %A"  (getTicks().ToString())
+
       { state with Mikishidas = List.map update state.Mikishidas }
