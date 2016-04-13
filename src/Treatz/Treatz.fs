@@ -33,6 +33,8 @@ let updatePositions (state:TreatzState) =
         
         //yuck, whatever for now
         match mikishida.kind with 
+        | CaughtDragon _ 
+        | TreatEaten _ -> Some { mikishida with location = tempLoc }
         | Dragon _ -> 
             
             if Map.containsKey tempLoc.Grid state.Player1.AsPlayerData.Foam then Some { mikishida with kind = Dragon(Wander(Intelligence.wanderDefault)) }
@@ -74,6 +76,26 @@ let collisionDetection state =
         |> List.filter(fun k -> match k.kind with Treat -> true | Player _ -> true | _ -> false)
         |> QuadTree.create (fun j -> j.AsQuadBounds) 5 30 screenQuadBounds
     
+    let createDragonCaught (location:Vector2) = 
+        let angle = 
+            {
+                currentAngle  = 0.0
+                alpha  = 128
+            }
+        let vx = state.Chaos.NextDouble() * 1.0 * 3.0
+        let vy = state.Chaos.NextDouble() * 1.0 * 3.0
+        {kind = CaughtDragon angle; location = location; velocity = {X = (if state.Chaos.Next(2) = 0 then vx else -vx); Y = (if state.Chaos.Next(2) = 0 then vy else -vy)}}
+
+    let createEatenTreat (location:Vector2) = 
+        let angle = 
+            {
+                currentAngle  = 0.0
+                alpha  = 255
+            }
+        let vx = state.Chaos.NextDouble() * 1.0 * 8.0
+        let vy = state.Chaos.NextDouble() * 1.0 * 8.0
+        {kind = TreatEaten angle; location = location; velocity = {X = (if state.Chaos.Next(2) = 0 then vx else -vx); Y = (if state.Chaos.Next(2) = 0 then vy else -vy)}}
+
     let update (mikis,juans) juan =
         match juan.kind with
         | Dragon _ -> 
@@ -87,11 +109,19 @@ let collisionDetection state =
                 match p.kind with 
                 | Player data ->  data.DragonsCaught <- data.DragonsCaught + 1
                 | _ -> ()
-                // add the dragon to the removal pile
-                Set.add juan mikis, juans
+                // add the dragon to the removal pile and a dragon animation to the caught dragons
+                Set.add juan mikis, (createDragonCaught p.location) :: juans
             | None -> 
                 // yum yum treats, reset drag to no behaviour
-                Set.union (Set.ofList collisions) mikis, {juan with kind = if collisions.Length > 0 then Dragon(Wander(Intelligence.wanderDefault)) else juan.kind } :: juans
+                if collisions.IsEmpty then
+                        mikis,
+                        {juan with kind = if collisions.Length > 0 then Dragon(Wander(Intelligence.wanderDefault)) else juan.kind } 
+                        :: juans
+                else
+                    Set.union (Set.ofList collisions) mikis, 
+                        {juan with kind = if collisions.Length > 0 then Dragon(Wander(Intelligence.wanderDefault)) else juan.kind } 
+                        :: (createEatenTreat juan.location)
+                        :: juans
         | _ -> mikis, juan :: juans
     
     let (treats,juans) = List.fold(fun acc juan -> update acc juan) (Set.empty,[]) state.Mikishidas
@@ -202,7 +232,27 @@ let miscUpdates state =
         state.Mikishidas 
         |> List.filter(fun m -> 
             match m.kind with 
-            | AntiDragonFoam ticks -> 
+            // out of bounds caught dragons and eaten treats are removed. also we are going to be cheeky 
+            // and in this filter perform and update and sideeffect so we don't have to iterate this
+            // list AGAIN!
+                
+            | CaughtDragon data ->
+                if state.IsCellOutofbounds(m.location.X,m.location.Y) || data.alpha = 0 then false 
+                else 
+                    let angle = data.currentAngle + 10.0
+                    data.currentAngle <- if angle > 360.0 then angle - 360.0 else angle
+                    true
+            | TreatEaten data -> 
+                // out of bounds caught dragons and eaten treats are removed. also we are going to be cheeky 
+                // and in this filter perform and update and sideeffect so we don't have to iterate this
+                // list AGAIN!
+                if state.IsCellOutofbounds(m.location.X,m.location.Y) then false 
+                else 
+                    let angle = data.currentAngle + 20.0
+                    data.currentAngle <- if angle > 360.0 then angle - 360.0 else angle
+                    data.alpha <- if data.alpha - 5 < 0 then 0 else data.alpha - 5
+                    true
+            | AntiDragonFoam _ -> 
                 if Map.containsKey m.location.Grid state.Player1.AsPlayerData.Foam then true
                 elif Map.containsKey m.location.Grid state.Player2.AsPlayerData.Foam then true
                 else false 
@@ -396,6 +446,16 @@ let render(context:RenderingContext) (state:TreatzState) =
         | Dragon _ ->     
             let d = state.Sprites.["drag"]  
             context.Renderer  |> copy d None (Some j.AsRect) |> ignore
+        | CaughtDragon data ->     
+            let d = state.Sprites.["drag"]  
+            SDLTexture.setAlpha data.alpha d |> ignore
+            context.Renderer  |> copyEx d None (Some j.AsRect) data.currentAngle 0 |> ignore
+            SDLTexture.setAlpha 255 d |> ignore
+        | TreatEaten data ->     
+            let d = state.Sprites.["treat"]  
+            SDLTexture.setAlpha data.alpha d |> ignore
+            context.Renderer  |> copyEx d None (Some j.AsRect) data.currentAngle 0 |> ignore
+            SDLTexture.setAlpha 255 d |> ignore
         | Treat ->     
             let d = state.Sprites.["treat"]  
             context.Renderer  |> copy d None (Some j.AsRect) |> ignore
@@ -428,8 +488,37 @@ let render(context:RenderingContext) (state:TreatzState) =
     let dst = { X = 504<px>; Y = 350<px>; Width=50<px>; Height=50<px> } : SDLGeometry.Rectangle    
     context.Renderer  |> copyEx turkeyTexture None (Some dst) state.TurkeyAngle 0 |> ignore
     
+    // show the scores by bliting double sized, transparent dragons over each other in the bottom left and right corners
+    
+    let d = state.Sprites.["drag"]  
+    SDLTexture.setAlpha 128 d |> ignore
+    for x = 1 to state.Player1.AsPlayerData.DragonsCaught do
+        
+        let r = 
+         { 
+          X = (1 + (x * 10)) * 1<px>
+          Y = screenHeight - 32<px>
+          Width = 32<px>
+          Height = 32<px> 
+         } : SDLGeometry.Rectangle
+        context.Renderer  |> copyEx d None (Some r) 0.0 1 |> ignore
+
+    for x = 1 to state.Player2.AsPlayerData.DragonsCaught do
+        let r = 
+         { 
+          X = ((screenWidth - 32<px>) - (x * 10<px>)) 
+          Y = screenHeight - 32<px>
+          Width = 32<px>
+          Height = 32<px> 
+         } : SDLGeometry.Rectangle
+        context.Renderer  |> copy d None (Some r) |> ignore
+
+    
+    SDLTexture.setAlpha 255 d |> ignore
+
     context.Renderer |> SDLRender.present 
 
+    
     // delay to lock at 60fps (we could do extra work here)
     let frameTime = getTicks() - context.LastFrameTick
     if frameTime < delay_timei then delay(delay_timei - frameTime)

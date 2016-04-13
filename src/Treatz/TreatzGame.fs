@@ -117,6 +117,11 @@ type PlayerData =
      mutable Foam : Map<int*int,int> }
     with static member Blank = {DragonsCaught = 0; FoamDuration = 0; Foam = Map.empty}
 
+type AlphaAngle =
+    { mutable currentAngle : float
+      mutable alpha : int
+       }
+
 type DragonData =
     | FollowPath of NodeVector array * Vector2
     | Wander of BehaviourState
@@ -131,6 +136,8 @@ type MikishidaKinds =
     | Squirrel
     | Cat
     | Otter
+    | CaughtDragon of AlphaAngle
+    | TreatEaten of AlphaAngle
     with 
     member this.defaultSpeed =
         match this with
