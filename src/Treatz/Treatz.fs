@@ -360,13 +360,18 @@ let updateInputs state =
         (state,moves) ||> List.fold (fun acc (pred,f) -> if pred acc then f acc else acc)
 
 let update (state:TreatzState) : TreatzState =
-    state
-    |> miscUpdates 
-    |> updateInputs
-    |> updatePositions
-    |> collisionDetection
-    |> intelligence
-    |> testGameOver
+    match state.GameState with
+    | Playing -> 
+        state
+        |> miscUpdates 
+        |> updateInputs
+        |> updatePositions
+        |> collisionDetection
+        |> intelligence
+        |> testGameOver
+    | _ -> 
+        state
+        |> updateInputs
     
 
 let rec eventPump (renderHandler:'TState->unit) (eventHandler:SDLEvent.Event->'TState->'TState option) (update:'TState->'TState) (state:'TState) : unit =
