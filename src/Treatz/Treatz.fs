@@ -278,13 +278,6 @@ let updateInputs state =
     let up1 x y = down1 x y |> not
     let up2 x y = down2 x y |> not
     
-//    let updateFoam p = 
-//        match p.kind with
-//        | Player data -> 
-//            if data.FoamDuration = 0 then
-//
-//        | _ -> ()
-        
     // yuuuuck!
     let moves = 
         [
@@ -491,7 +484,7 @@ let render(context:RenderingContext) (state:TreatzState) =
     // show the scores by bliting double sized, transparent dragons over each other in the bottom left and right corners
     
     let d = state.Sprites.["drag"]  
-    SDLTexture.setAlpha 128 d |> ignore
+    SDLTexture.setAlpha 80 d |> ignore
     for x = 1 to state.Player1.AsPlayerData.DragonsCaught do
         
         let r = 
@@ -528,7 +521,8 @@ let render(context:RenderingContext) (state:TreatzState) =
 
 let main() = 
     use system = new SDL.System(SDL.Init.Everything)
-    use mainWindow = SDLWindow.create "test" 100<px> 100<px> screenWidth screenHeight 0u
+    use mainWindow = SDLWindow.create "test" 100<px> 100<px> screenWidth screenHeight 0u //(uint32 SDLWindow.Flags.FullScreen)
+    //use mainWindow = SDLWindow.create "test" 100<px> 100<px> screenWidth screenHeight (uint32 SDLWindow.Flags.FullScreen) // FULLSCREEN!
     use mainRenderer = SDLRender.create mainWindow -1 SDLRender.Flags.Accelerated
     use surface = SDLSurface.createRGB (screenWidth,screenHeight,32<bit/px>) (0x00FF0000u,0x0000FF00u,0x000000FFu,0x00000000u)
     

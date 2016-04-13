@@ -139,7 +139,8 @@ let render(context:RenderingContext) (state:TreatzState) =
     |> ignore
 
     context.Renderer |> SDLRender.copy context.Texture None None |> ignore
-    drawTree 0 screenBounds state.QT
+    let qt = create (id) 3 10 {x = 0; y = 0; width = 800; height = 600} state.Items
+    drawTree 0 screenBounds qt
     
     context.Renderer |> SDLRender.present 
 
@@ -150,7 +151,8 @@ let render(context:RenderingContext) (state:TreatzState) =
 
 let main() = 
     use system = new SDL.System(SDL.Init.Video ||| SDL.Init.Events)
-    use mainWindow = SDLWindow.create "Dragon Treats" 100<px> 100<px> screenWidth screenHeight 0u
+    //use mainWindow = SDLWindow.create "Dragon Treats" 100<px> 100<px> screenWidth screenHeight 0u
+    use mainWindow = SDLWindow.create "test" 100<px> 100<px> screenWidth screenHeight (uint32 SDLWindow.Flags.FullScreen) // FULLSCREEN!
     use mainRenderer = SDLRender.create mainWindow -1 SDLRender.Flags.Accelerated
     use surface = SDLSurface.createRGB (screenWidth,screenHeight,32<bit/px>) (0x00FF0000u,0x0000FF00u,0x000000FFu,0x00000000u)    
     use mainTexture = mainRenderer |> SDLTexture.create SDLPixel.RGB888Format SDLTexture.Access.Streaming (screenWidth,screenHeight)
