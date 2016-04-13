@@ -31,7 +31,7 @@ let updatePositions (state:TreatzState) =
         // at any point a sprite could be in up to four cells at once (one for each corner)
         // and check the target is valid, else snap to the nearest grid boundary
       
-        let tempLoc = mikishida.location + (*(state.DeltaTicks |> toSeconds ) * *)  mikishida.velocity
+        let tempLoc = mikishida.location +  mikishida.velocity
         
         //yuck, whatever for now
         match mikishida.kind with 
@@ -84,8 +84,8 @@ let collisionDetection state =
                 currentAngle  = 0.0
                 alpha  = 128
             }
-        let vx = state.Chaos.NextDouble() * 1.0 * 3.0
-        let vy = state.Chaos.NextDouble() * 1.0 * 3.0
+        let vx = state.Chaos.NextDouble() * 3.0
+        let vy = state.Chaos.NextDouble() * 3.0
         {kind = CaughtDragon angle; location = location; velocity = {X = (if state.Chaos.Next(2) = 0 then vx else -vx); Y = (if state.Chaos.Next(2) = 0 then vy else -vy)}}
 
     let createEatenTreat (location:Vector2) = 
@@ -94,42 +94,43 @@ let collisionDetection state =
                 currentAngle  = 0.0
                 alpha  = 255
             }
-        let vx = state.Chaos.NextDouble() * 1.0 * 8.0
-        let vy = state.Chaos.NextDouble() * 1.0 * 8.0
+        let vx = state.Chaos.NextDouble() * 8.0
+        let vy = state.Chaos.NextDouble() * 8.0
         {kind = TreatEaten angle; location = location; velocity = {X = (if state.Chaos.Next(2) = 0 then vx else -vx); Y = (if state.Chaos.Next(2) = 0 then vy else -vy)}}
-
-    let update (mikis,juans) juan =
+    
+    // ross, sort this shit out. signed, ross
+    let update (collisions,juans) juan =
         match juan.kind with
         | Dragon _ -> 
-            let collisions =
+            let newCollisions =
                 treatTree
                 |> QuadTree.findNeighbours (fun k -> overlap(juan.AsRect,k.AsRect)) juan.AsQuadBounds screenQuadBounds
                 
-            match collisions |> List.tryFind(fun t -> match t.kind with Player _ -> true | _ -> false) with
+            match newCollisions |> List.tryFind(fun t -> match t.kind with Player _ -> true | _ -> false) with
             | Some p -> 
                 // a dragon in contact with a player means the dragon is caught!
                 match p.kind with 
                 | Player data ->  data.DragonsCaught <- data.DragonsCaught + 1
                 | _ -> ()
                 // add the dragon to the removal pile and a dragon animation to the caught dragons
-                Set.add juan mikis, (createDragonCaught p.location) :: juans
+                Set.add juan collisions, (createDragonCaught p.location) :: juans
             | None -> 
                 // yum yum treats, reset drag to no behaviour
-                if collisions.IsEmpty then
-                        mikis,
-                        {juan with kind = if collisions.Length > 0 then Dragon(Wander(Intelligence.wanderDefault)) else juan.kind } 
+                if newCollisions.IsEmpty then
+                        collisions,
+                        {juan with kind = if newCollisions.Length > 0 then Dragon(Wander(Intelligence.wanderDefault)) else juan.kind } 
                         :: juans
                 else
-                    Set.union (Set.ofList collisions) mikis, 
-                        {juan with kind = if collisions.Length > 0 then Dragon(Wander(Intelligence.wanderDefault)) else juan.kind } 
+                    Set.union (Set.ofList newCollisions) collisions, 
+                        {juan with kind = if newCollisions.Length > 0 then Dragon(Wander(Intelligence.wanderDefault)) else juan.kind } 
                         :: (createEatenTreat juan.location)
                         :: juans
-        | _ -> mikis, juan :: juans
+        | _ -> collisions, juan :: juans
     
-    let (treats,juans) = List.fold(fun acc juan -> update acc juan) (Set.empty,[]) state.Mikishidas
+    let (collisions,juans) = List.fold(fun acc juan -> update acc juan) (Set.empty,[]) state.Mikishidas
     
-    let mikis = List.filter (fun t -> Set.contains t treats |> not) juans  
-    let lookup = Set.difference state.TreatsLookup (treats|>Set.map(fun t->(t.location.GridX, t.location.GridY)))  
+    let mikis = List.filter (fun t -> Set.contains t collisions |> not) juans  
+    let lookup = Set.difference state.TreatsLookup (collisions|>Set.map(fun t->(t.location.GridX, t.location.GridY)))  
 //    maxTreats <- maxTreats - treats.Count
 //    if maxTreats < 0 then maxTreats <- 0
     {state with Mikishidas = mikis; TreatsLookup = lookup}
