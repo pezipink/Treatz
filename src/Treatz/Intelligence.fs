@@ -17,7 +17,7 @@
       let findClosestTreat (mikishida:Mikishida) =
             let clamp x = if x < 0 then 0 else x
             let r = mikishida.AsQuadBounds
-            let bounds = {r with x = clamp r.x - 950; y = clamp r.y - 950; width = 9100; height = 9100; }
+            let bounds = {r with x = clamp r.x - 50; y = clamp r.y - 50; width = 100; height = 100; }
 //            let bounds = {r with x = clamp r.x - 150; y = clamp r.y - 150; width = 300; height = 300; }
             
             state.findMikishidas(fun m -> match m.kind with Treat -> true | _ -> false) bounds
