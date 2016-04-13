@@ -142,7 +142,7 @@ let prepareLevel state =
                 yield x+35,y
         ] @
         [for y = 5 to 9 do             
-            for x = 20 to 45 do
+            for x = 19 to 44 do
                 yield x,y
                 yield x,y + 32] 
         |> Set.ofList
@@ -403,42 +403,42 @@ let render(context:RenderingContext) (state:TreatzState) =
                 let dst = { X = x'; Y = y'; Width=16<px>; Height=16<px> }  : SDLGeometry.Rectangle    
             
                 // top left mountain tiles
-                if( y= 10 && x = 12 ) || (y=10 && x = 12+35) || (y = 5 && x = 20) || (y=5+32 && x = 20)  then
+                if( y= 10 && x = 12 ) || (y=10 && x = 12+35) || (y = 5 && x = 19) || (y=5+32 && x = 19)  then
                     let src = { X = 50<px>; Y = 0<px>; Width=16<px>; Height=16<px> } : SDLGeometry.Rectangle                
                     context.Renderer |> copy t (Some src) (Some dst) |> ignore
                 // bottom left mountain tiles
-                elif( y= 35 && x = 12 ) || (y=35&& x = 12+35) || (y = 9 && x = 20) || (y=9+32 && x = 20)  then
+                elif( y= 35 && x = 12 ) || (y=35&& x = 12+35) || (y = 9 && x = 19) || (y=9+32 && x = 19)  then
                     let src = { X = 50<px>; Y = 34<px>; Width=16<px>; Height=16<px> } : SDLGeometry.Rectangle                
                     context.Renderer |> copy t (Some src) (Some dst) |> ignore
                 // top right mountain tiles
-                elif( y= 10 && x = 16 ) || (y=10 && x = 16+35) || (y = 5 && x = 45) || (y=5 && x = 45+32)  then
+                elif( y= 10 && x = 16 ) || (y=10 && x = 16+35) || (y = 5 && x = 44) || (y=5 && x = 44+32)  then
                     let src = { X = 84<px>; Y = 0<px>; Width=16<px>; Height=16<px> } : SDLGeometry.Rectangle                
                     context.Renderer |> copy t (Some src) (Some dst) |> ignore
                 // bottom right mountain tiles
-                elif( y= 35 && x = 16 ) || (y=35&& x = 16+35) || (y = 9 && x = 45) || (y=9+32 && x = 45)  then
+                elif( y= 35 && x = 16 ) || (y=35&& x = 16+35) || (y = 9 && x = 44) || (y=9+32 && x = 44)  then
                     let src = { X = 84<px>; Y = 34<px>; Width=16<px>; Height=16<px> } : SDLGeometry.Rectangle                
                     context.Renderer |> copy t (Some src) (Some dst) |> ignore
                 // left mountain tiles
-                elif (y >= 10 && y <= 35 && (x = 12 || x = 12+35)) || (x = 20 && ((y >= 5 && y <= 9) || y>=5+32 && y <= 9+32)) then
+                elif (y >= 10 && y <= 35 && (x = 12 || x = 12+35)) || (x = 19 && ((y >= 5 && y <= 9) || y>=5+32 && y <= 9+32)) then
                     let src = { X = 50<px>; Y = 17<px>; Width=16<px>; Height=16<px> } : SDLGeometry.Rectangle                
                     context.Renderer |> copy t (Some src) (Some dst) |> ignore
                 // right mountain tiles
-                elif (y >= 10 && y <= 35 && (x = 16 || x = 16+35)) || (x = 45 && ((y >= 5 && y <= 9) || y>=5+32 && y <= 9+32)) then
+                elif (y >= 10 && y <= 35 && (x = 16 || x = 16+35)) || (x = 44 && ((y >= 5 && y <= 9) || y>=5+32 && y <= 9+32)) then
                     let src = { X = 84<px>; Y = 17<px>; Width=16<px>; Height=16<px> } : SDLGeometry.Rectangle                
                     context.Renderer |> copy t (Some src) (Some dst) |> ignore
                 // top mountain tiles
                 elif( y= 10 && x >= 12 && x <= 16 ) || ( y= 10 && x >= 12+35 && x <= 16+35 ) ||
-                    ( y = 5 && x >= 20 && x <= 45 ) || ( y= 5+32  && x >= 20 && x <= 45 ) then
+                    ( y = 5 && x >= 19 && x <= 44 ) || ( y= 5+32  && x >= 19 && x <= 44 ) then
                     let src = { X = 67<px>; Y = 0<px>; Width=16<px>; Height=16<px> } : SDLGeometry.Rectangle                
                     context.Renderer |> copy t (Some src) (Some dst) |> ignore
                 // bottom mountain tiles
                 elif( y = 35 && x >= 12 && x <= 16 ) || ( y= 35 && x >= 12+35 && x <= 16+35 ) ||
-                    ( y = 9 && x >= 20 && x <= 45 ) || ( y= 9+32  && x >= 20 && x <= 45 ) then
+                    ( y = 9 && x >= 19 && x <= 44 ) || ( y= 9+32  && x >= 19 && x <= 44 ) then
                     let src = { X = 67<px>; Y = 34<px>; Width=16<px>; Height=16<px> } : SDLGeometry.Rectangle                
                     context.Renderer |> copy t (Some src) (Some dst) |> ignore
                 // all mountain tiles
                 elif (y >= 10 && y <= 35 && x >=12 && x <=16) || (y >= 10 && y <= 35 && x >=12+35 && x <=16+35) || 
-                   (y >= 5 && y <= 9 && x >= 20 && x <= 45) || (y >= 5+32 && y <= 9+32 && x >= 20 && x <= 45) then
+                   (y >= 5 && y <= 9 && x >= 19 && x <= 44) || (y >= 5+32 && y <= 9+32 && x >= 19 && x <= 44) then
                     let src = { X = 67<px>; Y = 17<px>; Width=16<px>; Height=16<px> } : SDLGeometry.Rectangle                
                     context.Renderer |> copy t (Some src) (Some dst) |> ignore
                 else // everything else is central grass
