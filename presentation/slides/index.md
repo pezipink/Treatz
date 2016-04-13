@@ -20,19 +20,22 @@
 ### F# Exchange - April 2016
 
 ***
-## Dragons
+## Dragons Treats
 
 ![m](https://dragonicecreamtreats.files.wordpress.com/2014/08/dragon-master-e1407382525282.jpg)
+
+' how Dragon treats came to be
+
 
 ***
 ## Treats
 
-
+' gameplay 
 ***
 ## What is in a game
 
 
-' how does the game work 
+' how does the game work from a technical point of view
 
 
 ***
