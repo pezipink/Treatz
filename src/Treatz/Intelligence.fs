@@ -92,20 +92,10 @@
               
               match destinationNode, origin with
               | Some destination, Some origin ->
-                  let gridPath = [| yield! PathFinding.search origin destination [state.Player1; state.Player2 ]; yield destination |]                 
-                  
-
-                  let points = gridPath |> Array.map(fun x -> 
-                                        { SDLGeometry.Point.X = (x.Identity.X * cellWidth + cellWidth / 2 ) * 1<px>
-                                          SDLGeometry.Point.Y =  (x.Identity.Y * cellHeight + cellHeight/ 2) * 1<px> })
-                  
-                  
-                  
-
+                  let gridPath = [| yield! PathFinding.search origin destination ; yield destination |]
                   {mikishida with kind = Dragon(FollowPath(gridPath |> Array.map(fun x -> x.Identity), treatLocation))}
               |  _ -> printfn "this should never happen, wtf"
                       {mikishida with kind = Dragon(Wander wanderDefault)}
-          
           | _ -> mikishida
 
       { state with Mikishidas = List.map update state.Mikishidas }
