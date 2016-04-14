@@ -15,19 +15,13 @@
             yield allNodes.[(i.X, i.Y)] |]
 
   let createInitialFrontier state : HashSet<Node> =
-    let q = HashSet<Node>()
-    q.Add(state) |> ignore
-    q
+    let f = HashSet<Node>()
+    f.Add(state) |> ignore
+    f
 
   // not the most efficient way to calc distance but ...
   let calcDistance (node:Node) goalNode =    
-    let x = double (node.Identity.X - goalNode.Identity.X)
-    let y = double( node.Identity.Y - goalNode.Identity.Y) 
-    sqrt( x * x + y * y) |> int
-
-  let calculatePlayerBasedCost baseNode (players: Mikishida list) =
-    baseNode.Cost
-
+    abs (node.Identity.X - goalNode.Identity.X) + abs( node.Identity.Y - goalNode.Identity.Y) 
 
   let convertToArray (pathNode :NodePath) =
     let rec someFn n (array: Node array) =
@@ -37,13 +31,10 @@
     someFn pathNode Array.empty 
     
   
-  let search startNode goal (playersNodes: Mikishida list): Node array =
+  let search startNode goal : Node array =
     let frontier = createInitialFrontier startNode 
-    let explored = new HashSet<Node>() //mutable
-
-    
-    let mutable currentPathNode = {Parent = None; Child= None; PathCost= 0.; GridNode = startNode} 
-    
+    let explored = new HashSet<Node>() //mutable    
+    let mutable currentPathNode = {Parent = None; PathCost= 0.; GridNode = startNode}    
     
     if (frontier.Count = 0) then 
         [||]
@@ -58,16 +49,14 @@
                               GridNode= currentNode }
         frontier.Remove(currentNode)  |> ignore
         if (currentNode.Identity <> goal.Identity) then
-          explored.Add(currentNode) |> ignore 
+            explored.Add(currentNode) |> ignore 
           
-          (currentNode.Neighbours)
-          |> Seq.iter(fun n -> 
-                if not(explored.Contains(n)) then 
-                  frontier.Add(n) |> ignore                  
-                   
-                  )          
+            (currentNode.Neighbours)
+            |> Seq.iter(fun n -> 
+                  if not(explored.Contains(n)) then 
+                    frontier.Add(n) |> ignore )          
         else
-          frontier.Clear()  //yuck          
+            frontier.Clear()  //yuck          
       convertToArray currentPathNode
 
 

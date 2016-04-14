@@ -79,8 +79,7 @@ type Node =
 
 type NodePath = {   
    GridNode: Node
-   Parent : NodePath option
-   Child : NodePath option
+   Parent : NodePath option   
    mutable PathCost: double
   }
 
