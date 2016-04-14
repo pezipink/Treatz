@@ -131,6 +131,10 @@
 * [SDL2](https://www.libsdl.org/)
 * [Ernest's Tutorials](https://www.youtube.com/playlist?list=PLsmt5lp-6Xodxsh4tu-l0xD3KdYonIwz2)
 * [Ernest's SDL Wrapper](https://github.com/hakelimopu/tjofgd-project2/tree/master/Project2/SDL2FS)
+* [Steering behaviours](http://gamedevelopment.tutsplus.com/tutorials/understanding-steering-behaviors-wander--gamedev-1624)
+* [A* Explanation](http://www.redblobgames.com/pathfinding/a-star/introduction.html)
+* [Interesting A* implementation](https://github.com/juhgiyo/EpPathFinding.cs) and [another one](https://github.com/jdoig/A-Star-Pathfinding-in-F-Sharp)
+
 
 <script>
   (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
