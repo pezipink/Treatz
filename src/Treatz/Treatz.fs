@@ -72,39 +72,32 @@ let updatePositions (state:TreatzState) =
 
 
 let collisionDetection state = 
-    let treatTree =
-        // create a quadtree of all the things dragons can collide with on the map
+    let collisionTree =
+        // create a quadtree of all dragons, players and treats
         state.Player1 :: state.Player2 :: state.Mikishidas
-        |> List.filter(fun k -> match k.kind with Treat -> true | Player _ -> true | _ -> false)
+        |> List.filter(fun k -> match k.kind with Treat | Player _  -> true | _ -> false)
         |> QuadTree.create (fun j -> j.AsQuadBounds) 5 30 screenQuadBounds
     
-    let createDragonCaught (location:Vector2) = 
-        let angle = 
-            {
-                currentAngle  = 0.0
-                alpha  = 128
-            }
-        let vx = state.Chaos.NextDouble() * 3.0
-        let vy = state.Chaos.NextDouble() * 3.0
-        {kind = CaughtDragon angle; location = location; velocity = {X = (if state.Chaos.Next(2) = 0 then vx else -vx); Y = (if state.Chaos.Next(2) = 0 then vy else -vy)}}
+    let createAnimation f alpha speed (location:Vector2)  =
+        let angle = {currentAngle  = 0.0; alpha  = alpha }
+        let vx = state.Chaos.NextDouble() * speed
+        let vy = state.Chaos.NextDouble() * speed
+        {kind = f angle; 
+         location = location; 
+         velocity = 
+            {X = (if state.Chaos.Next(2) = 0 then vx else -vx); 
+            Y = (if state.Chaos.Next(2) = 0 then vy else -vy)}}
 
-    let createEatenTreat (location:Vector2) = 
-        let angle = 
-            {
-                currentAngle  = 0.0
-                alpha  = 255
-            }
-        let vx = state.Chaos.NextDouble() * 8.0
-        let vy = state.Chaos.NextDouble() * 8.0
-        {kind = TreatEaten angle; location = location; velocity = {X = (if state.Chaos.Next(2) = 0 then vx else -vx); Y = (if state.Chaos.Next(2) = 0 then vy else -vy)}}
+    let createDragonCaught = createAnimation CaughtDragon 128 3.0
+    let createEatenTreat =  createAnimation TreatEaten 255 8.0
     
     // ross, sort this shit out. signed, ross
-    let update (collisions,juans) juan =
-        match juan.kind with
+    let update (removals,mikis) miki =
+        match miki.kind with
         | Dragon _ -> 
             let newCollisions =
-                treatTree
-                |> QuadTree.findNeighbours (fun k -> overlap(juan.AsRect,k.AsRect)) juan.AsQuadBounds screenQuadBounds
+                collisionTree
+                |> QuadTree.findNeighbours (fun k -> overlap(miki.AsRect,k.AsRect)) miki.AsQuadBounds screenQuadBounds
                 
             match newCollisions |> List.tryFind(fun t -> match t.kind with Player _ -> true | _ -> false) with
             | Some p -> 
@@ -113,27 +106,28 @@ let collisionDetection state =
                 | Player data ->  data.DragonsCaught <- data.DragonsCaught + 1
                 | _ -> ()
                 // add the dragon to the removal pile and a dragon animation to the caught dragons
-                Set.add juan collisions, (createDragonCaught p.location) :: juans
+                Set.add miki removals, (createDragonCaught p.location) :: mikis
             | None -> 
                 // yum yum treats, reset drag to no behaviour
                 if newCollisions.IsEmpty then
-                        collisions,
-                        {juan with kind = if newCollisions.Length > 0 then Dragon(Wander(Intelligence.wanderDefault)) else juan.kind } 
-                        :: juans
+                    removals,
+                    {miki with kind = if newCollisions.Length > 0 then Dragon(Wander(Intelligence.wanderDefault)) else miki.kind } 
+                    :: mikis
                 else
-                    Set.union (Set.ofList newCollisions) collisions, 
-                        {juan with kind = if newCollisions.Length > 0 then Dragon(Wander(Intelligence.wanderDefault)) else juan.kind } 
-                        :: (createEatenTreat juan.location)
-                        :: juans
-        | _ -> collisions, juan :: juans
+                    Set.union (Set.ofList newCollisions) removals, 
+                        {miki with kind = if newCollisions.Length > 0 then Dragon(Wander(Intelligence.wanderDefault)) else miki.kind } 
+                        :: (createEatenTreat miki.location)
+                        :: mikis
+        | _ -> removals, miki :: mikis
     
-    let (collisions,juans) = List.fold(fun acc juan -> update acc juan) (Set.empty,[]) state.Mikishidas
-    
-    let mikis = List.filter (fun t -> Set.contains t collisions |> not) juans  
-    let lookup = Set.difference state.TreatsLookup (collisions|>Set.map(fun t->(t.location.GridX, t.location.GridY)))  
-//    maxTreats <- maxTreats - treats.Count
-//    if maxTreats < 0 then maxTreats <- 0
-    {state with Mikishidas = mikis; TreatsLookup = lookup}
+    // determine stuff we need to remove and any new additions (caught animations)
+    let (removals,juans) = List.fold(fun acc juan -> update acc juan) (Set.empty,[]) state.Mikishidas
+    // remove removals from the list
+    let mikis = List.filter (fun t -> Set.contains t removals |> not) juans  
+    // maintain treats lookup
+    let lookup = Set.difference state.TreatsLookup (Set.map(fun t->(t.location.GridX, t.location.GridY))removals)  
+    // return new state
+    {state with Mikishidas = mikis; TreatsLookup = lookup; SpatialIndex = collisionTree}
 
 
 let prepareLevel state = 
@@ -209,6 +203,7 @@ let defaultState(sprites) =
          Player1 = {kind = Player(PlayerData.Blank); location = {X=494.; Y=330.}; velocity = {X=0.0; Y=0.0}}
          Player2 = {kind = Player(PlayerData.Blank); location = {X=564.; Y=330.}; velocity = {X=0.0; Y=0.0}}
          Mikishidas = []
+         SpatialIndex = QuadTree.Leaf []
          UnpassableLookup = Set.empty
          TreatsLookup = Set.empty
          PressedKeys = Set.empty
@@ -325,8 +320,6 @@ let updateInputs state =
         let moves = 
             [
                 // WOULDN'T MUTABLE STATE BE MUCH EASIER HMM??? WHAT ARE WE GAINING FROM THIS ???
-                // TODO: Clamp bounds
-                // TODO: Check new space is occupiable (this is NOT collision detection!)
                 (down1 ControllerButton.BUTTON_DPAD_LEFT),  fun state -> { state with Player1 = { state.Player1 with velocity = {X = -state.Player1.kind.defaultSpeed; Y = state.Player1.velocity.Y } } } 
                 (down1 ControllerButton.BUTTON_DPAD_RIGHT), fun state -> { state with Player1 = { state.Player1 with velocity = {X = state.Player1.kind.defaultSpeed; Y = state.Player1.velocity.Y } } } 
                 (down1 ControllerButton.BUTTON_DPAD_UP),    fun state -> { state with Player1 = { state.Player1 with velocity = {X = state.Player1.velocity.X; Y = -state.Player1.kind.defaultSpeed } } } 

@@ -4,6 +4,7 @@
   open Behaviours  
   open SDLUtility
   open System
+  open QuadTree
 
   let wanderDefault = { 
                       BehaviourState.RateOfChangeOfDirection = 0.1; 
@@ -20,7 +21,9 @@
             let bounds = {r with x = clamp r.x - 50; y = clamp r.y - 50; width = 100; height = 100; }
 //            let bounds = {r with x = clamp r.x - 150; y = clamp r.y - 150; width = 300; height = 300; }
             
-            state.findMikishidas(fun m -> match m.kind with Treat -> true | _ -> false) bounds
+            state.SpatialIndex 
+            |> QuadTree.findNeighbours(fun m -> match m.kind with Treat -> true | _ -> false) bounds screenQuadBounds
+//            state.findMikishidas(fun m -> match m.kind with Treat -> true | _ -> false) bounds
             |> function
                 | [] ->                 
                     Console.WriteLine("No treats found, wander")     

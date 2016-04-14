@@ -36,7 +36,24 @@
 
 
 ' how does the game work from a technical point of view
+' game loop
+' conflict between the two paradigm
+' inmutable vs imperative
 
+---
+
+###THE GAME LOOP
+![sdl](images/gloop.png)
+
+---
+### STATE PROPAGATION
+	state
+	|> miscUpdates 
+	|> updateInputs
+	|> updatePositions
+	|> collisionDetection
+	|> intelligence
+	|> testGameOver
 
 ***
 
@@ -46,12 +63,9 @@
 
 ' mention ernest
 ' what is sdl high level
-' game loop
 ' cross platform
-' conflict between the two paradigm
 
 ' mention some of the stuff 
-' inmutable vs imperative
 
 
 

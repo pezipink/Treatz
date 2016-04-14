@@ -165,6 +165,7 @@ type TreatzState =
       Player1 : Mikishida
       Player2 : Mikishida
       Mikishidas : Mikishida list
+      SpatialIndex : QuadTree.QuadTree<Mikishida>
       UnpassableLookup : Set<int*int> 
       TreatsLookup : Set<int*int> 
       PressedKeys : Set<ScanCode> 
@@ -173,8 +174,7 @@ type TreatzState =
       TurkeyAngle : float
       Chaos : System.Random      
       PathFindingData : Map<int*int,Node>
-      LastFrameTime: uint32      
-      
+      LastFrameTime: uint32            
       }
     with 
         member this.findMikishidas pred bounds =
