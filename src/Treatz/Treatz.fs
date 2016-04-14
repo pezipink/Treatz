@@ -494,7 +494,8 @@ let render(context:RenderingContext) (state:TreatzState) =
             match j.kind with
             | Dragon _ ->     
                 let d = state.Sprites.["drag"]  
-                context.Renderer  |> copy d None (Some j.AsRect) |> ignore
+                let flip = if j.velocity.X > 0.0 then 1 else 0
+                context.Renderer  |> copyEx d None (Some j.AsRect) 0.0 flip |> ignore
             | CaughtDragon data ->     
                 let d = state.Sprites.["drag"]  
                 SDLTexture.setAlpha data.alpha d |> ignore
