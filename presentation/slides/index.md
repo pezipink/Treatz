@@ -42,6 +42,8 @@
 
 ## Why SDL
 
+![sdl](images/Sdl-logo.png)
+
 ' mention ernest
 ' what is sdl high level
 ' game loop
@@ -50,6 +52,8 @@
 
 ' mention some of the stuff 
 ' inmutable vs imperative
+
+
 
 ***
 ## Steering Behaviours : Seek
@@ -60,9 +64,23 @@
 
 ***
 
+![qt](images/secretsquirrel.bmp)
+
+***
+
 ## Quad Trees
 
+![qt](images/quadtree.png)
 
+---
+	type 'a QuadTree = 
+	    | Leaf of  data : 'a list
+	    | Branch of
+	        data : 'a list *
+	        TR : QuadTree<'a> *
+	        BR : QuadTree<'a> *
+	        BL : QuadTree<'a> *
+	        TL : QuadTree<'a> 
 
 ***
 ## Artificial stupidity
@@ -96,6 +114,9 @@
 
 ### Resources
 
+* [SDL2](https://www.libsdl.org/)
+* [Ernest's Tutorials](https://www.youtube.com/playlist?list=PLsmt5lp-6Xodxsh4tu-l0xD3KdYonIwz2)
+* [Ernest's SDL Wrapper](https://github.com/hakelimopu/tjofgd-project2/tree/master/Project2/SDL2FS)
 
 <script>
   (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
