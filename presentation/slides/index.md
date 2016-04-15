@@ -25,7 +25,7 @@
 ***
 ## Dragons Treats
 
-![m](https://dragonicecreamtreats.files.wordpress.com/2014/08/dragon-master-e1407382525282.jpg)
+![m](images/treats.jpg)
 
 ' how Dragon treats came to be
 
@@ -147,11 +147,13 @@
 	        TL : QuadTree<'a> 
 
 ***
-## Artificial stupidity P 2
+## Artificial stupidity - Tha return
 
 ## Path finding 
 
+---
 
+![f](images/Astar_progress_animation.gif)
 ' path finding not so 
 ' shared mutable states
 ' use sorted set 
