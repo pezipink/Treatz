@@ -5,24 +5,27 @@
 - transition : default
 
 ***
-![dragons](images/dragon.jpg)
+- data-background : images/dragon.jpg
 
 
 ' thanks for coming to this talk
 
 ***
-- data-background : images/blending.jpg
-- data-background-size : 1500px
+- data-background : images/dragon-treats.png
 
 ## DRAGON TREATS: 
 ### ~ THE BLENDING OF THE PARADIGMS ~ 
 
 ### F# Exchange - April 2016
 
+####Andrea           |            Ross
+
+####@silverSpoon     |      @pezi_pink
+
 ***
 ## Dragons Treats
 
-![m](https://dragonicecreamtreats.files.wordpress.com/2014/08/dragon-master-e1407382525282.jpg)
+![m](images/treats.jpg)
 
 ' how Dragon treats came to be
 
@@ -57,6 +60,7 @@
 	|> intelligence
 	|> testGameOver
 
+
 ***
 
 ## Why SDL
@@ -69,19 +73,25 @@
 
 ' mention some of the stuff 
 
-
+***
+- data-background : images/sunny-cat.png
+- data-background-size : 800px
 
 ***
-## Steering Behaviours 
+## Artificial stupidity 
 
-## Wander
+## Steering Behaviours : Wander
 
+' dragons need smarts
 ' Craig Reynolds
 ' steering behaviour simple to impl because just maths
 ' produce small random displacements and apply to current direction vector 
 ' the small changes prevents abrupt changes
 
 
+---
+
+![d](images/wander_displacement_add_circle_center.png)
 
 ---
 
@@ -94,10 +104,6 @@
 	  SteeringDirection : Vector2
 	  }
 
-
----
-
-![d](images/wander_displacement_add_circle_center.png)
 
 ---
 
@@ -141,11 +147,13 @@
 	        TL : QuadTree<'a> 
 
 ***
-## Artificial stupidity
+## Artificial stupidity - Tha return
 
 ## Path finding 
 
+---
 
+![f](images/Astar_progress_animation.gif)
 ' path finding not so 
 ' shared mutable states
 ' use sorted set 
