@@ -18,7 +18,7 @@
       let findClosestTreat (mikishida:Mikishida) =
             let clamp x = if x < 0 then 0 else x
             let r = mikishida.AsQuadBounds
-            let bounds = {r with x = clamp r.x - 50; y = clamp r.y - 50; width = 100; height = 100; }
+            let bounds = {r with x = clamp r.x - 25; y = clamp r.y - 25; width = 50; height = 50; }
 //            let bounds = {r with x = clamp r.x - 150; y = clamp r.y - 150; width = 300; height = 300; }
             
             state.SpatialIndex 
@@ -26,7 +26,7 @@
 //            state.findMikishidas(fun m -> match m.kind with Treat -> true | _ -> false) bounds
             |> function
                 | [] ->                 
-                    Console.WriteLine("No treats found, wander")     
+//                    Console.WriteLine("No treats found, wander")     
                     None
                 | treats -> // find the cloest treat and head towards it
                     let treat = List.minBy(mikishida.ManhattanDistance) treats
