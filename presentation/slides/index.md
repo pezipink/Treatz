@@ -127,8 +127,10 @@
 
 
 ***
+- data-background : images/secretsquirrel.bmp
+- data-background-size : 800px
 
-![qt](images/secretsquirrel.bmp)
+
 
 ***
 
