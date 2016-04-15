@@ -28,9 +28,11 @@
 
 
 ***
-## Treats
 
+## Treats
+![dg](images/dragon-treats.png)
 ' gameplay 
+
 ***
 ## What is in a game
 
@@ -70,11 +72,53 @@
 
 
 ***
-## Steering Behaviours : Seek
+## Steering Behaviours 
+
+## Wander
+
+' Craig Reynolds
+' steering behaviour simple to impl because just maths
+' produce small random displacements and apply to current direction vector 
+' the small changes prevents abrupt changes
+
+
 
 ---
 
-## Wander
+	type BehaviourState  = {
+	  CircleRadius : double
+	  CircleDistance : double
+	  RateOfChangeOfDirection : double
+
+	  WanderingAngle: double
+	  SteeringDirection : Vector2
+	  }
+
+
+---
+
+![d](images/wander_displacement_add_circle_center.png)
+
+---
+
+	let wander (chaos: Random) mikishida state  =     
+
+	    let wanderA = state.WanderingAngle + state.RateOfChangeOfDirection * 
+	    				(chaos.NextDouble() * 2.0 - 1.0)     
+	    let dist = (state.CircleDistance * mikishida.velocity.normalize )
+	    let circlePosition = mikishida.location + dist
+	    
+	    let circleOffset = { 
+	      Vector2.X = state.CircleRadius * Math.Cos(wanderA)
+	      Y = state.CircleRadius * Math.Sin(wanderA) 
+	      }
+
+	    let steeringDirection = ( circlePosition + circleOffset) 
+	                              - mikishida.location
+	            
+	    { state with SteeringDirection = steeringDirection
+	        WanderingAngle = wanderA}
+
 
 ***
 
@@ -101,7 +145,7 @@
 
 ## Path finding 
 
-' steering behaviour easy because functional and  
+
 ' path finding not so 
 ' shared mutable states
 ' use sorted set 
