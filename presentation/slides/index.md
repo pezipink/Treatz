@@ -156,7 +156,12 @@
 ---
 
 ![f](images/Astar_progress_animation.gif)
-' path finding not so 
+
+' graph based solution to finding a path and also avoiding barriers 
+' other options
+' breath first search, dijstra 
+' 
+' 
 ' shared mutable states
 ' use sorted set 
 ' use manhatan distance
