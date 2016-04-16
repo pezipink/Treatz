@@ -24,7 +24,7 @@ type Vector2 = {
   member this.normalize  =        
     let len= this.length 
     match len with
-    | x when x <> 0.0 -> { X = this.X/len; Vector2.Y = this.Y/len }
+    | x when x <> 0.0 -> { X = this.X/len; Y = this.Y/len }
     | _ -> {X=0.0; Y=0.0}
   
   static member (*) (a, point: Vector2) =
@@ -49,19 +49,25 @@ type BehaviourState  = {
   SteeringDirection : Vector2
   }
 
-type NodeVector = 
-  {X: int; Y : int}
+type NodeIdentity = 
+  {
+    Column: int; 
+    Row : int  }
   
-  static member (+) (pointa , pointb) = 
-    {X = pointa.X + pointb.X ; Y= pointa.Y + pointb.Y}
+  member this.asVector2CentreCell() = {
+    X = (double this.Column) * cellWidthf + (cellWidthf / 2.0);
+    Y = (double this.Row) * cellHeightf + (cellHeightf / 2.0) }
+
+  static member (+) (ida , idb) = 
+    {Column = ida.Column + idb.Column ; Row= ida.Row + idb.Row}
   static member (-) (pointa , pointb) = 
-    {X = pointa.X - pointb.X ; Y= pointa.Y - pointb.Y}
+    {Column = pointa.Column - pointb.Column ; Row= pointa.Row - pointb.Row}
 
 [<CustomComparison; CustomEquality>]
 type Node = 
   {        
     ///Grid coordinates
-    Identity: NodeVector
+    Identity: NodeIdentity
     mutable Cost : int 
     mutable Neighbours : Node seq       
   }
@@ -74,7 +80,12 @@ type Node =
   interface System.IComparable with
     member x.CompareTo yobj =
         match yobj with
-        | :? Node as y -> compare x.Identity y.Identity
+        | :? Node as y -> 
+              let costC = compare x.Cost y.Cost
+              let idC = compare x.Identity y.Identity 
+              if costC <> 0 then costC
+              else idC
+
         | _ -> invalidArg "yobj" "canno"
 
 type NodePath = {   
@@ -95,7 +106,7 @@ type AlphaAngle =
        }
 
 type DragonData =
-    | FollowPath of NodeVector array * Vector2
+    | FollowPath of NodeIdentity array * Vector2
     | Wander of BehaviourState
     | PathFind of Vector2
 
