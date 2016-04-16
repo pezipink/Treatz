@@ -41,9 +41,8 @@
                   else
                       findP p
     findP nodePath
-    
-
-  let search startNode goal : Node array =    
+          
+  let oldSearch startNode goal : Node array =    
     let frontier = HashSet<Node>() 
     frontier.Add startNode |> ignore 
     let explored = new HashSet<Node>() 
@@ -73,4 +72,35 @@
       else
           frontier.Clear()  //yuck          
     convertToArray currentPathNode
-
+  
+  let search startNode goal : Node array =    
+    let frontier = SortedSet<Node>() 
+    frontier.Add startNode |> ignore 
+    let explored = new SortedSet<Node>() 
+    
+    let mutable currentPathNode = {Parent = None; PathCost= 0.; GridNode = startNode}    
+    
+    if (frontier.Count = 0) then 
+        [||]
+    else  
+    while frontier.Count > 0 do      
+      let currentNode = 
+          frontier
+          |> Seq.minBy(fun x -> costDistance x goal + x.Cost + int currentPathNode.PathCost )
+      currentPathNode <- { 
+                            Parent = if areNeighbours currentPathNode.GridNode.Identity currentNode.Identity then  
+                                        Some(currentPathNode)  
+                                     else Some(findNeigbourParent currentPathNode currentNode)
+                            PathCost = double currentNode.Cost + currentPathNode.PathCost 
+                            GridNode= currentNode }
+      frontier.Remove(currentNode)  |> ignore
+      if (currentNode.Identity <> goal.Identity) then
+          explored.Add(currentNode) |> ignore 
+          
+          (currentNode.Neighbours)
+          |> Seq.iter(fun n -> 
+                if not(explored.Contains(n)) then 
+                  frontier.Add(n) |> ignore )          
+      else
+          frontier.Clear()  //yuck          
+    convertToArray currentPathNode
