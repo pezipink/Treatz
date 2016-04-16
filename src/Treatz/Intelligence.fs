@@ -28,7 +28,8 @@
                 | treats -> // find the cloest treat and head towards it
                     let treat = List.minBy(mikishida.ManhattanDistance) treats
                     match treat.kind with 
-                    | Treat when treat.ManhattanDistance mikishida < 50.0 -> Some(treat.location)
+                    //TODO maybe we can do better distance checking but ...
+                    | Treat when treat.ManhattanDistance mikishida < double bounds.width  -> Some(treat.location)
                     | _ -> None
                         
       let update mikishida =                    
