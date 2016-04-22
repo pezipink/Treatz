@@ -3,7 +3,8 @@ TODO
 - stuck dragons
 
 
-- check for bounds properly - Ross
+- check for bounds properly - Ross DONE 
+    -  Pathfinding needs to be aware of wrap around DONE
 - wrap around - ROss
 - bounce against when after wander you collide with something - ANDREA
 - dynamic mountains - Ross 
@@ -11,3 +12,4 @@ TODO
 - diagonals in path find - Andrea
 - inmutable pathfind - Andrea
 - lenses - Andrea
+- keyboard controls
