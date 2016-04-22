@@ -33,33 +33,36 @@ let updatePositions (state:TreatzState) =
       
         let tempLoc = mikishida.location +  mikishida.velocity
         
-        //yuck, whatever for now
         match mikishida.kind with 
         | CaughtDragon _ 
-        | TreatEaten _ -> { mikishida with location = tempLoc }
+        | TreatEaten _ -> Some { mikishida with location = tempLoc }
         | Dragon _ -> 
             
-            if Map.containsKey tempLoc.Grid state.Player1.AsPlayerData.Foam then { mikishida with kind = Dragon(Wander(Intelligence.wanderDefault)) }
-            elif Map.containsKey tempLoc.Grid state.Player2.AsPlayerData.Foam then { mikishida with kind = Dragon(Wander(Intelligence.wanderDefault)) }
-            else { mikishida with location = tempLoc }
-        | _  ->
-            let newX = 
-                if mikishida.velocity.X > 0.0 && (state.IsCellUnpassable(tempLoc.X + cellWidthf, mikishida.location.Y) || state.IsCellOutofbounds(tempLoc.X + cellWidthf, mikishida.location.Y)) then
-                    tempLoc.GridX * cellWidth |> double
-                elif mikishida.velocity.X < 0.0 && (state.IsCellUnpassable(tempLoc.X,mikishida.location.Y)  ||state.IsCellOutofbounds(tempLoc.X,mikishida.location.Y) ) then
-                    mikishida.location.GridX * cellWidth |> double
-                else
-                    tempLoc.X
+            if Map.containsKey tempLoc.Grid state.Player1.AsPlayerData.Foam then Some { mikishida with kind = Dragon(Wander(Intelligence.wanderDefault)) }
+            elif Map.containsKey tempLoc.Grid state.Player2.AsPlayerData.Foam then Some { mikishida with kind = Dragon(Wander(Intelligence.wanderDefault)) }
+            else None
+        | _ -> None
+        |> function
+           | None ->
+                let newX = 
+                    if mikishida.velocity.X > 0.0 && (state.IsCellUnpassable(tempLoc.X + cellWidthf, mikishida.location.Y) || state.IsCellOutofbounds(tempLoc.X + cellWidthf, mikishida.location.Y)) then
+                        tempLoc.GridX * cellWidth |> double
+                    elif mikishida.velocity.X < 0.0 && (state.IsCellUnpassable(tempLoc.X,mikishida.location.Y)  ||state.IsCellOutofbounds(tempLoc.X,mikishida.location.Y) ) then
+                        mikishida.location.GridX * cellWidth |> double
+                    else
+                        tempLoc.X
         
-            let newY = 
-                if mikishida.velocity.Y > 0.0 && (state.IsCellUnpassable(mikishida.location.X, tempLoc.Y + cellHeightf) || state.IsCellOutofbounds(mikishida.location.X, tempLoc.Y + cellHeightf)) then
-                    tempLoc.GridY * cellHeight |> double
-                elif mikishida.velocity.Y < 0.0 && (state.IsCellUnpassable(mikishida.location.X,tempLoc.Y)  || state.IsCellOutofbounds(mikishida.location.X,tempLoc.Y)) then
-                    mikishida.location.GridY * cellHeight |> double
-                else
-                    tempLoc.Y     
+                let newY = 
+                    if mikishida.velocity.Y > 0.0 && (state.IsCellUnpassable(mikishida.location.X, tempLoc.Y + cellHeightf) || state.IsCellOutofbounds(mikishida.location.X, tempLoc.Y + cellHeightf)) then
+                        tempLoc.GridY * cellHeight |> double
+                    elif mikishida.velocity.Y < 0.0 && (state.IsCellUnpassable(mikishida.location.X,tempLoc.Y)  || state.IsCellOutofbounds(mikishida.location.X,tempLoc.Y)) then
+                        mikishida.location.GridY * cellHeight |> double
+                    else
+                        tempLoc.Y     
 
-            { mikishida with location = {X = newX; Y = newY } }
+                { mikishida with location = {X = newX; Y = newY } }
+           | Some state -> state
+
     { 
       state with
         Player1 = updateMikishidas state.Player1
@@ -160,9 +163,9 @@ let prepareLevel state =
     
     //setup graph for pathfinding
     let graphForPathfinding obstacles =
-        let getIdentity x y = {X= x; Y = y}
+        let getIdentity x y = {Column= x; Row = y}
         let getCost point obstacles =
-          match obstacles |>List.tryFind(fun x -> {NodeVector.X = x.location.GridX; Y= x.location.GridY }= point) with
+          match obstacles |>List.tryFind(fun x -> {NodeIdentity.Column = x.location.GridX; Row= x.location.GridY }= point) with
           | Some _ -> Int32.MaxValue 
           | None -> 1
          
@@ -578,7 +581,7 @@ let render(context:RenderingContext) (state:TreatzState) =
 let main() = 
     use system = new SDL.System(SDL.Init.Everything)
 //    use mainWindow = SDLWindow.create "test" 100<px> 100<px> screenWidth screenHeight 0u //(uint32 SDLWindow.Flags.FullScreen)
-    use mainWindow = SDLWindow.create "test" 100<px> 100<px> screenWidth screenHeight (uint32 SDLWindow.Flags.FullScreen) // FULLSCREEN!
+    use mainWindow = SDLWindow.create "test" 100<px> 100<px> screenWidth screenHeight (uint32 SDLWindow.Flags.Resizable) // FULLSCREEN!
     use mainRenderer = SDLRender.create mainWindow -1 SDLRender.Flags.Accelerated
     use surface = SDLSurface.createRGB (screenWidth,screenHeight,32<bit/px>) (0x00FF0000u,0x0000FF00u,0x000000FFu,0x00000000u)
     

@@ -7,7 +7,7 @@
   open QuadTree
 
   let wanderDefault = { 
-                      BehaviourState.RateOfChangeOfDirection = 0.1; 
+                      BehaviourState.RateOfChangeOfDirection = 0.5; 
                       BehaviourState.CircleDistance = 1.00 ;  
                       BehaviourState.CircleRadius = 2.50 ; 
                       BehaviourState.WanderingAngle = 0.10; 
@@ -19,19 +19,17 @@
             let clamp x = if x < 0 then 0 else x
             let r = mikishida.AsQuadBounds
             let bounds = {r with x = clamp r.x - 25; y = clamp r.y - 25; width = 50; height = 50; }
-//            let bounds = {r with x = clamp r.x - 150; y = clamp r.y - 150; width = 300; height = 300; }
             
             state.SpatialIndex 
             |> QuadTree.findNeighbours(fun m -> match m.kind with Treat -> true | _ -> false) bounds screenQuadBounds
-//            state.findMikishidas(fun m -> match m.kind with Treat -> true | _ -> false) bounds
             |> function
                 | [] ->                 
-//                    Console.WriteLine("No treats found, wander")     
                     None
                 | treats -> // find the cloest treat and head towards it
                     let treat = List.minBy(mikishida.ManhattanDistance) treats
                     match treat.kind with 
-                    | Treat -> Some(treat.location)
+                    //TODO maybe we can do better distance checking but ...
+                    | Treat when treat.ManhattanDistance mikishida < double bounds.width  -> Some(treat.location)
                     | _ -> None
                         
       let update mikishida =                    
@@ -51,15 +49,13 @@
                     let destinationCell = Array.head pathTo
                     // move towards the cetre of the destination cell, check if we are there yet by looking 
                     // where the centre of the dragon is.
-                    let destinationCentre = 
-                        (double destinationCell.X) * cellWidthf + (cellWidthf / 2.0),
-                        (double destinationCell.Y) * cellHeightf + (cellHeightf / 2.0)
+                    let destinationCentre = destinationCell.asVector2CentreCell()
                 
                     let dragonCentre = 
-                        (double mikishida.location.X + (cellWidthf / 2.0)) ,
-                        (double mikishida.location.Y + (cellHeightf / 2.0))
+                        double mikishida.location.CentreGridX ,
+                        double mikishida.location.CentreGridY
                 
-                    let destinationCell = int (fst destinationCentre / cellWidthf), int (snd destinationCentre / cellHeightf)
+                    let destinationCell = int (destinationCentre.X / cellWidthf), int (destinationCentre.Y / cellHeightf)
                     // top left
                     let dragonCell1 = int (mikishida.location.X / cellWidthf), int (mikishida.location.Y / cellHeightf) 
                     // top right
@@ -70,9 +66,9 @@
                     let dragonCell4 = int ((mikishida.location.X + cellWidthf) / cellWidthf), int ((mikishida.location.Y + cellHeightf) / cellHeightf)
 
                     if destinationCell = dragonCell1 ||  destinationCell = dragonCell2 || destinationCell = dragonCell3 || destinationCell = dragonCell4 then 
-                      {mikishida with kind = Dragon(FollowPath (pathTo |> Array.tail,dest)) }
+                      {mikishida with kind = Dragon(FollowPath (pathTo |> Array.tail, dest)) }
                     else                        
-                        let target = {Vector2.X = fst destinationCentre - fst dragonCentre ; Y = snd destinationCentre - snd dragonCentre}.normalize
+                        let target = {X = destinationCentre.X - fst dragonCentre ; Y =  destinationCentre.Y - snd dragonCentre}.normalize
                         let velocity = mikishida.kind.defaultSpeed * target
                         { mikishida with velocity = velocity}
                         
