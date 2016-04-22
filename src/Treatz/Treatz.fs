@@ -27,10 +27,6 @@ type RenderingContext =
 
 let updatePositions (state:TreatzState) = 
     let updateMikishidas mikishida = 
-        // the locaiton is measured from the top left corner of the bounding box (or map cell)
-        // at any point a sprite could be in up to four cells at once (one for each corner)
-        // and check the target is valid, else snap to the nearest grid boundary
-      
         let tempLoc = mikishida.location +  mikishida.velocity
         
         //yuck, whatever for now
@@ -44,21 +40,30 @@ let updatePositions (state:TreatzState) =
             else { mikishida with location = tempLoc }
         | _  ->
             let newX = 
-                if mikishida.velocity.X > 0.0 && (state.IsCellUnpassable(tempLoc.X + cellWidthf, mikishida.location.Y) || state.IsCellOutofbounds(tempLoc.X + cellWidthf, mikishida.location.Y)) then
+                if mikishida.velocity.X > 0.0 && (state.IsCellUnpassable(tempLoc.X + cellWidthf, mikishida.location.Y)) then
                     tempLoc.GridX * cellWidth |> double
-                elif mikishida.velocity.X < 0.0 && (state.IsCellUnpassable(tempLoc.X,mikishida.location.Y)  ||state.IsCellOutofbounds(tempLoc.X,mikishida.location.Y) ) then
+                elif mikishida.velocity.X < 0.0 && (state.IsCellUnpassable(tempLoc.X,mikishida.location.Y)  ) then
                     mikishida.location.GridX * cellWidth |> double
                 else
                     tempLoc.X
-        
+            
             let newY = 
-                if mikishida.velocity.Y > 0.0 && (state.IsCellUnpassable(mikishida.location.X, tempLoc.Y + cellHeightf) || state.IsCellOutofbounds(mikishida.location.X, tempLoc.Y + cellHeightf)) then
+                if mikishida.velocity.Y > 0.0 && (state.IsCellUnpassable(mikishida.location.X, tempLoc.Y + cellHeightf) ) then
                     tempLoc.GridY * cellHeight |> double
-                elif mikishida.velocity.Y < 0.0 && (state.IsCellUnpassable(mikishida.location.X,tempLoc.Y)  || state.IsCellOutofbounds(mikishida.location.X,tempLoc.Y)) then
+                elif mikishida.velocity.Y < 0.0 && (state.IsCellUnpassable(mikishida.location.X,tempLoc.Y))   then
                     mikishida.location.GridY * cellHeight |> double
                 else
                     tempLoc.Y     
 
+
+            let wrapBounds current max =
+                if current < 0.0 then max - current
+                elif current > max then current - max
+                else current
+
+            let newX = wrapBounds newX (mapWidthf * cellWidthf)
+            let newY = wrapBounds newY (mapHeightf * cellHeightf)
+               
             { mikishida with location = {X = newX; Y = newY } }
     { 
       state with
@@ -577,8 +582,8 @@ let render(context:RenderingContext) (state:TreatzState) =
 
 let main() = 
     use system = new SDL.System(SDL.Init.Everything)
-//    use mainWindow = SDLWindow.create "test" 100<px> 100<px> screenWidth screenHeight 0u //(uint32 SDLWindow.Flags.FullScreen)
-    use mainWindow = SDLWindow.create "test" 100<px> 100<px> screenWidth screenHeight (uint32 SDLWindow.Flags.FullScreen) // FULLSCREEN!
+    use mainWindow = SDLWindow.create "test" 100<px> 100<px> screenWidth screenHeight 0u //(uint32 SDLWindow.Flags.FullScreen)
+//    use mainWindow = SDLWindow.create "test" 100<px> 100<px> screenWidth screenHeight (uint32 SDLWindow.Flags.FullScreen) // FULLSCREEN!
     use mainRenderer = SDLRender.create mainWindow -1 SDLRender.Flags.Accelerated
     use surface = SDLSurface.createRGB (screenWidth,screenHeight,32<bit/px>) (0x00FF0000u,0x0000FF00u,0x000000FFu,0x00000000u)
     
