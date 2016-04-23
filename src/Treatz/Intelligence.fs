@@ -52,8 +52,8 @@
                     // move towards the cetre of the destination cell, check if we are there yet by looking 
                     // where the centre of the dragon is.
                     let destinationCentre = 
-                        (double destinationCell.X) * cellWidthf + (cellWidthf / 2.0),
-                        (double destinationCell.Y) * cellHeightf + (cellHeightf / 2.0)
+                        (double destinationCell.Column) * cellWidthf + (cellWidthf / 2.0),
+                        (double destinationCell.Row) * cellHeightf + (cellHeightf / 2.0)
                 
                     let dragonCentre = 
                         (double mikishida.location.X + (cellWidthf / 2.0)) ,

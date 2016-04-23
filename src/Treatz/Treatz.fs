@@ -165,9 +165,9 @@ let prepareLevel state =
     
     //setup graph for pathfinding
     let graphForPathfinding obstacles =
-        let getIdentity x y = {X= x; Y = y}
+        let getIdentity x y = {Column= x; Row = y}
         let getCost point obstacles =
-          match obstacles |>List.tryFind(fun x -> {NodeVector.X = x.location.GridX; Y= x.location.GridY }= point) with
+          match obstacles |>List.tryFind(fun x -> {NodeVector.Column = x.location.GridX; Row= x.location.GridY }= point) with
           | Some _ -> Int32.MaxValue 
           | None -> 1
          

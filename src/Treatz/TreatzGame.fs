@@ -50,12 +50,12 @@ type BehaviourState  = {
   }
 
 type NodeVector = 
-  {X: int; Y : int}
+  {Column: int; Row : int}
   
-  static member (+) (pointa , pointb) = 
-    {X = pointa.X + pointb.X ; Y= pointa.Y + pointb.Y}
-  static member (-) (pointa , pointb) = 
-    {X = pointa.X - pointb.X ; Y= pointa.Y - pointb.Y}
+  static member (+) (a , b) = 
+    {Column = a.Column + b.Column ; Row= a.Row + b.Row}
+  static member (-) (a , b) = 
+    {Column = a.Column - b.Column ; Row= a.Row - b.Row}
 
 [<CustomComparison; CustomEquality>]
 type Node = 
@@ -67,15 +67,22 @@ type Node =
   }
   override this.Equals(yobj) =
       match yobj with
-      | :? Node as y -> (this.Identity= y.Identity)
+      | :? Node as y -> 
+             this.Identity= y.Identity && this.Cost = y.Cost && this.Neighbours = y.Neighbours
       | _ -> false
 
   override x.GetHashCode() = hash x.Identity
   interface System.IComparable with
     member x.CompareTo yobj =
         match yobj with
-        | :? Node as y -> compare x.Identity y.Identity
-        | _ -> invalidArg "yobj" "canno"
+        | :? Node as y -> 
+              let idC = compare x.Identity y.Identity
+              if (idC <> 0 ) then idC
+              else
+                compare x.Cost y.Cost
+                
+        | _ -> invalidArg "yobj" "cannot compare x and y"
+
 
 type NodePath = {   
    GridNode: Node
@@ -92,7 +99,7 @@ type PlayerData =
 type AlphaAngle =
     { mutable currentAngle : float
       mutable alpha : int
-       }
+     }
 
 type DragonData =
     | FollowPath of NodeVector array * Vector2
@@ -175,8 +182,7 @@ type TreatzState =
       Chaos : System.Random      
       PathFindingData : Map<int*int,Node>
       LastFrameTime: uint32            
-      }
-    with 
+      }    
         member this.findMikishidas pred bounds =
             this.Mikishidas |> List.filter(fun m -> pred m && overlapq(m.AsQuadBounds, bounds))
         member this.IsCellOutofbounds (x,y) = 
