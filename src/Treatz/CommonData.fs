@@ -18,9 +18,9 @@ let cellWidthf = 16.0
 let cellHeightf = 16.0
 
 let maxTreats = 400
-let maxPlayerFoam = 10
+let maxPlayerFoam = 15
 let foamFrames = 60 * 3  // 5 seconds
-let maxDragons = 50
+let maxDragons = 40
 
 let screenQuadBounds =
     { x = 0; y = 0; width = int screenWidth; height = int screenHeight }  : QuadTree.QuadBounds

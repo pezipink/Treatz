@@ -5,32 +5,37 @@
 - transition : default
 
 ***
-![dragons](images/dragon.jpg)
+- data-background : images/dragon.jpg
 
 
 ' thanks for coming to this talk
 
 ***
-- data-background : images/blending.jpg
-- data-background-size : 1500px
+- data-background : images/dragon-treats.png
 
 ## DRAGON TREATS: 
 ### ~ THE BLENDING OF THE PARADIGMS ~ 
 
 ### F# Exchange - April 2016
 
+####Andrea           |            Ross
+
+####@silverSpoon     |      @pezi_pink
+
 ***
 ## Dragons Treats
 
-![m](https://dragonicecreamtreats.files.wordpress.com/2014/08/dragon-master-e1407382525282.jpg)
+![m](images/treats.jpg)
 
 ' how Dragon treats came to be
 
 
 ***
-## Treats
 
+## Treats
+![dg](images/dragon-treats.png)
 ' gameplay 
+
 ***
 ## What is in a game
 
@@ -55,6 +60,7 @@
 	|> intelligence
 	|> testGameOver
 
+
 ***
 
 ## Why SDL
@@ -67,18 +73,64 @@
 
 ' mention some of the stuff 
 
-
+***
+- data-background : images/sunny-cat.png
+- data-background-size : 800px
 
 ***
-## Steering Behaviours : Seek
+## Artificial stupidity 
+
+## Steering Behaviours : Wander
+
+' dragons need smarts
+' Craig Reynolds
+' steering behaviour simple to impl because just maths
+' produce small random displacements and apply to current direction vector 
+' the small changes prevents abrupt changes
+
 
 ---
 
-## Wander
+![d](images/wander_displacement_add_circle_center.png)
+
+---
+
+	type BehaviourState  = {
+	  CircleRadius : double
+	  CircleDistance : double
+	  RateOfChangeOfDirection : double
+
+	  WanderingAngle: double
+	  SteeringDirection : Vector2
+	  }
+
+
+---
+
+	let wander (chaos: Random) mikishida state  =     
+
+	    let wanderA = state.WanderingAngle + state.RateOfChangeOfDirection * 
+	    				(chaos.NextDouble() * 2.0 - 1.0)     
+	    let dist = (state.CircleDistance * mikishida.velocity.normalize )
+	    let circlePosition = mikishida.location + dist
+	    
+	    let circleOffset = { 
+	      Vector2.X = state.CircleRadius * Math.Cos(wanderA)
+	      Y = state.CircleRadius * Math.Sin(wanderA) 
+	      }
+
+	    let steeringDirection = ( circlePosition + circleOffset) 
+	                              - mikishida.location
+	            
+	    { state with SteeringDirection = steeringDirection
+	        WanderingAngle = wanderA}
+
 
 ***
+- data-background : images/secretsquirrel.bmp
+- data-background-size : 800px
 
-![qt](images/secretsquirrel.bmp)
+
 
 ***
 
@@ -97,12 +149,19 @@
 	        TL : QuadTree<'a> 
 
 ***
-## Artificial stupidity
+## Artificial stupidity - Tha return
 
 ## Path finding 
 
-' steering behaviour easy because functional and  
-' path finding not so 
+---
+
+![f](images/Astar_progress_animation.gif)
+
+' graph based solution to finding a path and also avoiding barriers 
+' other options
+' breath first search, dijstra 
+' 
+' 
 ' shared mutable states
 ' use sorted set 
 ' use manhatan distance
@@ -131,6 +190,10 @@
 * [SDL2](https://www.libsdl.org/)
 * [Ernest's Tutorials](https://www.youtube.com/playlist?list=PLsmt5lp-6Xodxsh4tu-l0xD3KdYonIwz2)
 * [Ernest's SDL Wrapper](https://github.com/hakelimopu/tjofgd-project2/tree/master/Project2/SDL2FS)
+* [Steering behaviours](http://gamedevelopment.tutsplus.com/tutorials/understanding-steering-behaviors-wander--gamedev-1624)
+* [A* Explanation](http://www.redblobgames.com/pathfinding/a-star/introduction.html)
+* [Interesting A* implementation](https://github.com/juhgiyo/EpPathFinding.cs) and [another one](https://github.com/jdoig/A-Star-Pathfinding-in-F-Sharp)
+
 
 <script>
   (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
