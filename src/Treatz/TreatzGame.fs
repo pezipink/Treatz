@@ -68,7 +68,8 @@ type Node =
   override this.Equals(yobj) =
       match yobj with
       | :? Node as y -> 
-             this.Identity= y.Identity && this.Cost = y.Cost && this.Neighbours = y.Neighbours
+            (this.Identity = y.Identity)//reverted this change to stop a stack overflow - TODO: investigate
+             //this.Identity= y.Identity && this.Cost = y.Cost && this.Neighbours = y.Neighbours
       | _ -> false
 
   override x.GetHashCode() = hash x.Identity
