@@ -40,7 +40,7 @@ let updatePositions (state:TreatzState) =
             else { mikishida with location = tempLoc }
         | _  ->
             let newX = 
-                if mikishida.velocity.X > 0.0 && (state.IsCellUnpassable(tempLoc.X + cellWidthf, mikishida.location.Y)) then
+                if mikishida.velocity.X > 0.0 && (state.IsCellUnpassable(tempLoc.X + cellWidthf/1.0<px>, mikishida.location.Y)) then
                     tempLoc.GridX * cellWidth |> double
                 elif mikishida.velocity.X < 0.0 && (state.IsCellUnpassable(tempLoc.X,mikishida.location.Y)  ) then
                     mikishida.location.GridX * cellWidth |> double
@@ -48,7 +48,7 @@ let updatePositions (state:TreatzState) =
                     tempLoc.X
             
             let newY = 
-                if mikishida.velocity.Y > 0.0 && (state.IsCellUnpassable(mikishida.location.X, tempLoc.Y + cellHeightf) ) then
+                if mikishida.velocity.Y > 0.0 && (state.IsCellUnpassable(mikishida.location.X, tempLoc.Y + cellHeightf/1.0<px>) ) then
                     tempLoc.GridY * cellHeight |> double
                 elif mikishida.velocity.Y < 0.0 && (state.IsCellUnpassable(mikishida.location.X,tempLoc.Y))   then
                     mikishida.location.GridY * cellHeight |> double
@@ -61,8 +61,8 @@ let updatePositions (state:TreatzState) =
                 elif current > max then current - max
                 else current
 
-            let newX = wrapBounds newX (mapWidthf * cellWidthf)
-            let newY = wrapBounds newY (mapHeightf * cellHeightf)
+            let newX = wrapBounds newX (mapWidthf/1.0<cell> * cellWidthf/1.0<px>)
+            let newY = wrapBounds newY (mapHeightf/1.0<cell> * cellHeightf/1.0<px>)
                
             { mikishida with location = {X = newX; Y = newY } }
     { 
@@ -146,22 +146,43 @@ let prepareLevel state =
                 yield x,y + 32] 
         |> Set.ofList
     
-    let gen n f s =
-        let rec aux acc i s =
-            if i = n then acc, s else
-            let p = randomGridLocation state.Chaos
-            if Set.contains p s then aux acc i s
-            else aux (f p::acc) (i+1) (Set.add p s)
-        aux [] 0 s 
+    let generate number factory set =
+        let rec aux accumulator index set =
+            if index = number then 
+                accumulator, set 
+            else
+                let position = state.Chaos |> randomGridLocation
 
-    let toPoint x = {Vector2.X = double(fst x) * cellWidthf; Y=double(snd x) * cellHeightf}
+                if Set.contains position set then 
+                    aux accumulator index set
+                else 
+                    aux (factory position::accumulator) (index+1) (Set.add position set)
+        aux [] 0 set 
 
-    let dragons, blocked = gen maxDragons (fun p -> {kind = MikishidaKinds.Dragon( Wander {Intelligence.wanderDefault with RateOfChangeOfDirection = (state.Chaos.NextDouble()/0.5)}) ; location = toPoint p; velocity = {X=0.0;Y=0.0}} ) mountains
-    let treatz, _  = gen maxTreats (fun p -> {kind = MikishidaKinds.Treat; location = toPoint p; velocity = {X=0.0;Y=0.0}} ) blocked
-    let treatzSet = treatz |> List.map(fun t -> int t.location.GridX, int t.location.GridY ) |> Set.ofList
-    let mountains' = mountains |> Set.map(fun p -> {kind = MikishidaKinds.Mountainountain; location = toPoint p; velocity = {X=0.0;Y=0.0}}) |> Set.toList
+    let toPoint position = {Vector2.X = double(fst position) * cellWidthf/1.0<px>; Y=double(snd position) * cellHeightf/1.0<px>}
 
+    let dragonFactory position =
+        {kind = MikishidaKinds.Dragon( Wander {Intelligence.wanderDefault with RateOfChangeOfDirection = (state.Chaos.NextDouble()/0.5)}) ; 
+        location = position |> toPoint ; 
+        velocity = {X=0.0;Y=0.0}}
 
+    let dragons, blocked = 
+        mountains
+        |> generate maxDragons dragonFactory
+
+    let treatz, _  = 
+        blocked
+        |> generate maxTreats (fun p -> {kind = MikishidaKinds.Treat; location = toPoint p; velocity = {X=0.0;Y=0.0}} )
+
+    let treatzSet = 
+        treatz 
+        |> List.map(fun t -> int t.location.GridX, int t.location.GridY ) 
+        |> Set.ofList
+
+    let mountains' = 
+        mountains 
+        |> Set.map(fun p -> {kind = MikishidaKinds.Mountain; location = toPoint p; velocity = {X=0.0;Y=0.0}}) 
+        |> Set.toList
     
     //setup graph for pathfinding
     let graphForPathfinding obstacles =
@@ -173,8 +194,8 @@ let prepareLevel state =
          
         let createGraph() =
           let allNodes = ResizeArray<(int*int)*Node>()
-          for y = 0 to mapHeight - 1 do 
-            for x = 0 to mapWidth - 1 do 
+          for y = 0 to mapHeight/1<cell> - 1 do 
+            for x = 0 to mapWidth/1<cell> - 1 do 
               let id = getIdentity x y
               let cost = getCost id obstacles
               if cost < Int32.MaxValue then
@@ -214,9 +235,8 @@ let defaultState(sprites) =
          TurkeyAngle = 0.0
          Chaos = System.Random(System.DateTime.Now.Millisecond)
          PathFindingData = Map.empty
-         LastFrameTime = getTicks()
-         
-         } |> prepareLevel
+         LastFrameTime = getTicks()} 
+         |> prepareLevel
 
 let miscUpdates state = 
     // 60 fps, rotate once every 2 seconds - 120 steps =
@@ -226,7 +246,7 @@ let miscUpdates state =
     
     // maintain max amount of treats and treat lookup
     let (treats, lookups) =
-        let toPoint x = {Vector2.X = double(fst x) * cellWidthf; Y=double(snd x) * cellHeightf}
+        let toPoint x = {Vector2.X = double(fst x) * cellWidthf/1.0<px>; Y=double(snd x) * cellHeightf/1.0<px>}
         let rec aux treats lookups =
             if Set.count lookups = maxTreats then (treats,lookups) else
             let p = randomGridLocation state.Chaos
@@ -292,7 +312,7 @@ let tryDropFoam player =
     match player.kind with
     | Player data -> 
         if data.Foam.Count < maxPlayerFoam + data.DragonsCaught && Map.containsKey(player.location.CentreGridX,player.location.CentreGridY) data.Foam = false then
-            let f = { kind = AntiDragonFoam (getTicks()); location = {X=float player.location.CentreGridX*cellWidthf; Y=float player.location.CentreGridY*cellHeightf} ; velocity = {X= 0.0; Y = 0.0} }
+            let f = { kind = AntiDragonFoam (getTicks()); location = {X=float player.location.CentreGridX*cellWidthf/1.0<px>; Y=float player.location.CentreGridY*cellHeightf/1.0<px>} ; velocity = {X= 0.0; Y = 0.0} }
             Some(f, { player with kind = Player({data with Foam = Map.add (player.location.CentreGridX,player.location.CentreGridY) 0 data.Foam })})
         else None
     | _ -> None
@@ -442,11 +462,11 @@ let render(context:RenderingContext) (state:TreatzState) =
         // we can hardcode the grass and mountain rendering !
         // YES I KNOW THIS IS HORRIBLE.  CRY ME A RIVER
         let t = state.Sprites.["tiles"]  
-        for y = 0 to mapHeight do
-            for x = 0 to mapWidth do
-                let x' = x*cellWidth*1<px>
-                let y' = y*cellHeight*1<px>
-                let dst = { X = x'; Y = y'; Width=16<px>; Height=16<px> }  : SDLGeometry.Rectangle    
+        for y = 0 to mapHeight/1<cell> do
+            for x = 0 to mapWidth/1<cell> do
+                let x' = x*cellWidth
+                let y' = y*cellHeight
+                let dst = { X = x'; Y = y'; Width=cellWidth; Height=cellHeight }  : SDLGeometry.Rectangle    
             
                 // top left mountain tiles
                 if( y= 10 && x = 12 ) || (y=10 && x = 12+35) || (y = 5 && x = 19) || (y=5+32 && x = 19)  then
@@ -582,72 +602,76 @@ let render(context:RenderingContext) (state:TreatzState) =
 
 let main() = 
     use system = new SDL.System(SDL.Init.Everything)
-    use mainWindow = SDLWindow.create "test" 100<px> 100<px> screenWidth screenHeight 0u //(uint32 SDLWindow.Flags.FullScreen)
-//    use mainWindow = SDLWindow.create "test" 100<px> 100<px> screenWidth screenHeight (uint32 SDLWindow.Flags.FullScreen) // FULLSCREEN!
+    use mainWindow = SDLWindow.create "Treatz" 100<px> 100<px> screenWidth screenHeight 0u //(uint32 SDLWindow.Flags.FullScreen)
     use mainRenderer = SDLRender.create mainWindow -1 SDLRender.Flags.Accelerated
     use surface = SDLSurface.createRGB (screenWidth,screenHeight,32<bit/px>) (0x00FF0000u,0x0000FF00u,0x000000FFu,0x00000000u)
-    
-    use turkeyBitmap = SDLSurface.loadBmp SDLPixel.RGB888Format @"..\..\..\..\images\turkey.bmp"
-    use dragBitmap = SDLSurface.loadBmp SDLPixel.RGB888Format @"..\..\..\..\images\drag.bmp"
-    use treatBitmap = SDLSurface.loadBmp SDLPixel.RGB888Format @"..\..\..\..\images\treat.bmp"
-    use tilesBitmap = SDLSurface.loadBmp SDLPixel.RGB888Format @"..\..\..\..\images\tiles2.bmp"
-    use juanitaBitmap = SDLSurface.loadBmp SDLPixel.RGB888Format @"..\..\..\..\images\juanita.bmp"
-    use juanBitmap = SDLSurface.loadBmp SDLPixel.RGB888Format @"..\..\..\..\images\juan.bmp"
-    use foamBitmap = SDLSurface.loadBmp SDLPixel.RGB888Format @"..\..\..\..\images\foam.bmp"
-    use anykeyBitmap = SDLSurface.loadBmp SDLPixel.RGB888Format @"..\..\..\..\images\anykey.bmp"
-    use titleBitmap = SDLSurface.loadBmp SDLPixel.RGB888Format @"..\..\..\..\images\title.bmp"
-    use dtBitmap = SDLSurface.loadBmp SDLPixel.RGB888Format @"..\..\..\..\images\DRAGONTREATZ.bmp"
-    use win1Bitmap = SDLSurface.loadBmp SDLPixel.RGB888Format @"..\..\..\..\images\1win.bmp"
-    use win2Bitmap = SDLSurface.loadBmp SDLPixel.RGB888Format @"..\..\..\..\images\2win.bmp"
-    
-    SDLGameController.gameControllerOpen 0
-    SDLGameController.gameControllerOpen 1
+    use mainTexture = 
+        mainRenderer 
+        |> SDLTexture.create SDLPixel.RGB888Format SDLTexture.Access.Streaming (screenWidth,screenHeight)
 
-    let setKey bitmap colour =    
+    mainRenderer 
+    |> SDLRender.setLogicalSize (screenWidth,screenHeight) |> ignore
+
+    [0..1]
+    |> Seq.iter SDLGameController.gameControllerOpen
+
+    let loadBmp (fileName:string) = 
+        fileName
+        |> SDLSurface.loadBmp SDLPixel.RGB888Format
+
+    let setKey colour bitmap=    
         bitmap
         |> SDLSurface.setColorKey (Some colour)
-        |> ignore    
+        |> ignore
+        bitmap  
     
     let magenta = {Red=255uy;Green=0uy;Blue=255uy;Alpha=0uy}
-    
-    setKey turkeyBitmap magenta
-    setKey dragBitmap magenta
-    setKey treatBitmap magenta
-    setKey tilesBitmap magenta
-    setKey juanitaBitmap magenta
-    setKey juanBitmap magenta
-    setKey foamBitmap magenta
-        
-    use mainTexture = mainRenderer |> SDLTexture.create SDLPixel.RGB888Format SDLTexture.Access.Streaming (screenWidth,screenHeight)
-    mainRenderer |> SDLRender.setLogicalSize (screenWidth,screenHeight) |> ignore
 
-    let turkeyTex = SDLTexture.fromSurface mainRenderer turkeyBitmap.Pointer
-    let dragTex = SDLTexture.fromSurface mainRenderer dragBitmap.Pointer
-    let treatTex = SDLTexture.fromSurface mainRenderer treatBitmap.Pointer
-    let tilesTex = SDLTexture.fromSurface mainRenderer tilesBitmap.Pointer
-    let juanTex = SDLTexture.fromSurface mainRenderer juanBitmap.Pointer
-    let juanitaTex = SDLTexture.fromSurface mainRenderer juanitaBitmap.Pointer
-    let foamTex = SDLTexture.fromSurface mainRenderer foamBitmap.Pointer
-    let titleTex = SDLTexture.fromSurface mainRenderer titleBitmap.Pointer
-    let anykeyTex = SDLTexture.fromSurface mainRenderer anykeyBitmap.Pointer
-    let dtTex = SDLTexture.fromSurface mainRenderer dtBitmap.Pointer
-    let win1Tex = SDLTexture.fromSurface mainRenderer win1Bitmap.Pointer
-    let win2Tex = SDLTexture.fromSurface mainRenderer win2Bitmap.Pointer
+    let bmp2Tex (bmp:SDLSurface.Surface) =
+        bmp.Pointer
+        |> SDLTexture.fromSurface mainRenderer
+
+    use turkeyBitmap  = @"..\..\..\..\images\turkey.bmp"       |> loadBmp
+    use dragBitmap    = @"..\..\..\..\images\drag.bmp"         |> loadBmp
+    use treatBitmap   = @"..\..\..\..\images\treat.bmp"        |> loadBmp
+    use tilesBitmap   = @"..\..\..\..\images\tiles2.bmp"       |> loadBmp
+    use juanitaBitmap = @"..\..\..\..\images\juanita.bmp"      |> loadBmp
+    use juanBitmap    = @"..\..\..\..\images\juan.bmp"         |> loadBmp
+    use foamBitmap    = @"..\..\..\..\images\foam.bmp"         |> loadBmp
+    use anykeyBitmap  = @"..\..\..\..\images\anykey.bmp"       |> loadBmp
+    use titleBitmap   = @"..\..\..\..\images\title.bmp"        |> loadBmp
+    use dtBitmap      = @"..\..\..\..\images\DRAGONTREATZ.bmp" |> loadBmp
+    use win1Bitmap    = @"..\..\..\..\images\1win.bmp"         |> loadBmp
+    use win2Bitmap    = @"..\..\..\..\images\2win.bmp"         |> loadBmp
+
+    use turkeyTex  = turkeyBitmap  |> setKey magenta |> bmp2Tex
+    use dragTex    = dragBitmap    |> setKey magenta |> bmp2Tex
+    use treatTex   = treatBitmap   |> setKey magenta |> bmp2Tex
+    use tilesTex   = tilesBitmap   |> setKey magenta |> bmp2Tex
+    use juanTex    = juanBitmap    |> setKey magenta |> bmp2Tex
+    use juanitaTex = juanitaBitmap |> setKey magenta |> bmp2Tex
+    use foamTex    = foamBitmap    |> setKey magenta |> bmp2Tex
+    use titleTex   = titleBitmap                     |> bmp2Tex
+    use anykeyTex  = anykeyBitmap                    |> bmp2Tex
+    use dtTex      = dtBitmap                        |> bmp2Tex
+    use win1Tex    = win1Bitmap                      |> bmp2Tex
+    use win2Tex    = win2Bitmap                      |> bmp2Tex
+
     let sprites = 
-        ["turkey", turkeyTex; 
-         "drag", dragTex; 
-         "treat", treatTex; 
-         "tiles", tilesTex; 
-         "juan", juanTex;
+        ["turkey" , turkeyTex; 
+         "drag"   , dragTex; 
+         "treat"  , treatTex; 
+         "tiles"  , tilesTex; 
+         "juan"   ,  juanTex;
          "juanita", juanitaTex;
-         "foam", foamTex;
-         "title", titleTex;
-         "anykey", anykeyTex
-         "dt", dtTex
-         "win1", win1Tex
-         "win2", win2Tex
-        ] |> Map.ofList
-    
+         "foam"   , foamTex;
+         "title"  , titleTex;
+         "anykey" , anykeyTex;
+         "dt"     , dtTex;
+         "win1"   , win1Tex;
+         "win2"   , win2Tex;
+        ] 
+        |> Map.ofList
     
     let context =  { Renderer = mainRenderer; Texture = mainTexture; Surface = surface; LastFrameTick = getTicks() }
     let state = defaultState(sprites)

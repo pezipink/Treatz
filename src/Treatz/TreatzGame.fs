@@ -14,8 +14,8 @@ type Vector2 = {
      
   member this.GridX = int(this.X / cellWidthf)
   member this.GridY = int(this.Y / cellHeightf)
-  member this.CentreGridX = int <| (this.X + cellWidthf / 2.0) / cellWidthf
-  member this.CentreGridY = int <| (this.Y + cellHeightf /2.0) / cellHeightf
+  member this.CentreGridX = int <| (this.X + (cellWidthf |> double) / 2.0) / cellWidthf
+  member this.CentreGridY = int <| (this.Y + (cellHeightf|> double) / 2.0) / cellHeightf
   member this.Grid = this.GridX, this.GridY
 
   static member (-) (pointa, pointb) = 
@@ -111,7 +111,7 @@ type MikishidaKinds =
     | Player of PlayerData
     | Dragon of DragonData
     | Treat
-    | Mountainountain
+    | Mountain
     | AntiDragonFoam of System.UInt32
     | Squirrel
     | Cat
@@ -131,7 +131,7 @@ type Mikishida =
     member this.Size =
         match this.kind with
         // Everything must be at most the size of a cell
-        | _ -> cellWidth * 1<px>,cellHeight * 1<px>
+        | _ -> cellWidth,cellHeight
   
     member this.AsRect = 
         let w, h = this.Size
@@ -187,7 +187,7 @@ type TreatzState =
         member this.findMikishidas pred bounds =
             this.Mikishidas |> List.filter(fun m -> pred m && overlapq(m.AsQuadBounds, bounds))
         member this.IsCellOutofbounds (x,y) = 
-            (x < 0.0 || x > mapWidthf * cellWidthf - cellWidthf ||   y < 0.0 || y > mapHeightf * cellHeightf ) 
+            (x < 0.0 || x > mapWidthf/1.0<cell> * cellWidthf/1.0<px> - cellWidthf/1.0<px> ||   y < 0.0 || y > mapHeightf/1.0<cell> * cellHeightf/1.0<px> ) 
         member this.IsCellUnpassable (x,y) = 
             let toCell (x,y) = (int(x/cellWidthf)),(int(y/cellHeightf))
             Set.contains (toCell (x, y)) this.UnpassableLookup

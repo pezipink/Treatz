@@ -52,22 +52,22 @@
                     // move towards the cetre of the destination cell, check if we are there yet by looking 
                     // where the centre of the dragon is.
                     let destinationCentre = 
-                        (double destinationCell.Column) * cellWidthf + (cellWidthf / 2.0),
-                        (double destinationCell.Row) * cellHeightf + (cellHeightf / 2.0)
+                        (double destinationCell.Column) * cellWidthf/1.0<px> + (cellWidthf / 2.0<px>),
+                        (double destinationCell.Row) * cellHeightf/1.0<px> + (cellHeightf / 2.0<px>)
                 
                     let dragonCentre = 
-                        (double mikishida.location.X + (cellWidthf / 2.0)) ,
-                        (double mikishida.location.Y + (cellHeightf / 2.0))
+                        (double mikishida.location.X + (cellWidthf / 2.0<px>)) ,
+                        (double mikishida.location.Y + (cellHeightf / 2.0<px>))
                 
                     let destinationCell = int (fst destinationCentre / cellWidthf), int (snd destinationCentre / cellHeightf)
                     // top left
                     let dragonCell1 = int (mikishida.location.X / cellWidthf), int (mikishida.location.Y / cellHeightf) 
                     // top right
-                    let dragonCell2 = int ((mikishida.location.X + cellWidthf) / cellWidthf), int (mikishida.location.Y / cellHeightf)
+                    let dragonCell2 = int ((mikishida.location.X + cellWidthf/1.0<px>) / cellWidthf), int (mikishida.location.Y / cellHeightf)
                     // bottom left
-                    let dragonCell3 = int ((mikishida.location.X) / cellWidthf), int ((mikishida.location.Y + cellHeightf) / cellHeightf)
+                    let dragonCell3 = int ((mikishida.location.X) / cellWidthf), int ((mikishida.location.Y + cellHeightf/1.0<px>) / cellHeightf)
                     // bottom right
-                    let dragonCell4 = int ((mikishida.location.X + cellWidthf) / cellWidthf), int ((mikishida.location.Y + cellHeightf) / cellHeightf)
+                    let dragonCell4 = int ((mikishida.location.X + cellWidthf/1.0<px>) / cellWidthf), int ((mikishida.location.Y + cellHeightf/1.0<px>) / cellHeightf)
 
                     if destinationCell = dragonCell1 ||  destinationCell = dragonCell2 || destinationCell = dragonCell3 || destinationCell = dragonCell4 then 
                       {mikishida with kind = Dragon(FollowPath (pathTo |> Array.tail,dest)) }
