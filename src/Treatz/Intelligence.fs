@@ -5,10 +5,11 @@
   open SDLUtility
   open System
   open QuadTree
+  open Microsoft.FSharp.Core.LanguagePrimitives
 
   let wanderDefault = { 
                       BehaviourState.RateOfChangeOfDirection = 0.1; 
-                      BehaviourState.CircleDistance = 1.00 ;  
+                      BehaviourState.CircleDistance = 1.00<px> ;  
                       BehaviourState.CircleRadius = 2.50 ; 
                       BehaviourState.WanderingAngle = 0.10; 
                       SteeringDirection = Vector2.Zero }  
@@ -52,22 +53,22 @@
                     // move towards the cetre of the destination cell, check if we are there yet by looking 
                     // where the centre of the dragon is.
                     let destinationCentre = 
-                        (double destinationCell.Column) * cellWidthf/1.0<px> + (cellWidthf / 2.0<px>),
-                        (double destinationCell.Row) * cellHeightf/1.0<px> + (cellHeightf / 2.0<px>)
+                        (((destinationCell.Column |> float) + 0.5)*1.0<cell>) * cellWidthf,
+                        (((destinationCell.Row |> float) + 0.5)*1.0<cell>) * cellHeightf
                 
                     let dragonCentre = 
-                        (double mikishida.location.X + (cellWidthf / 2.0<px>)) ,
-                        (double mikishida.location.Y + (cellHeightf / 2.0<px>))
+                        (mikishida.location.X + (cellWidthf * 0.5<cell>)) ,
+                        (mikishida.location.Y + (cellHeightf * 0.5<cell>))
                 
                     let destinationCell = int (fst destinationCentre / cellWidthf), int (snd destinationCentre / cellHeightf)
                     // top left
                     let dragonCell1 = int (mikishida.location.X / cellWidthf), int (mikishida.location.Y / cellHeightf) 
                     // top right
-                    let dragonCell2 = int ((mikishida.location.X + cellWidthf/1.0<px>) / cellWidthf), int (mikishida.location.Y / cellHeightf)
+                    let dragonCell2 = int ((mikishida.location.X + cellWidthf * 1.0<cell>) / cellWidthf), int (mikishida.location.Y / cellHeightf)
                     // bottom left
-                    let dragonCell3 = int ((mikishida.location.X) / cellWidthf), int ((mikishida.location.Y + cellHeightf/1.0<px>) / cellHeightf)
+                    let dragonCell3 = int ((mikishida.location.X) / cellWidthf), int ((mikishida.location.Y + cellHeightf * 1.0<cell>) / cellHeightf)
                     // bottom right
-                    let dragonCell4 = int ((mikishida.location.X + cellWidthf/1.0<px>) / cellWidthf), int ((mikishida.location.Y + cellHeightf/1.0<px>) / cellHeightf)
+                    let dragonCell4 = int ((mikishida.location.X + cellWidthf * 1.0<cell>) / cellWidthf), int ((mikishida.location.Y + cellHeightf * 1.0<cell>) / cellHeightf)
 
                     if destinationCell = dragonCell1 ||  destinationCell = dragonCell2 || destinationCell = dragonCell3 || destinationCell = dragonCell4 then 
                       {mikishida with kind = Dragon(FollowPath (pathTo |> Array.tail,dest)) }
@@ -87,7 +88,7 @@
                 | Some node-> Some(node)
                 | None  -> 
                       let x, y = loc
-                      let x', y' = state.Chaos.Next(-1,2), state.Chaos.Next(-1,2)
+                      let x', y' = state.Chaos.Next(-1,2)*1<cell>, state.Chaos.Next(-1,2)*1<cell>
                       getNode (x+x', y+y') 
                 
               let destinationNode = getNode (treatLocation.GridX,treatLocation.GridY) 

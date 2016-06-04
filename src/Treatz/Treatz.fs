@@ -40,29 +40,29 @@ let updatePositions (state:TreatzState) =
             else { mikishida with location = tempLoc }
         | _  ->
             let newX = 
-                if mikishida.velocity.X > 0.0 && (state.IsCellUnpassable(tempLoc.X + cellWidthf/1.0<px>, mikishida.location.Y)) then
-                    tempLoc.GridX * cellWidth |> double
-                elif mikishida.velocity.X < 0.0 && (state.IsCellUnpassable(tempLoc.X,mikishida.location.Y)  ) then
-                    mikishida.location.GridX * cellWidth |> double
+                if mikishida.velocity.X > 0.0<px> && (state.IsCellUnpassable(tempLoc.X + cellWidthf * 1.0<cell>, mikishida.location.Y)) then
+                    (tempLoc.GridX * cellWidth |> float) * 1.0<px>
+                elif mikishida.velocity.X < 0.0<px> && (state.IsCellUnpassable(tempLoc.X,mikishida.location.Y)  ) then
+                    (mikishida.location.GridX * cellWidth |> float) * 1.0<px>
                 else
                     tempLoc.X
             
             let newY = 
-                if mikishida.velocity.Y > 0.0 && (state.IsCellUnpassable(mikishida.location.X, tempLoc.Y + cellHeightf/1.0<px>) ) then
-                    tempLoc.GridY * cellHeight |> double
-                elif mikishida.velocity.Y < 0.0 && (state.IsCellUnpassable(mikishida.location.X,tempLoc.Y))   then
-                    mikishida.location.GridY * cellHeight |> double
+                if mikishida.velocity.Y > 0.0<px> && (state.IsCellUnpassable(mikishida.location.X, tempLoc.Y + cellHeightf * 1.0<cell>) ) then
+                    (tempLoc.GridY * cellHeight |> float) * 1.0<px>
+                elif mikishida.velocity.Y < 0.0<px> && (state.IsCellUnpassable(mikishida.location.X,tempLoc.Y))   then
+                    (mikishida.location.GridY * cellHeight |> float) * 1.0<px>
                 else
                     tempLoc.Y     
 
 
-            let wrapBounds current max =
-                if current < 0.0 then max - current
+            let wrapBounds (current:float<px>) (max:float<px>) =
+                if current < 0.0<px> then max - current
                 elif current > max then current - max
                 else current
 
-            let newX = wrapBounds newX (mapWidthf/1.0<cell> * cellWidthf/1.0<px>)
-            let newY = wrapBounds newY (mapHeightf/1.0<cell> * cellHeightf/1.0<px>)
+            let newX = wrapBounds newX (mapWidthf * cellWidthf)
+            let newY = wrapBounds newY (mapHeightf * cellHeightf)
                
             { mikishida with location = {X = newX; Y = newY } }
     { 
@@ -82,8 +82,8 @@ let collisionDetection state =
     
     let createAnimation f alpha speed (location:Vector2)  =
         let angle = {currentAngle  = 0.0; alpha  = alpha }
-        let vx = state.Chaos.NextDouble() * speed
-        let vy = state.Chaos.NextDouble() * speed
+        let vx = state.Chaos.NextDouble() * speed * 1.0<px>
+        let vy = state.Chaos.NextDouble() * speed * 1.0<px>
         {kind = f angle; 
          location = location; 
          velocity = 
@@ -137,16 +137,16 @@ let prepareLevel state =
     let mountains = 
         [for y = 10 to 35 do             
             for x = 12 to 16 do
-                yield x,y
-                yield x+35,y
+                yield x * 1<cell>,y * 1<cell>
+                yield x * 1<cell> + 35<cell>,y * 1<cell>
         ] @
         [for y = 5 to 9 do             
             for x = 19 to 44 do
-                yield x,y
-                yield x,y + 32] 
+                yield x * 1<cell>,y * 1<cell>
+                yield x * 1<cell>,y * 1<cell> + 32<cell>] 
         |> Set.ofList
     
-    let generate number factory set =
+    let generate (number:int) (factory: (int<cell>*int<cell>) -> 'a) (set: Set<int<cell> * int<cell>>) : ('a list) * (Set<int<cell> * int<cell>>)=
         let rec aux accumulator index set =
             if index = number then 
                 accumulator, set 
@@ -159,12 +159,12 @@ let prepareLevel state =
                     aux (factory position::accumulator) (index+1) (Set.add position set)
         aux [] 0 set 
 
-    let toPoint position = {Vector2.X = double(fst position) * cellWidthf/1.0<px>; Y=double(snd position) * cellHeightf/1.0<px>}
+    let toPoint (position:int<cell> * int<cell>) = {Vector2.X = float(fst position) * cellWidthf * 1.0<cell>; Y=float(snd position) * cellHeightf * 1.0<cell>}
 
-    let dragonFactory position =
+    let dragonFactory (position: int<cell> * int<cell>) : Mikishida =
         {kind = MikishidaKinds.Dragon( Wander {Intelligence.wanderDefault with RateOfChangeOfDirection = (state.Chaos.NextDouble()/0.5)}) ; 
         location = position |> toPoint ; 
-        velocity = {X=0.0;Y=0.0}}
+        velocity = {X=0.0<px>;Y=0.0<px>}}
 
     let dragons, blocked = 
         mountains
@@ -172,16 +172,16 @@ let prepareLevel state =
 
     let treatz, _  = 
         blocked
-        |> generate maxTreats (fun p -> {kind = MikishidaKinds.Treat; location = toPoint p; velocity = {X=0.0;Y=0.0}} )
+        |> generate maxTreats (fun p -> {kind = MikishidaKinds.Treat; location = toPoint p; velocity = {X=0.0<px>;Y=0.0<px>}} )
 
     let treatzSet = 
         treatz 
-        |> List.map(fun t -> int t.location.GridX, int t.location.GridY ) 
+        |> List.map(fun t -> t.location.GridX, t.location.GridY ) 
         |> Set.ofList
 
     let mountains' = 
         mountains 
-        |> Set.map(fun p -> {kind = MikishidaKinds.Mountain; location = toPoint p; velocity = {X=0.0;Y=0.0}}) 
+        |> Set.map(fun p -> {kind = MikishidaKinds.Mountain; location = toPoint p; velocity = {X=0.0<px>;Y=0.0<px>}}) 
         |> Set.toList
     
     //setup graph for pathfinding
@@ -189,21 +189,21 @@ let prepareLevel state =
         let getIdentity x y = {Column= x; Row = y}
         let getCost point obstacles =
           match obstacles |>List.tryFind(fun x -> {NodeVector.Column = x.location.GridX; Row= x.location.GridY }= point) with
-          | Some _ -> Int32.MaxValue 
-          | None -> 1
+          | Some _ -> Int32.MaxValue * 1<cell>
+          | None -> 1<cell>
          
         let createGraph() =
-          let allNodes = ResizeArray<(int*int)*Node>()
+          let allNodes = ResizeArray<(int<cell>*int<cell>)*Node>()
           for y = 0 to mapHeight/1<cell> - 1 do 
             for x = 0 to mapWidth/1<cell> - 1 do 
-              let id = getIdentity x y
+              let id = getIdentity (x * 1<cell>) (y * 1<cell>)
               let cost = getCost id obstacles
-              if cost < Int32.MaxValue then
+              if cost < Int32.MaxValue * 1<cell> then
                   let newNode = {
                       Node.Identity= id ;
                       Node.Neighbours = Seq.empty; 
                       Cost = getCost id obstacles} 
-                  allNodes.Add((x,y),newNode)
+                  allNodes.Add((x * 1<cell>,y * 1<cell>),newNode)
               
           Map.ofSeq allNodes
 
@@ -223,8 +223,8 @@ let prepareLevel state =
 
 let defaultState(sprites) = 
         {GameState = TitleScreen
-         Player1 = {kind = Player(PlayerData.Blank); location = {X=494.; Y=330.}; velocity = {X=0.0; Y=0.0}}
-         Player2 = {kind = Player(PlayerData.Blank); location = {X=564.; Y=330.}; velocity = {X=0.0; Y=0.0}}
+         Player1 = {kind = Player(PlayerData.Blank); location = {X=494.0<px>; Y=330.0<px>}; velocity = {X=0.0<px>; Y=0.0<px>}}
+         Player2 = {kind = Player(PlayerData.Blank); location = {X=564.0<px>; Y=330.0<px>}; velocity = {X=0.0<px>; Y=0.0<px>}}
          Mikishidas = []
          SpatialIndex = QuadTree.Leaf []
          UnpassableLookup = Set.empty
@@ -246,19 +246,19 @@ let miscUpdates state =
     
     // maintain max amount of treats and treat lookup
     let (treats, lookups) =
-        let toPoint x = {Vector2.X = double(fst x) * cellWidthf/1.0<px>; Y=double(snd x) * cellHeightf/1.0<px>}
+        let toPoint x = {Vector2.X = (fst x) * cellWidthf; Y= (snd x) * cellHeightf}
         let rec aux treats lookups =
             if Set.count lookups = maxTreats then (treats,lookups) else
             let p = randomGridLocation state.Chaos
-            if Set.contains p lookups || Set.contains p state.UnpassableLookup || state.IsCellOutofbounds(float(fst p), float(snd p)) then aux treats lookups
+            if Set.contains p lookups || Set.contains p state.UnpassableLookup || state.IsCellOutofbounds(float(fst p) * 1.0<px>, float(snd p) * 1.0<px>) then aux treats lookups
             else
-                let t = {kind = MikishidaKinds.Treat; location = toPoint p; velocity = {X=0.0;Y=0.0}}
+                let t = {kind = MikishidaKinds.Treat; location = toPoint (float(fst p) * 1.0<cell>, float(snd p) * 1.0<cell>); velocity = {X=0.0<px>;Y=0.0<px>}}
                 aux (t::treats) (Set.add p lookups)
         aux [] state.TreatsLookup
     
-    let updateDragonFoam (foam:Map<int*int,int>) =
+    let updateDragonFoam (foam:Map<int<cell>*int<cell>,int<frame>>) =
         foam
-        |> Map.map(fun _ v -> v + 1)
+        |> Map.map(fun _ v -> v + 1<frame>)
         |> Map.filter(fun _ v -> v < foamFrames)
         
     // using mutable state here to save record headaches, because why not
@@ -311,9 +311,9 @@ let testGameOver state =
 let tryDropFoam player =
     match player.kind with
     | Player data -> 
-        if data.Foam.Count < maxPlayerFoam + data.DragonsCaught && Map.containsKey(player.location.CentreGridX,player.location.CentreGridY) data.Foam = false then
-            let f = { kind = AntiDragonFoam (getTicks()); location = {X=float player.location.CentreGridX*cellWidthf/1.0<px>; Y=float player.location.CentreGridY*cellHeightf/1.0<px>} ; velocity = {X= 0.0; Y = 0.0} }
-            Some(f, { player with kind = Player({data with Foam = Map.add (player.location.CentreGridX,player.location.CentreGridY) 0 data.Foam })})
+        if (data.Foam.Count < maxPlayerFoam + data.DragonsCaught) && (Map.containsKey((player.location.CentreGridX |> int) * 1<cell>,(player.location.CentreGridY |> int) * 1<cell>) data.Foam) = false then
+            let f = { kind = AntiDragonFoam (getTicks()); location = {X=player.location.CentreGridX*cellWidthf; Y=player.location.CentreGridY*cellHeightf} ; velocity = {X= 0.0<px>; Y = 0.0<px>} }
+            Some(f, { player with kind = Player({data with Foam = Map.add ((player.location.CentreGridX |> int) * 1<cell>,(player.location.CentreGridY |> int) * 1<cell>) 0<frame> data.Foam })})
         else None
     | _ -> None
     
@@ -353,9 +353,9 @@ let updateInputs state =
                         | None -> state
                 // todo: clean this up!
                 (fun s-> up1 ControllerButton.BUTTON_DPAD_LEFT  s
-                      && up1 ControllerButton.BUTTON_DPAD_RIGHT s ), fun state -> { state with Player1 = { state.Player1 with velocity = {X =0.0; Y = state.Player1.velocity.Y }} } 
+                      && up1 ControllerButton.BUTTON_DPAD_RIGHT s ), fun state -> { state with Player1 = { state.Player1 with velocity = {X =0.0<px>; Y = state.Player1.velocity.Y }} } 
                 (fun s-> up1 ControllerButton.BUTTON_DPAD_UP  s
-                      && up1 ControllerButton.BUTTON_DPAD_DOWN s ), fun state -> { state with Player1 = { state.Player1 with velocity = {X=state.Player1.velocity.X;Y=0.} } } 
+                      && up1 ControllerButton.BUTTON_DPAD_DOWN s ), fun state -> { state with Player1 = { state.Player1 with velocity = {X=state.Player1.velocity.X;Y=0.0<px>} } } 
 
                 (down2 ControllerButton.BUTTON_DPAD_LEFT),  fun state -> { state with Player2 = { state.Player2 with velocity = {X = -state.Player2.kind.defaultSpeed; Y = state.Player2.velocity.Y } } } 
                 (down2 ControllerButton.BUTTON_DPAD_RIGHT), fun state -> { state with Player2 = { state.Player2 with velocity = {X = state.Player2.kind.defaultSpeed; Y = state.Player2.velocity.Y } } } 
@@ -367,9 +367,9 @@ let updateInputs state =
                         | Some(foam,player) -> {state with Player2 = player; Mikishidas = foam :: state.Mikishidas  }
                         | None -> state
                 (fun s-> up2 ControllerButton.BUTTON_DPAD_LEFT  s
-                      && up2 ControllerButton.BUTTON_DPAD_RIGHT s ), fun state -> { state with Player2 = { state.Player2 with velocity = {X =0.0; Y = state.Player2.velocity.Y }} } 
+                      && up2 ControllerButton.BUTTON_DPAD_RIGHT s ), fun state -> { state with Player2 = { state.Player2 with velocity = {X =0.0<px>; Y = state.Player2.velocity.Y }} } 
                 (fun s-> up2 ControllerButton.BUTTON_DPAD_UP  s
-                      && up2 ControllerButton.BUTTON_DPAD_DOWN s ), fun state -> { state with Player2 = { state.Player2 with velocity = {X=state.Player2.velocity.X;Y=0.} } } 
+                      && up2 ControllerButton.BUTTON_DPAD_DOWN s ), fun state -> { state with Player2 = { state.Player2 with velocity = {X=state.Player2.velocity.X;Y=0.0<px>} } } 
 
 
             ]
@@ -455,7 +455,6 @@ let render(context:RenderingContext) (state:TreatzState) =
     | Player1Wins -> 
         context.Renderer |> copy state.Sprites.["win1"]   None None |> ignore
     | Player2Wins -> 
-        let src = { X = 0<px>; Y = 0<px>; Width=1024<px>; Height=768<px> } : SDLGeometry.Rectangle                
         context.Renderer |> copy state.Sprites.["win2"]   None None |> ignore
 
     | Playing ->
@@ -464,9 +463,9 @@ let render(context:RenderingContext) (state:TreatzState) =
         let t = state.Sprites.["tiles"]  
         for y = 0 to mapHeight/1<cell> do
             for x = 0 to mapWidth/1<cell> do
-                let x' = x*cellWidth
-                let y' = y*cellHeight
-                let dst = { X = x'; Y = y'; Width=cellWidth; Height=cellHeight }  : SDLGeometry.Rectangle    
+                let x' = x*cellWidth*1<cell>
+                let y' = y*cellHeight*1<cell>
+                let dst = { X = x'; Y = y'; Width=cellWidth*1<cell>; Height=cellHeight*1<cell> }  : SDLGeometry.Rectangle    
             
                 // top left mountain tiles
                 if( y= 10 && x = 12 ) || (y=10 && x = 12+35) || (y = 5 && x = 19) || (y=5+32 && x = 19)  then
@@ -516,7 +515,7 @@ let render(context:RenderingContext) (state:TreatzState) =
             match j.kind with
             | Dragon _ ->     
                 let d = state.Sprites.["drag"]  
-                let flip = if j.velocity.X > 0.0 then 1 else 0
+                let flip = if j.velocity.X > 0.0<px> then 1 else 0
                 context.Renderer  |> copyEx d None (Some j.AsRect) 0.0 flip |> ignore
             | CaughtDragon data ->     
                 let d = state.Sprites.["drag"]  
@@ -542,9 +541,9 @@ let render(context:RenderingContext) (state:TreatzState) =
             | _ -> () 
     
         let determinePlayerFrame player =   
-            if player.velocity.Y = 0.0 && player.velocity.X > 0.0 then 2 // right
-            elif player.velocity.Y = 0.0 && player.velocity.X < 0.0 then 3 // left
-            elif player.velocity.X = 0.0 && player.velocity.Y < 0.0 then 1 // up
+            if player.velocity.Y = 0.0<px> && player.velocity.X > 0.0<px> then 2 // right
+            elif player.velocity.Y = 0.0<px> && player.velocity.X < 0.0<px> then 3 // left
+            elif player.velocity.X = 0.0<px> && player.velocity.Y < 0.0<px> then 1 // up
             else 0 // down
 
         let juanFrame = determinePlayerFrame state.Player1
