@@ -1,8 +1,8 @@
 ﻿module Behaviours
 
-open CommonData
 open System
 open TreatzGame
+open SDLUtility
 
 let wander (random: Random) mikishida state  =     
 
@@ -11,8 +11,8 @@ let wander (random: Random) mikishida state  =
     let normalizedDistance = (state.CircleDistance * mikishida.velocity.normalize )
     let circlePosition = mikishida.location + normalizedDistance
     let circleOffset = {
-      Vector2.X = state.CircleRadius * Math.Cos(currentWanderAngle)
-      Y = state.CircleRadius * Math.Sin(currentWanderAngle) 
+      Vector2.X = state.CircleRadius * Math.Cos(currentWanderAngle) * 1.0<px>
+      Y = state.CircleRadius * Math.Sin(currentWanderAngle) * 1.0<px>
       }
     let steeringDirection = ( circlePosition + circleOffset)  - mikishida.location
             

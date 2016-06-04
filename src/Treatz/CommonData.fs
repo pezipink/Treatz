@@ -7,19 +7,22 @@ open QuadTree
 let screenWidth = 1024<px>
 let screenHeight = 768<px>
 
-let mapWidth = 64
-let mapHeight = 48
-let mapWidthf = 64.0
-let mapHeightf = 48.0
+[<Measure>] type cell
+[<Measure>] type frame
 
-let cellWidth = 16
-let cellHeight = 16
-let cellWidthf = 16.0
-let cellHeightf = 16.0
+let mapWidth = 64<cell>
+let mapHeight = 48<cell>
+let mapWidthf = (mapWidth |> float) * 1.0<cell>
+let mapHeightf = (mapHeight |> float) * 1.0<cell>
+
+let cellWidth = 16<px/cell>
+let cellHeight = 16<px/cell>
+let cellWidthf = (cellWidth |> float) * 1.0<px/cell>
+let cellHeightf = (cellHeight |> float) * 1.0<px/cell>
 
 let maxTreats = 400
 let maxPlayerFoam = 15
-let foamFrames = 60 * 3  // 5 seconds
+let foamFrames = 60 * 3<frame>  // 5 seconds
 let maxDragons = 40
 
 let screenQuadBounds =
@@ -52,4 +55,4 @@ let overlapq(rectA, rectB) =
     x2' >= x1 && x1' <= x2 && y2' >= y1 && y1' <= y2
 
 let randomGridLocation (chaos:System.Random) =
-    (chaos.Next(mapWidth)),(chaos.Next(mapHeight))
+    (chaos.Next(mapWidth/1<cell>)) * 1<cell>,(chaos.Next(mapHeight/1<cell>)) * 1<cell>

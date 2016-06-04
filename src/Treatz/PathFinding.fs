@@ -3,11 +3,12 @@
   open System.Collections.Generic
   open System.Linq
   open TreatzGame
+  open CommonData
 
   let getNeighbours allNodes node=            
       let x = node.Identity.Column
       let y = node.Identity.Row
-      let identites = [(1,0); (-1, 0); (0, -1); (0, 1)]
+      let identites = [(1<cell>,0<cell>); (-1<cell>, 0<cell>); (0<cell>, -1<cell>); (0<cell>, 1<cell>)]
                       |> List.map(fun (o,r) -> 
                           {Column= (x + o); Row= (y + r)} )
       [|for i in identites do
@@ -25,8 +26,8 @@
     someFn pathNode Array.empty 
 
   let areNeighbours n1 n2 = 
-    let difX = abs(n1.Column - n2.Column) = 1 
-    let difY = abs(n1.Row - n2.Row) = 1
+    let difX = abs(n1.Column - n2.Column) = 1<cell> 
+    let difY = abs(n1.Row - n2.Row) = 1<cell>
 
     match difX, difY with
     | true, true | false, false -> false
@@ -55,7 +56,7 @@
     while frontier.Count > 0 do      
       let currentNode = 
           frontier.ToArray() 
-          |> Seq.minBy(fun x -> costDistance x goal + x.Cost + int currentPathNode.PathCost )
+          |> Seq.minBy(fun x -> costDistance x goal + x.Cost + (int currentPathNode.PathCost) * 1<cell> )
       currentPathNode <- { 
                             Parent = if areNeighbours currentPathNode.GridNode.Identity currentNode.Identity then  
                                         Some(currentPathNode)  
