@@ -78,7 +78,7 @@ let collisionDetection state =
         // create a quadtree of all dragons, players and treats
         state.Player1 :: state.Player2 :: state.Mikishidas
         |> List.filter(fun k -> match k.kind with Treat | Player _  -> true | _ -> false)
-        |> QuadTree.create (fun j -> j.AsQuadBounds) 5 30 screenQuadBounds
+        |> QuadTree.create (fun j -> j.AsQuadBounds) 10 40 screenQuadBounds
     
     let createAnimation f alpha speed (location:Vector2)  =
         let angle = {currentAngle  = 0.0; alpha  = alpha }
@@ -100,7 +100,6 @@ let collisionDetection state =
             let newCollisions =
                 collisionTree
                 |> QuadTree.findNeighbours (fun k -> overlap(miki.AsRect,k.AsRect)) miki.AsQuadBounds screenQuadBounds
-                
             match newCollisions |> List.tryFind(fun t -> match t.kind with Player _ -> true | _ -> false) with
             | Some p -> 
                 // a dragon in contact with a player means the dragon is caught!
@@ -130,21 +129,12 @@ let collisionDetection state =
     let lookup = Set.difference state.TreatsLookup (Set.map(fun t->(t.location.GridX, t.location.GridY))removals)  
     // return new state
     {state with Mikishidas = mikis; TreatsLookup = lookup; SpatialIndex = collisionTree}
+      
 
 
 let prepareLevel state = 
     // create some dragons and treats
-    let mountains = 
-        [for y = 10 to 35 do             
-            for x = 12 to 16 do
-                yield x,y
-                yield x+35,y
-        ] @
-        [for y = 5 to 9 do             
-            for x = 19 to 44 do
-                yield x,y
-                yield x,y + 32] 
-        |> Set.ofList
+    let mountains = LevelGen.generateRandomMountains()
     
     let gen n f s =
         let rec aux acc i s =
@@ -159,7 +149,7 @@ let prepareLevel state =
     let dragons, blocked = gen maxDragons (fun p -> {kind = MikishidaKinds.Dragon( Wander {Intelligence.wanderDefault with RateOfChangeOfDirection = (state.Chaos.NextDouble()/0.5)}) ; location = toPoint p; velocity = {X=0.0;Y=0.0}} ) mountains
     let treatz, _  = gen maxTreats (fun p -> {kind = MikishidaKinds.Treat; location = toPoint p; velocity = {X=0.0;Y=0.0}} ) blocked
     let treatzSet = treatz |> List.map(fun t -> int t.location.GridX, int t.location.GridY ) |> Set.ofList
-    let mountains' = mountains |> Set.map(fun p -> {kind = MikishidaKinds.Mountainountain; location = toPoint p; velocity = {X=0.0;Y=0.0}}) |> Set.toList
+    let mountains' = mountains |> Set.map(fun p -> {kind = MikishidaKinds.Mountain; location = toPoint p; velocity = {X=0.0;Y=0.0}}) |> Set.toList
 
 
     
@@ -193,9 +183,16 @@ let prepareLevel state =
         graph
         |> Map.iter(fun _ node -> node.Neighbours <-(PathFinding.getNeighbours graph node))
         graph
-
+    
+    let rec getUnblockedLoc() =
+        let p = randomGridLocation state.Chaos
+        if Set.contains p mountains then getUnblockedLoc()
+        else {X=((fst>>double)p)*cellWidthf ; Y=((snd>>double)p)*cellHeightf}
+            
     { state with 
           Mikishidas = dragons @ treatz @ mountains'; 
+          Player1 = { state.Player1 with location = getUnblockedLoc() }
+          Player2 = { state.Player2 with location = getUnblockedLoc() }
           UnpassableLookup = mountains; 
           TreatsLookup = treatzSet 
           PathFindingData = graphForPathfinding mountains'}
@@ -356,6 +353,7 @@ let updateInputs state =
         (state,moves) ||> List.fold (fun acc (pred,f) -> if pred acc then f acc else acc)
 
 let update (state:TreatzState) : TreatzState =
+    
     match state.GameState with
     | Playing -> 
         state
@@ -439,52 +437,14 @@ let render(context:RenderingContext) (state:TreatzState) =
         context.Renderer |> copy state.Sprites.["win2"]   None None |> ignore
 
     | Playing ->
-        // we can hardcode the grass and mountain rendering !
-        // YES I KNOW THIS IS HORRIBLE.  CRY ME A RIVER
         let t = state.Sprites.["tiles"]  
         for y = 0 to mapHeight do
             for x = 0 to mapWidth do
                 let x' = x*cellWidth*1<px>
                 let y' = y*cellHeight*1<px>
                 let dst = { X = x'; Y = y'; Width=16<px>; Height=16<px> }  : SDLGeometry.Rectangle    
-            
-                // top left mountain tiles
-                if( y= 10 && x = 12 ) || (y=10 && x = 12+35) || (y = 5 && x = 19) || (y=5+32 && x = 19)  then
-                    let src = { X = 50<px>; Y = 0<px>; Width=16<px>; Height=16<px> } : SDLGeometry.Rectangle                
-                    context.Renderer |> copy t (Some src) (Some dst) |> ignore
-                // bottom left mountain tiles
-                elif( y= 35 && x = 12 ) || (y=35&& x = 12+35) || (y = 9 && x = 19) || (y=9+32 && x = 19)  then
-                    let src = { X = 50<px>; Y = 34<px>; Width=16<px>; Height=16<px> } : SDLGeometry.Rectangle                
-                    context.Renderer |> copy t (Some src) (Some dst) |> ignore
-                // top right mountain tiles
-                elif( y= 10 && x = 16 ) || (y=10 && x = 16+35) || (y = 5 && x = 44) || (y=5 && x = 44+32)  then
-                    let src = { X = 84<px>; Y = 0<px>; Width=16<px>; Height=16<px> } : SDLGeometry.Rectangle                
-                    context.Renderer |> copy t (Some src) (Some dst) |> ignore
-                // bottom right mountain tiles
-                elif( y= 35 && x = 16 ) || (y=35&& x = 16+35) || (y = 9 && x = 44) || (y=9+32 && x = 44)  then
-                    let src = { X = 84<px>; Y = 34<px>; Width=16<px>; Height=16<px> } : SDLGeometry.Rectangle                
-                    context.Renderer |> copy t (Some src) (Some dst) |> ignore
-                // left mountain tiles
-                elif (y >= 10 && y <= 35 && (x = 12 || x = 12+35)) || (x = 19 && ((y >= 5 && y <= 9) || y>=5+32 && y <= 9+32)) then
-                    let src = { X = 50<px>; Y = 17<px>; Width=16<px>; Height=16<px> } : SDLGeometry.Rectangle                
-                    context.Renderer |> copy t (Some src) (Some dst) |> ignore
-                // right mountain tiles
-                elif (y >= 10 && y <= 35 && (x = 16 || x = 16+35)) || (x = 44 && ((y >= 5 && y <= 9) || y>=5+32 && y <= 9+32)) then
-                    let src = { X = 84<px>; Y = 17<px>; Width=16<px>; Height=16<px> } : SDLGeometry.Rectangle                
-                    context.Renderer |> copy t (Some src) (Some dst) |> ignore
-                // top mountain tiles
-                elif( y= 10 && x >= 12 && x <= 16 ) || ( y= 10 && x >= 12+35 && x <= 16+35 ) ||
-                    ( y = 5 && x >= 19 && x <= 44 ) || ( y= 5+32  && x >= 19 && x <= 44 ) then
-                    let src = { X = 67<px>; Y = 0<px>; Width=16<px>; Height=16<px> } : SDLGeometry.Rectangle                
-                    context.Renderer |> copy t (Some src) (Some dst) |> ignore
-                // bottom mountain tiles
-                elif( y = 35 && x >= 12 && x <= 16 ) || ( y= 35 && x >= 12+35 && x <= 16+35 ) ||
-                    ( y = 9 && x >= 19 && x <= 44 ) || ( y= 9+32  && x >= 19 && x <= 44 ) then
-                    let src = { X = 67<px>; Y = 34<px>; Width=16<px>; Height=16<px> } : SDLGeometry.Rectangle                
-                    context.Renderer |> copy t (Some src) (Some dst) |> ignore
-                // all mountain tiles
-                elif (y >= 10 && y <= 35 && x >=12 && x <=16) || (y >= 10 && y <= 35 && x >=12+35 && x <=16+35) || 
-                   (y >= 5 && y <= 9 && x >= 19 && x <= 44) || (y >= 5+32 && y <= 9+32 && x >= 19 && x <= 44) then
+                if Set.contains(x,y) state.UnpassableLookup then
+                    // todo: work out which tile to use (probably pre-calc this)
                     let src = { X = 67<px>; Y = 17<px>; Width=16<px>; Height=16<px> } : SDLGeometry.Rectangle                
                     context.Renderer |> copy t (Some src) (Some dst) |> ignore
                 else // everything else is central grass
@@ -574,16 +534,16 @@ let render(context:RenderingContext) (state:TreatzState) =
     context.Renderer |> SDLRender.present 
     
     // delay to lock at 60fps (we could do extra work here)
-    let frameTime = getTicks() - context.LastFrameTick
-    if frameTime < delay_timei then delay(delay_timei - frameTime)
-    else printfn "Frametime %A" frameTime
-    context.LastFrameTick <- getTicks()    
+    let ticks = getTicks() 
+    let frameTime = ticks - context.LastFrameTick
+    if frameTime <= delay_timei then delay(delay_timei - frameTime)
+//    else printfn "Frametime %A" frameTime    
 
 
 let main() = 
     use system = new SDL.System(SDL.Init.Everything)
-    use mainWindow = SDLWindow.create "test" 100<px> 100<px> screenWidth screenHeight 0u //(uint32 SDLWindow.Flags.FullScreen)
-//    use mainWindow = SDLWindow.create "test" 100<px> 100<px> screenWidth screenHeight (uint32 SDLWindow.Flags.FullScreen) // FULLSCREEN!
+//    use mainWindow = SDLWindow.create "test" 100<px> 100<px> screenWidth screenHeight 0u //(uint32 SDLWindow.Flags.FullScreen)
+    use mainWindow = SDLWindow.create "test" 100<px> 100<px> screenWidth screenHeight (uint32 SDLWindow.Flags.FullScreen) // FULLSCREEN!
     use mainRenderer = SDLRender.create mainWindow -1 SDLRender.Flags.Accelerated
     use surface = SDLSurface.createRGB (screenWidth,screenHeight,32<bit/px>) (0x00FF0000u,0x0000FF00u,0x000000FFu,0x00000000u)
     

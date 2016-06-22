@@ -68,7 +68,7 @@ type Node =
   override this.Equals(yobj) =
       match yobj with
       | :? Node as y -> 
-             this.Identity= y.Identity && this.Cost = y.Cost && this.Neighbours = y.Neighbours
+             this.Identity= y.Identity && this.Cost = y.Cost //&& this.Neighbours = y.Neighbours
       | _ -> false
 
   override x.GetHashCode() = hash x.Identity
@@ -110,7 +110,7 @@ type MikishidaKinds =
     | Player of PlayerData
     | Dragon of DragonData
     | Treat
-    | Mountainountain
+    | Mountain
     | AntiDragonFoam of System.UInt32
     | Squirrel
     | Cat
