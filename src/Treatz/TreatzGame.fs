@@ -110,7 +110,7 @@ type MikishidaKinds =
     | Player of PlayerData
     | Dragon of DragonData
     | Treat
-    | Mountain
+    | Mountain of LevelGen.MountainType
     | AntiDragonFoam of System.UInt32
     | Squirrel
     | Cat
@@ -173,7 +173,7 @@ type TreatzState =
       Player2 : Mikishida
       Mikishidas : Mikishida list
       SpatialIndex : QuadTree.QuadTree<Mikishida>
-      UnpassableLookup : Set<int*int> 
+      Mountains : Map<int*int, LevelGen.MountainType> 
       TreatsLookup : Set<int*int> 
       PressedKeys : Set<ScanCode> 
       Controllers : Set<ControllerButton> * Set<ControllerButton>
@@ -189,6 +189,6 @@ type TreatzState =
             (x < 0.0 || x > mapWidthf * cellWidthf - cellWidthf ||   y < 0.0 || y > mapHeightf * cellHeightf ) 
         member this.IsCellUnpassable (x,y) = 
             let toCell (x,y) = (int(x/cellWidthf)),(int(y/cellHeightf))
-            Set.contains (toCell (x, y)) this.UnpassableLookup
+            Map.containsKey (toCell (x, y)) this.Mountains
         
             

@@ -134,8 +134,9 @@ let collisionDetection state =
 
 let prepareLevel state = 
     // create some dragons and treats
-    let mountains = LevelGen.generateRandomMountains()
-    
+    let mountainMap = LevelGen.generateRandomMountains()
+    let mountains = mountainMap |> Map.toList |> List.map fst |> Set.ofList
+        
     let gen n f s =
         let rec aux acc i s =
             if i = n then acc, s else
@@ -149,7 +150,7 @@ let prepareLevel state =
     let dragons, blocked = gen maxDragons (fun p -> {kind = MikishidaKinds.Dragon( Wander {Intelligence.wanderDefault with RateOfChangeOfDirection = (state.Chaos.NextDouble()/0.5)}) ; location = toPoint p; velocity = {X=0.0;Y=0.0}} ) mountains
     let treatz, _  = gen maxTreats (fun p -> {kind = MikishidaKinds.Treat; location = toPoint p; velocity = {X=0.0;Y=0.0}} ) blocked
     let treatzSet = treatz |> List.map(fun t -> int t.location.GridX, int t.location.GridY ) |> Set.ofList
-    let mountains' = mountains |> Set.map(fun p -> {kind = MikishidaKinds.Mountain; location = toPoint p; velocity = {X=0.0;Y=0.0}}) |> Set.toList
+    let mountains' = mountains |> Set.map(fun p -> {kind = MikishidaKinds.Mountain LevelGen.Centre; location = toPoint p; velocity = {X=0.0;Y=0.0}}) |> Set.toList
 
 
     
@@ -193,7 +194,7 @@ let prepareLevel state =
           Mikishidas = dragons @ treatz @ mountains'; 
           Player1 = { state.Player1 with location = getUnblockedLoc() }
           Player2 = { state.Player2 with location = getUnblockedLoc() }
-          UnpassableLookup = mountains; 
+          Mountains = mountainMap; 
           TreatsLookup = treatzSet 
           PathFindingData = graphForPathfinding mountains'}
 
@@ -203,7 +204,7 @@ let defaultState(sprites) =
          Player2 = {kind = Player(PlayerData.Blank); location = {X=564.; Y=330.}; velocity = {X=0.0; Y=0.0}}
          Mikishidas = []
          SpatialIndex = QuadTree.Leaf []
-         UnpassableLookup = Set.empty
+         Mountains = Map.empty
          TreatsLookup = Set.empty
          PressedKeys = Set.empty
          Sprites = sprites
@@ -227,7 +228,7 @@ let miscUpdates state =
         let rec aux treats lookups =
             if Set.count lookups = maxTreats then (treats,lookups) else
             let p = randomGridLocation state.Chaos
-            if Set.contains p lookups || Set.contains p state.UnpassableLookup || state.IsCellOutofbounds(float(fst p), float(snd p)) then aux treats lookups
+            if Set.contains p lookups || Map.containsKey p state.Mountains || state.IsCellOutofbounds(float(fst p), float(snd p)) then aux treats lookups
             else
                 let t = {kind = MikishidaKinds.Treat; location = toPoint p; velocity = {X=0.0;Y=0.0}}
                 aux (t::treats) (Set.add p lookups)
@@ -432,8 +433,7 @@ let render(context:RenderingContext) (state:TreatzState) =
             context.Renderer |> copy state.Sprites.["anykey"]   None (Some src) |> ignore
     | Player1Wins -> 
         context.Renderer |> copy state.Sprites.["win1"]   None None |> ignore
-    | Player2Wins -> 
-        let src = { X = 0<px>; Y = 0<px>; Width=1024<px>; Height=768<px> } : SDLGeometry.Rectangle                
+    | Player2Wins ->         
         context.Renderer |> copy state.Sprites.["win2"]   None None |> ignore
 
     | Playing ->
@@ -443,9 +443,19 @@ let render(context:RenderingContext) (state:TreatzState) =
                 let x' = x*cellWidth*1<px>
                 let y' = y*cellHeight*1<px>
                 let dst = { X = x'; Y = y'; Width=16<px>; Height=16<px> }  : SDLGeometry.Rectangle    
-                if Set.contains(x,y) state.UnpassableLookup then
-                    // todo: work out which tile to use (probably pre-calc this)
-                    let src = { X = 67<px>; Y = 17<px>; Width=16<px>; Height=16<px> } : SDLGeometry.Rectangle                
+                if Map.containsKey(x,y) state.Mountains then
+                    let src = 
+                        match state.Mountains.[x,y] with
+                        | LevelGen.Top          -> { X = 67<px>; Y = 0<px>; Width=16<px>; Height=16<px> } : SDLGeometry.Rectangle                
+                        | LevelGen.TopRight     -> { X = 84<px>; Y = 0<px>; Width=16<px>; Height=16<px> } : SDLGeometry.Rectangle                
+                        | LevelGen.Right        -> { X = 84<px>; Y = 17<px>; Width=16<px>; Height=16<px> } : SDLGeometry.Rectangle                
+                        | LevelGen.BottomRight  -> { X = 84<px>; Y = 34<px>; Width=16<px>; Height=16<px> } : SDLGeometry.Rectangle                
+                        | LevelGen.Bottom       -> { X = 67<px>; Y = 34<px>; Width=16<px>; Height=16<px> } : SDLGeometry.Rectangle                
+                        | LevelGen.BottomLeft   -> { X = 50<px>; Y = 34<px>; Width=16<px>; Height=16<px> } : SDLGeometry.Rectangle                
+                        | LevelGen.Left         -> { X = 50<px>; Y = 17<px>; Width=16<px>; Height=16<px> } : SDLGeometry.Rectangle                
+                        | LevelGen.TopLeft      -> { X = 50<px>; Y = 0<px>; Width=16<px>; Height=16<px> } : SDLGeometry.Rectangle                
+                        | LevelGen.Centre       -> { X = 67<px>; Y = 17<px>; Width=16<px>; Height=16<px> } : SDLGeometry.Rectangle                
+                                            
                     context.Renderer |> copy t (Some src) (Some dst) |> ignore
                 else // everything else is central grass
                     let src = { X = 17<px>; Y = 17<px>; Width=16<px>; Height=16<px> } : SDLGeometry.Rectangle                

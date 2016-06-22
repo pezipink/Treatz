@@ -1,9 +1,19 @@
 ﻿module LevelGen
-
 open System
 
+type MountainType =
+  | Top
+  | TopRight
+  | Right
+  | BottomRight
+  | Bottom
+  | BottomLeft
+  | Left
+  | TopLeft
+  | Centre
+
 type Surface =
-    | Mountain
+    | Mountain of MountainType
     | Grass
 
 type MountainMap = Map<int * int, Surface >
@@ -12,7 +22,7 @@ let printMountains (mountain:MountainMap) =
     for x = 0 to CommonData.mapWidth do
         for y = 0 to CommonData.mapHeight do
             match mountain.[x,y] with
-            | Mountain -> printf "#"
+            | Mountain _ -> printf "#"
             | Grass -> printf " "
         printfn "\n"
     mountain
@@ -37,11 +47,16 @@ let findNeighboursKeys grid (x,y) =
       |> Option.map(fun _ -> cell))
 
 let newValue grid cell =
-    let count = findNeighbours grid cell |> List.filter((=)Mountain) |> List.length
+    let count = 
+      findNeighbours grid cell 
+      |> List.filter( function Mountain _  -> true | _ -> false) 
+      |> List.length
+      
     match grid.[cell] with
-    | Mountain when count >= 4 -> Mountain
-    | Grass when count >= 5 -> Mountain      
+    | Mountain _ when count >= 4 -> Mountain Centre
+    | Grass when count >= 5 -> Mountain Centre     
     | _ -> Grass
+
 
 let iteration grid = Map.map(fun k _ -> newValue grid k) grid
 
@@ -76,21 +91,75 @@ let generateRandomMountains() =
     let map =
         (Map.empty,indexes)
         ||> List.fold(fun map cell  -> 
-            let x = if chaos.NextDouble() <= 0.45 then Mountain else Grass
+            let x = if chaos.NextDouble() <= 0.45 then Mountain Centre else Grass
             Map.add cell x map)
     
     let level =
         (map,[1..3]) 
         ||> List.fold(fun acc _ -> iteration acc)
         
-        
-    let x = findConnectedAreas level
-    level
-    |> Map.filter(fun _ v -> v = Mountain)
-    |> Map.toList
-    |> List.map fst
-    |> Set.ofList
+    let neighbours grid (x,y) =     
+      [(-1, -1);(0, -1); (1,-1);
+       (-1,  0);         (1, 0);
+       (-1,  1);(0,  1); (1, 1)]        
+      |> List.map(fun (x',y') -> 
+        let cell = x+x',y+y'
+        match Map.tryFind cell grid with
+        | Some Grass -> false
+        | _  -> true )
 
+    let identifyMountain = function
+    | [ _   ; false;  _  ;
+        true;        true;
+          _ ;  true;  _; ] -> Mountain Top       
+  
+    | [ _  ; true;   _ ;
+        true;      true;
+        _   ; false;  _  ; ] -> Mountain Bottom
+  
+    | [ false ; false;  _  ;
+        false;        true;
+          _ ;  true;  true; ] -> Mountain TopLeft        
+    
+    | [ _   ; false;  false  ;
+        true;         false;
+        true ;  true;   _; ] -> Mountain TopRight
+  
+    | [ _   ; true;   true  ;
+        false;         true;
+        false ;  false;   _; ] -> Mountain BottomLeft     
+  
+    | [  true   ; true;   _  ;
+        true;           false;
+         _   ;  false;   _; ] -> Mountain BottomRight     
+  
+    | [  _   ; true;     _  ;
+        true;           false;
+         _   ;  true;    _; ] -> Mountain Right
+          
+    | [  _   ; true;     _  ;
+        false;           true;
+         _   ;  true;    _; ] -> Mountain Left
+         
+    | _ -> Mountain Centre
+
+    //let x = findConnectedAreas level
+    level
+    // todo: clean this thing up a bit
+    |> Map.map(fun k v -> 
+      match v with
+      | Grass -> v
+      | Mountain _ -> identifyMountain (neighbours map k))
+    |> Map.filter(fun _ v -> 
+      match v with 
+      | Grass -> false
+      | _ -> true)
+    |> Map.map(fun _ v -> 
+        match v with
+        | Mountain v -> v
+        | _ -> failwith "!" 
+    )
+  
 
 
 //http://www.roguebasin.com/index.php?title=Cellular_Automata_Method_for_Generating_Random_Cave-Like_Levels
