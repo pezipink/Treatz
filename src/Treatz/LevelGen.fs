@@ -111,55 +111,44 @@ let generateRandomMountains() =
     let identifyMountain = function
     | [ _   ; false;  _  ;
         true;        true;
-          _ ;  true;  _; ] -> Mountain Top       
+          _ ;  true;  _; ] -> Top       
   
     | [ _  ; true;   _ ;
         true;      true;
-        _   ; false;  _  ; ] -> Mountain Bottom
+        _   ; false;  _  ; ] -> Bottom
   
     | [ false ; false;  _  ;
         false;        true;
-          _ ;  true;  true; ] -> Mountain TopLeft        
+          _ ;  true;  true; ] -> TopLeft        
     
     | [ _   ; false;  false  ;
         true;         false;
-        true ;  true;   _; ] -> Mountain TopRight
+        true ;  true;   _; ] -> TopRight
   
     | [ _   ; true;   true  ;
         false;         true;
-        false ;  false;   _; ] -> Mountain BottomLeft     
+        false ;  false;   _; ] -> BottomLeft     
   
     | [  true   ; true;   _  ;
         true;           false;
-         _   ;  false;   _; ] -> Mountain BottomRight     
+         _   ;  false;   _; ] -> BottomRight     
   
     | [  _   ; true;     _  ;
         true;           false;
-         _   ;  true;    _; ] -> Mountain Right
+         _   ;  true;    _; ] -> Right
           
     | [  _   ; true;     _  ;
         false;           true;
-         _   ;  true;    _; ] -> Mountain Left
+         _   ;  true;    _; ] -> Left
          
-    | _ -> Mountain Centre
+    | _ -> Centre
 
     //let x = findConnectedAreas level
-    level
-    // todo: clean this thing up a bit
-    |> Map.map(fun k v -> 
-      match v with
-      | Grass -> v
-      | Mountain _ -> identifyMountain (neighbours map k))
-    |> Map.filter(fun _ v -> 
-      match v with 
-      | Grass -> false
-      | _ -> true)
-    |> Map.map(fun _ v -> 
+    (Map.empty,level)
+    ||> Map.fold(fun newLevel cell v -> 
         match v with
-        | Mountain v -> v
-        | _ -> failwith "!" 
-    )
-  
+        | Grass -> newLevel
+        | Mountain _ -> Map.add cell (identifyMountain (neighbours level cell)) newLevel)
 
 
 //http://www.roguebasin.com/index.php?title=Cellular_Automata_Method_for_Generating_Random_Cave-Like_Levels
