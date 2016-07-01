@@ -26,15 +26,10 @@
     "SDL_image": "*",
     "SDLFS": {
       "version": "*",
-      "type": "project"
+      "target": "project"
     } 
   },
   "frameworks": {
-    "net46": {
-      "dependencies": {
-        "FSharp.Core": "*"
-      }
-    },
     "netcoreapp1.0": {
       "dependencies": {
         "Microsoft.NETCore.App": {
