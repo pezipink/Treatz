@@ -1,0 +1,45 @@
+{
+  "version": "1.0.0-*",
+  "buildOptions": {
+    "debugType": "portable",
+    "compilerName": "fsc",
+    "compile": {
+      "includeFiles": [
+          "AssemblyInfo.fs",
+          "SDLUtility.fs",
+          "SDLCursor.fs",
+          "SDLPixel.fs",
+          "SDLGeometry.fs",
+          "SDLKeyboard.fs",
+          "SDLGameController.fs",
+          "SDLMouse.fs",
+          "SDLEvent.fs",
+          "SDLRWops.fs",
+          "SDLSurface.fs",
+          "SDLTexture.fs",
+          "SDLWindow.fs",
+          "SDLRender.fs",
+          "SDLVersion.fs",
+          "SDLError.fs",
+          "SDL.fs"
+      ]
+    }
+  },
+  "dependencies": {
+    "Microsoft.FSharp.Core.netcore": "1.0.0-alpha-*",
+    "sdl2": "*"
+  },
+  "frameworks": {
+    "netstandard1.6": {
+      "dependencies": {
+        "NETStandard.Library": "1.6.0"
+      }
+    }
+  },
+  "tools": {
+    "dotnet-compile-fsc": {
+      "version": "1.0.0-preview2-*",
+      "imports": "dnxcore50"
+    }
+  }
+}

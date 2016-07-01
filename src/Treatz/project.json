@@ -1,0 +1,50 @@
+{
+  "version": "1.0.0-*",
+  "buildOptions": {
+    "debugType": "portable",
+    "emitEntryPoint": true,
+    "additionalArguments": [
+      "--maxerrors:10000"
+    ],
+    "compilerName": "fsc",
+    "compile": {
+      "includeFiles": [
+          "QuadTree.fs",
+          "CommonData.fs",
+          "LevelGen.fs",
+          "TreatzGame.fs",
+          "Behaviours.fs",
+          "PathFinding.fs",
+          "Intelligence.fs",
+          "Treatz_QT_Demo.fs",
+          "Treatz.fs"
+      ]
+    }
+  },
+  "dependencies": {
+    "sdl2": "*",
+    "SDL_image": "*",
+    "SDLFS": {
+      "version": "*",
+      "target": "project"
+    } 
+  },
+  "frameworks": {
+    "netcoreapp1.0": {
+      "dependencies": {
+        "Microsoft.NETCore.App": {
+          "type": "platform",
+          "version": "1.0.0"
+        },
+        "Microsoft.FSharp.Core.netcore": "1.0.0-alpha-*"
+      },
+      "imports": "dnxcore50"
+    }
+  },
+  "tools": {
+    "dotnet-compile-fsc": {
+      "version": "1.0.0-preview2-*",
+      "imports": "dnxcore50"
+    }
+  }
+}
